@@ -29,13 +29,13 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
 
     for epoch in range(start_epoch,stop_epoch):
         model.train()
-        model.train_loop(epoch, base_loader,  optimizer ) #model are called by reference, no need to return 
+        model.train_loop(epoch, base_loader,  optimizer) #model are called by reference, no need to return
         model.eval()
 
         if not os.path.isdir(params.checkpoint_dir):
             os.makedirs(params.checkpoint_dir)
 
-        acc = model.test_loop( val_loader)
+        acc = model.test_loop(val_loader)
         if acc > max_acc : #for baseline and baseline++, we don't use validation here so we let acc = -1
             print("best model! save...")
             max_acc = acc
@@ -52,7 +52,7 @@ if __name__=='__main__':
     np.random.seed(10)
     params = parse_args('train')
 
-
+    # Define path to data depending on dataset
     if params.dataset == 'cross':
         base_file = configs.data_dir['miniImagenet'] + 'all.json' 
         val_file   = configs.data_dir['CUB'] + 'val.json' 
@@ -62,7 +62,8 @@ if __name__=='__main__':
     else:
         base_file = configs.data_dir[params.dataset] + 'base.json' 
         val_file   = configs.data_dir[params.dataset] + 'val.json' 
-         
+
+    # Define size of input image depending on backbone and dataset
     if 'Conv' in params.model:
         if params.dataset in ['omniglot', 'cross_char']:
             image_size = 28
@@ -77,6 +78,8 @@ if __name__=='__main__':
 
     optimization = 'Adam'
 
+
+    # Define number of epochs depending on method, dataset and K-shot (if not specified in script arguments)
     if params.stop_epoch == -1: 
         if params.method in ['baseline', 'baseline++'] :
             if params.dataset in ['omniglot', 'cross_char']:
@@ -155,10 +158,16 @@ if __name__=='__main__':
 
     model = model.cuda()
 
-    params.checkpoint_dir = '%s/checkpoints/%s/%s_%s' %(configs.save_dir, params.dataset, params.model, params.method)
+    params.checkpoint_dir = os.path.join(
+        configs.save_dir,
+        'checkpoints',
+        params.dataset,
+        params.model,
+        params.method,
+    )
     if params.train_aug:
         params.checkpoint_dir += '_aug'
-    if not params.method  in ['baseline', 'baseline++']: 
+    if not params.method in ['baseline', 'baseline++']:
         params.checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
 
     if not os.path.isdir(params.checkpoint_dir):
