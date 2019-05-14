@@ -34,9 +34,9 @@ class MetaTemplate(nn.Module):
         if is_feature:
             z_all = x
         else:
-            x           = x.contiguous().view( self.n_way * (self.n_support + self.n_query), *x.size()[2:]) 
+            x           = x.contiguous().view(self.n_way * (self.n_support + self.n_query), *x.size()[2:])
             z_all       = self.feature.forward(x)
-            z_all       = z_all.view( self.n_way, self.n_support + self.n_query, -1)
+            z_all       = z_all.view(self.n_way, self.n_support + self.n_query, -1)
         z_support   = z_all[:, :self.n_support]
         z_query     = z_all[:, self.n_support:]
 

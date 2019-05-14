@@ -32,7 +32,7 @@ def feature_evaluation(cl_data_file, model, n_way = 5, n_support = 5, n_query = 
         perm_ids = np.random.permutation(len(img_feat)).tolist()
         z_all.append( [ np.squeeze( img_feat[perm_ids[i]]) for i in range(n_support+n_query) ] )     # stack each batch
 
-    z_all = torch.from_numpy(np.array(z_all) )
+    z_all = torch.from_numpy(np.array(z_all))
    
     model.n_query = n_query
     if adaptation:
@@ -58,9 +58,9 @@ if __name__ == '__main__':
         params.model = 'Conv4S'
 
     if params.method == 'baseline':
-        model           = BaselineFinetune( model_dict[params.model], **few_shot_params )
+        model           = BaselineFinetune(model_dict[params.model], **few_shot_params)
     elif params.method == 'baseline++':
-        model           = BaselineFinetune( model_dict[params.model], loss_type = 'dist', **few_shot_params )
+        model           = BaselineFinetune(model_dict[params.model], loss_type = 'dist', **few_shot_params)
     elif params.method == 'protonet':
         model           = ProtoNet( model_dict[params.model], **few_shot_params )
     elif params.method == 'matchingnet':
@@ -137,14 +137,14 @@ if __name__ == '__main__':
         else: 
             loadfile    = configs.data_dir[params.dataset] + split + '.json'
 
-        novel_loader     = datamgr.get_data_loader( loadfile, aug = False)
+        novel_loader     = datamgr.get_data_loader(loadfile, aug = False)
         if params.adaptation:
             model.task_update_num = 100 #We perform adaptation on MAML simply by updating more times.
         model.eval()
-        acc_mean, acc_std = model.test_loop( novel_loader, return_std = True)
+        acc_mean, acc_std = model.test_loop(novel_loader, return_std = True)
 
     else:
-        novel_file = os.path.join( checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
+        novel_file = os.path.join(checkpoint_dir.replace("checkpoints","features"), split_str +".hdf5") #defaut split = novel, but you can also test base or val classes
         cl_data_file = feat_loader.init_loader(novel_file)
 
         for i in range(iter_num):

@@ -7,6 +7,7 @@ import numpy as np
 import torchvision.transforms as transforms
 import os
 identity = lambda x:x
+# TODO: why not extend torch.utils.data.Dataset ?
 class SimpleDataset:
     def __init__(self, data_file, transform, target_transform=identity):
         with open(data_file, 'r') as f:

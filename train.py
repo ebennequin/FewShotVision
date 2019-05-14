@@ -36,6 +36,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
             os.makedirs(params.checkpoint_dir)
 
         acc = model.test_loop(val_loader)
+        # TODO: check that it makes sense to train baselines systematically for  epochs
         if acc > max_acc : #for baseline and baseline++, we don't use validation here so we let acc = -1
             print("best model! save...")
             max_acc = acc
@@ -99,21 +100,23 @@ if __name__=='__main__':
                 params.stop_epoch = 600 #default
      
 
+    # Define data loaders and model
     if params.method in ['baseline', 'baseline++'] :
         base_datamgr    = SimpleDataManager(image_size, batch_size = 16)
-        base_loader     = base_datamgr.get_data_loader( base_file , aug = params.train_aug )
+        base_loader     = base_datamgr.get_data_loader(base_file , aug = params.train_aug)
         val_datamgr     = SimpleDataManager(image_size, batch_size = 64)
-        val_loader      = val_datamgr.get_data_loader( val_file, aug = False)
+        val_loader      = val_datamgr.get_data_loader(val_file, aug = False)
         
         if params.dataset == 'omniglot':
+            # TODO : change num_classes
             assert params.num_classes >= 4112, 'class number need to be larger than max label id in base class'
         if params.dataset == 'cross_char':
             assert params.num_classes >= 1597, 'class number need to be larger than max label id in base class'
 
         if params.method == 'baseline':
-            model           = BaselineTrain( model_dict[params.model], params.num_classes)
+            model = BaselineTrain(model_dict[params.model], params.num_classes)
         elif params.method == 'baseline++':
-            model           = BaselineTrain( model_dict[params.model], params.num_classes, loss_type = 'dist')
+            model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type = 'dist')
 
     elif params.method in ['protonet','matchingnet','relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
         n_query = max(1, int(16* params.test_n_way/params.train_n_way)) #if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
@@ -158,6 +161,7 @@ if __name__=='__main__':
 
     model = model.cuda()
 
+    # Define checkpoint directory depending on experience settings
     params.checkpoint_dir = os.path.join(
         configs.save_dir,
         'checkpoints',

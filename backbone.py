@@ -298,6 +298,7 @@ class ConvNetS(nn.Module): #For omniglot, only 1 input channel, output dim is 64
             trunk.append(Flatten())
 
         self.trunk = nn.Sequential(*trunk)
+        # TODO: final_feat_dim ne doit pas être déclaré comme ça
         self.final_feat_dim = 64
 
     def forward(self,x):
