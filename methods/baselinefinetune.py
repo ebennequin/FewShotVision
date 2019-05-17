@@ -21,6 +21,7 @@ class BaselineFinetune(MetaTemplate):
         z_support   = z_support.contiguous().view(self.n_way* self.n_support, -1 )
         z_query     = z_query.contiguous().view(self.n_way* self.n_query, -1 )
 
+        # TODO : check that this delivers the correct labels
         y_support = torch.from_numpy(np.repeat(range( self.n_way ), self.n_support ))
         y_support = Variable(y_support.cuda())
 

@@ -14,7 +14,6 @@ class SimpleHDF5Dataset:
             self.all_feats_dset = self.f['all_feats'][...]
             self.all_labels = self.f['all_labels'][...]
             self.total = self.f['count'][0]
-           # print('here')
     def __getitem__(self, i):
         return torch.Tensor(self.all_feats_dset[i,:]), int(self.all_labels[i])
 
