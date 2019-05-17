@@ -88,7 +88,7 @@ class MAML(MetaTemplate):
             assert self.n_way == x.size(0), "MAML do not support way change"
 
             loss = self.set_forward_loss(x)
-            avg_loss = avg_loss + loss.data[0]
+            avg_loss = avg_loss + loss.item()
             loss_all.append(loss)
 
             task_count += 1
