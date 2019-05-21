@@ -18,7 +18,7 @@ class MAML(MetaTemplate):
         self.classifier.bias.data.fill_(0)  # TODO why
 
         self.n_task = 4
-        self.task_update_num = 5
+        self.task_update_num = 5 #TODO should be customable
         self.train_lr = 0.01
         self.approx = approx  # first order approx.
 
@@ -31,10 +31,12 @@ class MAML(MetaTemplate):
         assert is_feature == False, 'MAML do not support fixed feature'
         x = x.cuda()
         x_var = Variable(x)
+        # TODO: variable name unclear
         x_a_i = x_var[:, :self.n_support, :, :, :].contiguous().view(self.n_way * self.n_support,
                                                                      *x.size()[2:])  # support data
         x_b_i = x_var[:, self.n_support:, :, :, :].contiguous().view(self.n_way * self.n_query,
                                                                      *x.size()[2:])  # query data
+        # TODO: Variable has been deprecated. Delete all usage
         y_a_i = Variable(
             torch.from_numpy(np.repeat(range(self.n_way), self.n_support))).cuda()  # label for support data
 
@@ -51,6 +53,7 @@ class MAML(MetaTemplate):
             if self.approx:
                 grad = [g.detach() for g in
                         grad]  # do not calculate gradient of gradient if using first order approximation
+            # TODO: first order approximation should hold only when task_update_num is small
             fast_parameters = []
             for k, weight in enumerate(self.parameters()):
                 # for usage of weight.fast, please see Linear_fw, Conv_fw in backbone.py
@@ -120,7 +123,7 @@ class MAML(MetaTemplate):
         acc_all = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std = np.std(acc_all)
-        print('%d Test Acc = %4.2f%% +- %4.2f%%' % (iter_num, acc_mean, 1.96 * acc_std / np.sqrt(iter_num)))
+        print('%d Test Acc = %4.2f%% +- %4.2f%%' % (iter_num, acc_mean, 1.96 * acc_std / np.sqrt(iter_num))) #TODO: already set elsewhere
         if return_std:
             return acc_mean, acc_std
         else:

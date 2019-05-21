@@ -37,7 +37,7 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
             os.makedirs(params.checkpoint_dir)
 
         acc = model.test_loop(val_loader)
-        # TODO: check that it makes sense to train baselines systematically for  epochs
+        # TODO: check that it makes sense to train baselines systematically for 400 epochs (and not validate)
         if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
             print("best model! save...")
             max_acc = acc
