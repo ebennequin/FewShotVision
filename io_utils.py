@@ -32,6 +32,7 @@ def parse_args(script, args):
         parser.add_argument('--stop_epoch'  , default=-1, type=int, help ='Stopping epoch') #for meta-learning methods, each epoch contains 100 episodes. The default epoch number is dataset dependent. See train.py
         parser.add_argument('--resume'      , action='store_true', help='continue from previous trained model with largest epoch')
         parser.add_argument('--warmup'      , action='store_true', help='continue from baseline, neglected if resume is true') #never used in the paper
+        parser.add_argument('--shallow', default=False, type=bool, help='Uses only a very small dataset, for code testing')
     elif script == 'save_features':
         parser.add_argument('--split'       , default='novel', help='base/val/novel') #default novel, but you can also test base/val class accuracy if you want 
         parser.add_argument('--save_iter', default=-1, type=int,help ='save feature from the model trained in x epoch, use the best model if x is -1')

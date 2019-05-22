@@ -54,9 +54,9 @@ class SimpleDataManager(DataManager):
         self.batch_size = batch_size
         self.trans_loader = TransformLoader(image_size)
 
-    def get_data_loader(self, data_file, aug): #parameters that would change on train/val set
+    def get_data_loader(self, data_file, aug, shallow=False): #parameters that would change on train/val set
         transform = self.trans_loader.get_composed_transform(aug)
-        dataset = SimpleDataset(data_file, transform)
+        dataset = SimpleDataset(data_file, transform, shallow=shallow)
         data_loader_params = dict(batch_size = self.batch_size, shuffle = True, num_workers = 12, pin_memory = True)
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
 

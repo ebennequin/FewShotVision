@@ -9,9 +9,12 @@ import os
 identity = lambda x:x
 # TODO: why not extend torch.utils.data.Dataset ?
 class SimpleDataset:
-    def __init__(self, data_file, transform, target_transform=identity):
+    def __init__(self, data_file, transform, target_transform=identity, shallow=False):
         with open(data_file, 'r') as f:
             self.meta = json.load(f)
+        if shallow: # We return a reduced dataset
+            self.meta['image_names'] = self.meta['image_names'][:256]
+            self.meta['image_labels'] = self.meta['image_labels'][:256]
         self.transform = transform
         self.target_transform = target_transform
 

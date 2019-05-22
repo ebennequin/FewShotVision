@@ -39,6 +39,8 @@ def test_main_does_not_return_error():
         '4412',
         '--stop_epoch',
         '1',
+        '--shallow',
+        'True',
     ]
 
     main(args)
