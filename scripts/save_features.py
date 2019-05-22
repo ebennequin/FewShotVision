@@ -1,21 +1,13 @@
-import numpy as np
 import torch
 from torch.autograd import Variable
 import os
-import glob
 import h5py
 import sys
 
-import configs
-import backbone
-from data.datamgr import SimpleDataManager
-from methods.baselinetrain import BaselineTrain
-from methods.baselinefinetune import BaselineFinetune
-from methods.protonet import ProtoNet
-from methods.matchingnet import MatchingNet
-from methods.relationnet import RelationNet
-from methods.maml import MAML
-from io_utils import model_dict, parse_args, get_resume_file, get_best_file, get_assigned_file 
+from src import backbone
+from src.utils import configs
+from src.loaders.datamgr import SimpleDataManager
+from src.utils.io_utils import model_dict, parse_args, get_resume_file, get_best_file, get_assigned_file
 
 def save_features(model, data_loader, outfile ):
     f = h5py.File(outfile, 'w')

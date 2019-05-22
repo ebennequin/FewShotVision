@@ -1,27 +1,22 @@
 import torch
 import numpy as np
-from torch.autograd import Variable
-import torch.nn as nn
 import torch.optim
-import json
 import torch.utils.data.sampler
 import os
-import glob
 import random
 import time
 import sys
 
-import configs
-import backbone
-import data.feature_loader as feat_loader  # TODO : ambiguous
-from data.datamgr import SetDataManager
-from methods.baselinetrain import BaselineTrain
-from methods.baselinefinetune import BaselineFinetune
-from methods.protonet import ProtoNet
-from methods.matchingnet import MatchingNet
-from methods.relationnet import RelationNet
-from methods.maml import MAML
-from io_utils import model_dict, parse_args, get_resume_file, get_best_file, get_assigned_file
+from src import backbone
+from src.utils import configs
+import src.loaders.feature_loader as feat_loader  # TODO : ambiguous
+from src.loaders.datamgr import SetDataManager
+from src.methods import BaselineFinetune
+from src.methods import ProtoNet
+from src.methods import MatchingNet
+from src.methods import RelationNet
+from src.methods import MAML
+from src.utils.io_utils import model_dict, parse_args, get_best_file, get_assigned_file
 
 
 def feature_evaluation(cl_data_file, model, n_way=5, n_support=5, n_query=15, adaptation=False):

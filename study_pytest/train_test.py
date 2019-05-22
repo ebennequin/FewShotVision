@@ -1,4 +1,4 @@
-from train import (
+from scripts.train import (
     get_data_loaders_model_and_train_parameterers,
     main,
     parse_args,

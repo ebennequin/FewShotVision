@@ -1,6 +1,5 @@
-from save_features import (
+from scripts.save_features import (
     main,
-    parse_args,
 )
 
 def test_main_does_not_return_error():

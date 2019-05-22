@@ -1,24 +1,18 @@
 import numpy as np
 import torch
-import torch.nn as nn
-from torch.autograd import Variable
 import torch.optim
-import torch.optim.lr_scheduler as lr_scheduler
-import time
 import os
-import glob
 import sys
 
-import configs
-import backbone
-from data.datamgr import SimpleDataManager, SetDataManager
-from methods.baselinetrain import BaselineTrain
-from methods.baselinefinetune import BaselineFinetune
-from methods.protonet import ProtoNet
-from methods.matchingnet import MatchingNet
-from methods.relationnet import RelationNet
-from methods.maml import MAML
-from io_utils import model_dict, parse_args, get_resume_file
+from src import backbone
+from src.utils import configs
+from src.loaders.datamgr import SimpleDataManager, SetDataManager
+from src.methods import BaselineTrain
+from src.methods import ProtoNet
+from src.methods import MatchingNet
+from src.methods import RelationNet
+from src.methods.maml import MAML
+from src.utils.io_utils import model_dict, parse_args, get_resume_file
 
 
 def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params):
@@ -198,7 +192,7 @@ def get_data_loaders_model_and_train_parameterers(params):
             model.load_state_dict(tmp['state'])
     elif params.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
         baseline_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (
-        configs.save_dir, params.dataset, params.model, 'baseline')
+            configs.save_dir, params.dataset, params.model, 'baseline')
         if params.train_aug:
             baseline_checkpoint_dir += '_aug'
         warmup_resume_file = get_resume_file(baseline_checkpoint_dir)
