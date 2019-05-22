@@ -228,9 +228,7 @@ def get_data_loaders_model_and_train_parameterers(params):
     )
 
 
-if __name__ == '__main__':
-    args = sys.argv[1:]
-
+def main(args):
     np.random.seed(10)
     params = parse_args('train', args)
 
@@ -239,3 +237,9 @@ if __name__ == '__main__':
     )
 
     train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params)
+
+
+if __name__ == '__main__':
+    args = sys.argv[1:]
+
+    main(args)
