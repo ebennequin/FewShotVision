@@ -51,7 +51,6 @@ def main(args):
 
     acc_all = []
 
-    iter_num = 600
 
     few_shot_params = dict(n_way=params.test_n_way, n_support=params.n_shot)
 
@@ -127,7 +126,7 @@ def main(args):
         else:
             image_size = 224
 
-        datamgr = SetDataManager(image_size, n_episode=iter_num, n_query=15, **few_shot_params)
+        datamgr = SetDataManager(image_size, n_episode=params.n_iter, n_query=15, **few_shot_params)
 
         if params.dataset == 'cross':
             if split == 'base':
@@ -155,17 +154,17 @@ def main(args):
                                   split_str + ".hdf5")  # defaut split = novel, but you can also test base or val classes
         cl_data_file = feat_loader.init_loader(novel_file)
 
-        for i in range(iter_num):
+        for i in range(params.n_iter):
             acc = feature_evaluation(cl_data_file, model, n_query=15, adaptation=params.adaptation, **few_shot_params)
             acc_all.append(acc)
             if i%10==0:
-                print('{}/{}'.format(i, iter_num))
+                print('{}/{}'.format(i, params.n_iter))
 
         acc_all = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std = np.std(acc_all)
-        print('%d Test Acc = %4.2f%% +- %4.2f%%' % (iter_num, acc_mean, 1.96 * acc_std / np.sqrt(
-            iter_num)))  # 1.96 is the approximation for 95% confidence interval
+        print('%d Test Acc = %4.2f%% +- %4.2f%%' % (params.n_iter, acc_mean, 1.96 * acc_std / np.sqrt(
+            params.n_iter)))  # 1.96 is the approximation for 95% confidence interval
     with open('./record/results.txt', 'a') as f:
         timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
         aug_str = '-aug' if params.train_aug else ''
@@ -178,7 +177,7 @@ def main(args):
             params.dataset, split_str, params.model, params.method, aug_str, params.n_shot, params.train_n_way,
             params.test_n_way)
         acc_str = '%d Test Acc = %4.2f%% +- %4.2f%%' % (
-        iter_num, acc_mean, 1.96 * acc_std / np.sqrt(iter_num))  # TODO : redite
+        params.n_iter, acc_mean, 1.96 * acc_std / np.sqrt(params.n_iter))  # TODO : redite
         f.write('Time: %s, Setting: %s, Acc: %s \n' % (timestamp, exp_setting, acc_str))
 
 if __name__ == '__main__':

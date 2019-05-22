@@ -11,6 +11,8 @@ def test_main_does_not_return_error():
         'Conv4',
         '--method',
         'baseline',
+        '--n_iter',
+        '1',
     ]
 
     main(args)
