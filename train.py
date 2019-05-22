@@ -51,10 +51,15 @@ def train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch,
     return model
 
 
-if __name__ == '__main__':
-    np.random.seed(10)
-    params = parse_args('train')
+def get_data_loaders_model_and_train_parameterers(params):
+    """ Function that returns train/val data loaders, the model and the train params
 
+    Args:
+        params: parameters returned by parse_args function from io_utils.py
+
+    Returns:
+        tuple: a tuple of 7 elements containing the train/val data loaders, the model and the train params
+    """
     # Define path to data depending on dataset
     if params.dataset == 'cross':
         base_file = configs.data_dir['miniImagenet'] + 'all.json'
@@ -211,4 +216,22 @@ if __name__ == '__main__':
         else:
             raise ValueError('No warm_up file')
 
-    model = train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params)
+    return (
+        base_loader,
+        val_loader,
+        model,
+        optimization,
+        start_epoch,
+        stop_epoch,
+        params,
+    )
+
+if __name__ == '__main__':
+    np.random.seed(10)
+    params = parse_args('train')
+
+    base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params = (
+        get_data_loaders_model_and_train_parameterers(params)
+    )
+
+    train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params)
