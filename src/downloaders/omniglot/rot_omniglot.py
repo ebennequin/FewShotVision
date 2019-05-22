@@ -6,7 +6,8 @@ import json
 import random
 from PIL import Image
 
-cwd = os.getcwd() 
+cwd = os.getcwd()
+print(cwd)
 data_path = join(cwd,'images')
 savedir = './'
 
