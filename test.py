@@ -9,6 +9,7 @@ import os
 import glob
 import random
 import time
+import sys
 
 import configs
 import backbone
@@ -47,7 +48,8 @@ def feature_evaluation(cl_data_file, model, n_way=5, n_support=5, n_query=15, ad
 
 
 if __name__ == '__main__':
-    params = parse_args('test')
+    args = sys.argv[1:]
+    params = parse_args('test', args)
 
     acc_all = []
 

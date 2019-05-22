@@ -7,6 +7,7 @@ import torch.optim.lr_scheduler as lr_scheduler
 import time
 import os
 import glob
+import sys
 
 import configs
 import backbone
@@ -226,9 +227,12 @@ def get_data_loaders_model_and_train_parameterers(params):
         params,
     )
 
+
 if __name__ == '__main__':
+    args = sys.argv[1:]
+
     np.random.seed(10)
-    params = parse_args('train')
+    params = parse_args('train', args)
 
     base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params = (
         get_data_loaders_model_and_train_parameterers(params)

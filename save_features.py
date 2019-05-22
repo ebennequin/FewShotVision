@@ -4,6 +4,7 @@ from torch.autograd import Variable
 import os
 import glob
 import h5py
+import sys
 
 import configs
 import backbone
@@ -45,8 +46,10 @@ def save_features(model, data_loader, outfile ):
     f.close()
 
 if __name__ == '__main__':
+    args = sys.argv[1:]
+
     # TODO: unify with train.py
-    params = parse_args('save_features')
+    params = parse_args('save_features', args)
     assert params.method != 'maml' and params.method != 'maml_approx', 'maml do not support save_feature and run'
 
     # Defines image size

@@ -14,7 +14,7 @@ model_dict = dict(
             ResNet50 = backbone.ResNet50,
             ResNet101 = backbone.ResNet101) 
 
-def parse_args(script):
+def parse_args(script, args):
     parser = argparse.ArgumentParser(description= 'few-shot script %s' %(script))
     parser.add_argument('--dataset'     , default='CUB',        help='CUB/miniImagenet/cross/omniglot/cross_char')
     # TODO: find better than 'model'
@@ -43,7 +43,7 @@ def parse_args(script):
        raise ValueError('Unknown script')
         
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def get_assigned_file(checkpoint_dir,num):
