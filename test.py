@@ -46,9 +46,7 @@ def feature_evaluation(cl_data_file, model, n_way=5, n_support=5, n_query=15, ad
     acc = np.mean(pred == y) * 100
     return acc
 
-
-if __name__ == '__main__':
-    args = sys.argv[1:]
+def main(args):
     params = parse_args('test', args)
 
     acc_all = []
@@ -160,6 +158,8 @@ if __name__ == '__main__':
         for i in range(iter_num):
             acc = feature_evaluation(cl_data_file, model, n_query=15, adaptation=params.adaptation, **few_shot_params)
             acc_all.append(acc)
+            if i%10==0:
+                print('{}/{}'.format(i, iter_num))
 
         acc_all = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
@@ -180,3 +180,7 @@ if __name__ == '__main__':
         acc_str = '%d Test Acc = %4.2f%% +- %4.2f%%' % (
         iter_num, acc_mean, 1.96 * acc_std / np.sqrt(iter_num))  # TODO : redite
         f.write('Time: %s, Setting: %s, Acc: %s \n' % (timestamp, exp_setting, acc_str))
+
+if __name__ == '__main__':
+    args = sys.argv[1:]
+    main(args)

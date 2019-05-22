@@ -45,11 +45,18 @@ def save_features(model, data_loader, outfile ):
     count_var[0] = count
     f.close()
 
-if __name__ == '__main__':
-    args = sys.argv[1:]
 
+def get_data_loader_model_and_outfile(params):
+    ''' Function that returns data loaders and backbone model and path to outfile
+
+    Args:
+        params: parameters returned by parse_args function from io_utils.py
+
+    Returns:
+        tuple : data_loader, modem and outfile
+
+    '''
     # TODO: unify with train.py
-    params = parse_args('save_features', args)
     assert params.method != 'maml' and params.method != 'maml_approx', 'maml do not support save_feature and run'
 
     # Defines image size
@@ -57,65 +64,66 @@ if __name__ == '__main__':
         if params.dataset in ['omniglot', 'cross_char']:
             image_size = 28
         else:
-            image_size = 84 
+            image_size = 84
     else:
         image_size = 224
 
     if params.dataset in ['omniglot', 'cross_char']:
-        assert params.model == 'Conv4' and not params.train_aug ,'omniglot only support Conv4 without augmentation'
+        assert params.model == 'Conv4' and not params.train_aug, 'omniglot only support Conv4 without augmentation'
         params.model = 'Conv4S'
 
     # Defines path to data
     split = params.split
     if params.dataset == 'cross':
         if split == 'base':
-            loadfile = configs.data_dir['miniImagenet'] + 'all.json' 
+            loadfile = configs.data_dir['miniImagenet'] + 'all.json'
         else:
-            loadfile   = configs.data_dir['CUB'] + split +'.json' 
+            loadfile = configs.data_dir['CUB'] + split + '.json'
     elif params.dataset == 'cross_char':
         if split == 'base':
-            loadfile = configs.data_dir['omniglot'] + 'noLatin.json' 
+            loadfile = configs.data_dir['omniglot'] + 'noLatin.json'
         else:
-            loadfile  = configs.data_dir['emnist'] + split +'.json' 
+            loadfile = configs.data_dir['emnist'] + split + '.json'
     else:
         loadfile = configs.data_dir[params.dataset] + split + '.json'
 
     # Compute checkpoint directory and fetch model parameters
-    checkpoint_dir = '%s/checkpoints/%s/%s_%s' %(configs.save_dir, params.dataset, params.model, params.method)
+    checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
     if params.train_aug:
         checkpoint_dir += '_aug'
-    if not params.method in ['baseline', 'baseline++'] :
-        checkpoint_dir += '_%dway_%dshot' %( params.train_n_way, params.n_shot)
+    if not params.method in ['baseline', 'baseline++']:
+        checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
 
     if params.save_iter != -1:
-        modelfile   = get_assigned_file(checkpoint_dir,params.save_iter)
-    elif params.method in ['baseline', 'baseline++'] :
-        modelfile   = get_resume_file(checkpoint_dir)
+        modelfile = get_assigned_file(checkpoint_dir, params.save_iter)
+    elif params.method in ['baseline', 'baseline++']:
+        modelfile = get_resume_file(checkpoint_dir)
     else:
-        modelfile   = get_best_file(checkpoint_dir)
+        modelfile = get_best_file(checkpoint_dir)
 
-    #Defines output file for computed features
+    # Defines output file for computed features
     if params.save_iter != -1:
-        outfile = os.path.join( checkpoint_dir.replace("checkpoints","features"), split + "_" + str(params.save_iter)+ ".hdf5") 
+        outfile = os.path.join(checkpoint_dir.replace("checkpoints", "features"),
+                               split + "_" + str(params.save_iter) + ".hdf5")
     else:
-        outfile = os.path.join( checkpoint_dir.replace("checkpoints","features"), split + ".hdf5") 
+        outfile = os.path.join(checkpoint_dir.replace("checkpoints", "features"), split + ".hdf5")
 
-    # Return data loader TODO: why do we do batches here ?
-    datamgr         = SimpleDataManager(image_size, batch_size = 64)
-    data_loader      = datamgr.get_data_loader(loadfile, aug = False)
+        # Return data loader TODO: why do we do batches here ?
+    datamgr = SimpleDataManager(image_size, batch_size=64)
+    data_loader = datamgr.get_data_loader(loadfile, aug=False)
 
     # Create backbone
     if params.method in ['relationnet', 'relationnet_softmax']:
-        if params.model == 'Conv4': 
+        if params.model == 'Conv4':
             model = backbone.Conv4NP()
-        elif params.model == 'Conv6': 
+        elif params.model == 'Conv6':
             model = backbone.Conv6NP()
-        elif params.model == 'Conv4S': 
+        elif params.model == 'Conv4S':
             model = backbone.Conv4SNP()
         else:
-            model = model_dict[params.model]( flatten = False )
-    elif params.method in ['maml' , 'maml_approx']: 
-       raise ValueError('MAML do not support save feature')
+            model = model_dict[params.model](flatten=False)
+    elif params.method in ['maml', 'maml_approx']:
+        raise ValueError('MAML do not support save feature')
     else:
         model = model_dict[params.model]()
 
@@ -126,15 +134,31 @@ if __name__ == '__main__':
     state_keys = list(state.keys())
     for i, key in enumerate(state_keys):
         if "feature." in key:
-            newkey = key.replace("feature.","")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'  
+            newkey = key.replace("feature.",
+                                 "")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'
             state[newkey] = state.pop(key)
         else:
             state.pop(key)
-            
+
     model.load_state_dict(state)
     model.eval()
 
     dirname = os.path.dirname(outfile)
     if not os.path.isdir(dirname):
         os.makedirs(dirname)
+
+    return (model,
+            data_loader,
+            outfile,
+            )
+
+def main(args):
+    params = parse_args('save_features', args)
+
+    model, data_loader, outfile = get_data_loader_model_and_outfile(params)
+
     save_features(model, data_loader, outfile)
+
+if __name__ == '__main__':
+    args = sys.argv[1:]
+    main(args)

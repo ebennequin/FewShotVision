@@ -1,5 +1,7 @@
-from train import main
-
+from save_features import (
+    main,
+    parse_args,
+)
 
 def test_main_does_not_return_error():
     args = [
@@ -9,10 +11,6 @@ def test_main_does_not_return_error():
         'Conv4',
         '--method',
         'baseline',
-        '--num_classes',
-        '4412',
-        '--stop_epoch',
-        '1',
     ]
 
     main(args)
