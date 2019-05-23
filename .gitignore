@@ -1,6 +1,9 @@
 # Python compiled files
-g*.pyc
-*__pycache__*
+*.pyc
+
+
+__pycache__/
+
 
 
 # IDE
