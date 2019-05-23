@@ -1,6 +1,4 @@
-from scripts.test import (
-    main,
-)
+from src.steps.method_evaluation import MethodEvaluation
 
 def test_main_does_not_return_error():
     args = [
@@ -14,4 +12,4 @@ def test_main_does_not_return_error():
         '1',
     ]
 
-    main(args)
+    MethodEvaluation().apply(args)

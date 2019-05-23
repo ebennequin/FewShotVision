@@ -1,6 +1,4 @@
-from scripts.save_features import (
-    main,
-)
+from src.steps.embedding import Embedding
 
 def test_main_does_not_return_error():
     args = [
@@ -12,4 +10,4 @@ def test_main_does_not_return_error():
         'baseline',
     ]
 
-    main(args)
+    Embedding().apply(args)
