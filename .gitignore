@@ -26,9 +26,6 @@ __pycache__/
 /record/*
 save_dir/*
 
-.vscode/
-*.pem
-
 .polyaxon/
 
 .DS_Store

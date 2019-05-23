@@ -1,3 +1,5 @@
+# This file needs to be run from project root folder
+
 #!/usr/bin/env bash
 mkdir -p data/omniglot
 cd data/omniglot
@@ -21,14 +23,6 @@ python ../../src/downloaders/omniglot/rot_omniglot.py
 python ../../src/downloaders/omniglot/write_omniglot_filelist.py
 python ../../src/downloaders/omniglot/write_cross_char_base_filelist.py
 
-#FINALDIR=../../../data/omniglot
-#mkdir -p $FINALDIR
-#
-#mv $DATADIR $FINALDIR
-#mv val.json $FINALDIR
-#mv novel.json $FINALDIR
-#mv base.json $FINALDIR
-#mv noLatin.json $FINALDIR
 rm images_background.zip images_evaluation.zip test.txt train.txt val.txt
 
 cd ../..
