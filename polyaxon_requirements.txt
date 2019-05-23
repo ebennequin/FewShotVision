@@ -5,6 +5,7 @@ certifi==2019.3.9
 chardet==3.0.4
 click==6.7
 clint==0.5.1
+decorator==4.4.0
 h5py==2.9.0
 hestia==0.3.0
 idna==2.8
@@ -12,7 +13,9 @@ Jinja2==2.10
 MarkupSafe==1.1.1
 marshmallow==3.0.0rc4
 more-itertools==7.0.0
+networkx==2.3
 numpy==1.16.3
+pandas==0.24.2
 pathlib==1.0.1
 Pillow==6.0.0
 pluggy==0.11.0
@@ -24,6 +27,8 @@ polyaxon-schemas==0.4.4
 polystores==0.1.7
 psutil==5.4.7
 py==1.8.0
+pydot==1.4.1
+pyparsing==2.4.0
 pytest==4.5.0
 python-dateutil==2.8.0
 pytz==2019.1
@@ -39,3 +44,4 @@ torchvision==0.2.2.post3
 urllib3==1.25.2
 wcwidth==0.1.7
 websocket-client==0.56.0
+git+ssh://git@github.com/sicara/pipeline.git@v0.8.0
