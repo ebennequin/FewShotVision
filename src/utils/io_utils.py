@@ -3,6 +3,7 @@ import os
 import glob
 import argparse
 from src import backbone
+from src.utils import configs
 
 model_dict = dict(
             Conv4 = backbone.Conv4,
@@ -46,6 +47,23 @@ def parse_args(script, args):
         
 
     return parser.parse_args(args)
+
+
+def path_to_step_output(dataset, backbone, method, n_way, n_shot, aug=False, output_dir=configs.save_dir):
+    checkpoint_dir = os.path.join(
+        output_dir,
+        dataset,
+        backbone,
+        method,
+    )
+    if aug:
+        checkpoint_dir += '_aug'
+    if not method in ['baseline', 'baseline++']:
+        checkpoint_dir += '_%dway_%dshot' % (n_way, n_shot)
+
+    if not os.path.isdir(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+    return checkpoint_dir
 
 
 def get_assigned_file(checkpoint_dir,num):

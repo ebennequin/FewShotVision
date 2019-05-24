@@ -14,24 +14,27 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, parse_args, get_resume_file
+from src.utils.io_utils import model_dict, parse_args, get_resume_file, path_to_step_output
 
 
 class MethodTraining(AbstractStep):
-    def apply(self, args):
+    def __init__(self, args):
         np.random.seed(10)
-        params = parse_args('train', args)
+        self.params = parse_args('train', args)
 
-        base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params = (
-            self._get_data_loaders_model_and_train_parameters(params)
+    def apply(self):
+
+
+        base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params, checkpoint_dir = (
+            self._get_data_loaders_model_and_train_parameters(self.params)
         )
 
-        self._train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params)
+        self._train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params, checkpoint_dir)
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _train(self, base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params):
+    def _train(self, base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params, checkpoint_dir):
         if optimization == 'Adam': #TODO: work on the optimizer. Here lr=0.001 is implicit
             optimizer = torch.optim.Adam(model.parameters())
         else:
@@ -44,19 +47,16 @@ class MethodTraining(AbstractStep):
             model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
             model.eval()
 
-            if not os.path.isdir(params.checkpoint_dir):
-                os.makedirs(params.checkpoint_dir)
-
             acc = model.test_loop(val_loader)
             # TODO: check that it makes sense to train baselines systematically for 400 epochs (and not validate)
             if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
                 print("best model! save...")
                 max_acc = acc
-                outfile = os.path.join(params.checkpoint_dir, 'best_model.tar')
+                outfile = os.path.join(checkpoint_dir, 'best_model.tar')
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
             if (epoch % params.save_freq == 0) or (epoch == stop_epoch - 1):
-                outfile = os.path.join(params.checkpoint_dir, '{:d}.tar'.format(epoch))
+                outfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
         return model
@@ -178,21 +178,16 @@ class MethodTraining(AbstractStep):
 
         model = model.cuda()
 
-        # Define checkpoint directory depending on experience settings
-        params.checkpoint_dir = os.path.join(
-            configs.save_dir,
-            'checkpoints',
+        checkpoint_dir= path_to_step_output(
             params.dataset,
             params.model,
             params.method,
+            params.train_n_way,
+            params.n_shot,
+            params.train_aug,
         )
-        if params.train_aug:
-            params.checkpoint_dir += '_aug'
-        if not params.method in ['baseline', 'baseline++']:
-            params.checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
 
-        if not os.path.isdir(params.checkpoint_dir):
-            os.makedirs(params.checkpoint_dir)
+
 
         start_epoch = params.start_epoch
         stop_epoch = params.stop_epoch
@@ -200,7 +195,7 @@ class MethodTraining(AbstractStep):
             stop_epoch = params.stop_epoch * model.n_task  # maml use multiple tasks in one update
 
         if params.resume:
-            resume_file = get_resume_file(params.checkpoint_dir)
+            resume_file = get_resume_file(checkpoint_dir)
             if resume_file is not None:
                 tmp = torch.load(resume_file)
                 start_epoch = tmp['epoch'] + 1
@@ -234,5 +229,6 @@ class MethodTraining(AbstractStep):
             start_epoch,
             stop_epoch,
             params,
+            checkpoint_dir,
         )
 
