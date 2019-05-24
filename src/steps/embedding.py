@@ -117,7 +117,7 @@ class Embedding(AbstractStep):
 
             # Return data loader TODO: why do we do batches here ?
         datamgr = SimpleDataManager(image_size, batch_size=64)
-        data_loader = datamgr.get_data_loader(loadfile, aug=False)
+        data_loader = datamgr.get_data_loader(loadfile, aug=False, shallow=params.shallow)
 
         # Create backbone
         if params.method in ['relationnet', 'relationnet_softmax']:
