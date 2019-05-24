@@ -4,7 +4,7 @@ def test_main_does_not_return_error():
 
     args_without_method = [
             '--dataset',
-            'omniglot',
+            'CUB',
             '--model',
             'Conv4',
             '--n_iter',

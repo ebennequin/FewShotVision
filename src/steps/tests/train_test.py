@@ -6,7 +6,7 @@ class TestTrainingMethods:
     def test_step_does_not_return_error():
         args_without_method = [
             '--dataset',
-            'omniglot',
+            'CUB',
             '--model',
             'Conv4',
             '--num_classes',
