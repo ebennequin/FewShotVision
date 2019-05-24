@@ -1,11 +1,8 @@
-import backbone
-import utils
+from src import backbone
 
-import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import numpy as np
-import torch.nn.functional as F
+
 
 class BaselineTrain(nn.Module):
     def __init__(self, model_func, num_class, loss_type = 'softmax'):

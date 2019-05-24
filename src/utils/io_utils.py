@@ -2,7 +2,7 @@ import numpy as np
 import os
 import glob
 import argparse
-import backbone
+from src import backbone
 
 model_dict = dict(
             Conv4 = backbone.Conv4,
@@ -14,7 +14,7 @@ model_dict = dict(
             ResNet50 = backbone.ResNet50,
             ResNet101 = backbone.ResNet101) 
 
-def parse_args(script):
+def parse_args(script, args):
     parser = argparse.ArgumentParser(description= 'few-shot script %s' %(script))
     parser.add_argument('--dataset'     , default='CUB',        help='CUB/miniImagenet/cross/omniglot/cross_char')
     # TODO: find better than 'model'
@@ -32,18 +32,20 @@ def parse_args(script):
         parser.add_argument('--stop_epoch'  , default=-1, type=int, help ='Stopping epoch') #for meta-learning methods, each epoch contains 100 episodes. The default epoch number is dataset dependent. See train.py
         parser.add_argument('--resume'      , action='store_true', help='continue from previous trained model with largest epoch')
         parser.add_argument('--warmup'      , action='store_true', help='continue from baseline, neglected if resume is true') #never used in the paper
+        parser.add_argument('--shallow', default=False, type=bool, help='Uses only a very small dataset, for code testing')
     elif script == 'save_features':
         parser.add_argument('--split'       , default='novel', help='base/val/novel') #default novel, but you can also test base/val class accuracy if you want 
         parser.add_argument('--save_iter', default=-1, type=int,help ='save feature from the model trained in x epoch, use the best model if x is -1')
     elif script == 'test':
-        parser.add_argument('--split'       , default='novel', help='base/val/novel') #default novel, but you can also test base/val class accuracy if you want 
+        parser.add_argument('--split'       , default='novel', help='base/val/novel') #default novel, but you can also test base/val class accuracy if you want
+        parser.add_argument('--n_iter', default=600, type=int, help='number of classification tasks on which the model is tested')
         parser.add_argument('--save_iter', default=-1, type=int,help ='saved feature from the model trained in x epoch, use the best model if x is -1')
         parser.add_argument('--adaptation'  , action='store_true', help='further adaptation in test time or not')
     else:
        raise ValueError('Unknown script')
         
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def get_assigned_file(checkpoint_dir,num):

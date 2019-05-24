@@ -1,5 +1,10 @@
+# This file needs to be run from project root folder
+
 #!/usr/bin/env bash
-wget https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/train.txt 
+mkdir -p data/omniglot
+cd data/omniglot
+
+wget https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/train.txt
 wget https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/val.txt
 wget https://raw.githubusercontent.com/jakesnell/prototypical-networks/master/data/omniglot/splits/vinyals/test.txt
 
@@ -14,6 +19,10 @@ mv $DATADIR/images_evaluation/* $DATADIR/
 rmdir $DATADIR/images_background
 rmdir $DATADIR/images_evaluation
 
-python rot_omniglot.py
-python write_omniglot_filelist.py
-python write_cross_char_base_filelist.py
+python ../../src/downloaders/omniglot/rot_omniglot.py
+python ../../src/downloaders/omniglot/write_omniglot_filelist.py
+python ../../src/downloaders/omniglot/write_cross_char_base_filelist.py
+
+rm images_background.zip images_evaluation.zip test.txt train.txt val.txt
+
+cd ../..

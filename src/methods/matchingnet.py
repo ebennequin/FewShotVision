@@ -1,14 +1,11 @@
 # This code is modified from https://github.com/facebookresearch/low-shot-shrink-hallucinate
 
-import backbone
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-import torch.nn.functional as F
-from methods.meta_template import MetaTemplate
-import utils
-import copy
+from src.methods.meta_template import MetaTemplate
+from src.utils import utils
 
 
 class MatchingNet(MetaTemplate): #TODO: check that LSTMs are still trained

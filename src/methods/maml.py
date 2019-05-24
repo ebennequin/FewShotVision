@@ -1,12 +1,11 @@
 # This code is modified from https://github.com/dragen1860/MAML-Pytorch and https://github.com/katerakelly/pytorch-maml 
 
-import backbone
+from src import backbone
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-import torch.nn.functional as F
-from methods.meta_template import MetaTemplate
+from src.methods.meta_template import MetaTemplate
 
 
 class MAML(MetaTemplate):

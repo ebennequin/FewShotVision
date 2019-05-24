@@ -1,0 +1,36 @@
+# Python compiled files
+*.pyc
+
+
+__pycache__/
+
+
+
+# IDE
+.idea/
+
+# Tests cache
+.pytest_cache/
+*.egg-info/
+
+# Unit test / coverage reports
+.coverage
+
+# virtualenv
+.venv
+/venv/
+/venv_without_gpu/
+
+
+/data/*
+/record/*
+save_dir/*
+
+.polyaxon/
+
+.DS_Store
+*.diff
+
+# GPU executables
+python_36
+python_36_without_gpu

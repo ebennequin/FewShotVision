@@ -6,7 +6,7 @@ import json
 import random
 from PIL import Image
 
-cwd = os.getcwd() 
+cwd = os.getcwd()
 data_path = join(cwd,'images')
 savedir = './'
 
@@ -34,4 +34,3 @@ for language_folder in language_folder_list:
             for img in image_list:                
                 rot_img = Image.open(join(character_folder_path,img)).rotate(deg)
                 rot_img.save(join(character_folder_path,rot_str,img))
-
