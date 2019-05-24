@@ -77,8 +77,6 @@ class MethodEvaluation(AbstractStep):
             params.train_aug,
         )
 
-        # modelfile   = get_resume_file(checkpoint_dir)
-
         # Fetch model parameters
         if not params.method in ['baseline', 'baseline++']:
             if params.save_iter != -1:
