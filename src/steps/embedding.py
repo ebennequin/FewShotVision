@@ -9,8 +9,14 @@ from torch.autograd import Variable
 from src import backbone
 from src.loaders.datamgr import SimpleDataManager
 from src.utils import configs
-from src.utils.io_utils import model_dict, parse_args, get_resume_file, get_best_file, get_assigned_file, path_to_step_output
-
+from src.utils.io_utils import (
+  model_dict,
+  parse_args,
+  get_resume_file,
+  get_best_file,
+  get_assigned_file,
+  path_to_step_output,
+)
 
 class Embedding(AbstractStep):
     def apply(self, args):

@@ -1,9 +1,22 @@
+import pytest
+
 from src.steps.method_training import MethodTraining
 
 class TestTrainingMethods:
 
     @staticmethod
-    def test_step_does_not_return_error():
+    @pytest.mark.parametrize(
+        "method",
+        [
+            'baseline',
+            'baseline++',
+            'protonet',
+            'matchingnet',
+            'relationnet',
+            'relationnet_softmax',
+            # TODO 'maml', 'maml_approx',
+        ])
+    def test_step_does_not_return_error(method):
         args_without_method = [
             '--dataset',
             'CUB',
@@ -18,16 +31,4 @@ class TestTrainingMethods:
             '--method',
         ]
 
-        methods=[
-            'baseline',
-            'baseline++',
-            'protonet',
-            'matchingnet',
-            'relationnet',
-            'relationnet_softmax',
-            # 'maml',
-            # 'maml_approx',
-        ]
-
-        for method in methods:
-            MethodTraining(args_without_method+[method]).apply()
+        MethodTraining(args_without_method+[method]).apply()

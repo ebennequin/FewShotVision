@@ -187,8 +187,6 @@ class MethodTraining(AbstractStep):
             params.train_aug,
         )
 
-
-
         start_epoch = params.start_epoch
         stop_epoch = params.stop_epoch
         if params.method == 'maml' or params.method == 'maml_approx':

@@ -1,7 +1,12 @@
+import pytest
+
+
 from src.steps.embedding import Embedding
 
-class TestEmbedding:
-    args_without_method = [
+
+@pytest.fixture
+def args_without_method():
+    return [
         '--dataset',
         'CUB',
         '--model',
@@ -12,26 +17,25 @@ class TestEmbedding:
     ]
 
 
-    def test_baseline(self):
+def test_baseline(args_without_method):
+    Embedding().apply(args_without_method + ['baseline'])
 
-        Embedding().apply(self.args_without_method + ['baseline'])
 
-    def test_baseline_p(self):
+def test_baseline_p(args_without_method):
+    Embedding().apply(args_without_method + ['baseline++'])
 
-        Embedding().apply(self.args_without_method + ['baseline++'])
 
-    def test_protonet(self):
+def test_protonet(args_without_method):
+    Embedding().apply(args_without_method + ['protonet'])
 
-        Embedding().apply(self.args_without_method + ['protonet'])
 
-    def test_matchingnet(self):
+def test_matchingnet(args_without_method):
+    Embedding().apply(args_without_method + ['matchingnet'])
 
-        Embedding().apply(self.args_without_method + ['matchingnet'])
 
-    def test_relationnet(self):
+def test_relationnet(args_without_method):
+    Embedding().apply(args_without_method + ['relationnet'])
 
-        Embedding().apply(self.args_without_method + ['relationnet'])
 
-    def test_relationnet_softmax(self):
-
-        Embedding().apply(self.args_without_method + ['relationnet_softmax'])
+def test_relationnet_softmax(args_without_method):
+    Embedding().apply(args_without_method + ['relationnet_softmax'])
