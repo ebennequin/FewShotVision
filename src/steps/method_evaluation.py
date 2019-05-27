@@ -64,53 +64,11 @@ class MethodEvaluation(AbstractStep):
         self.n_iter = n_iter
         self.adaptation = adaptation
 
-    def apply(self):
-
-        acc_all = []
-
-        few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
-
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
             self.backbone = 'Conv4S'
 
-        # Define model
-        if self.method == 'baseline':
-            model = BaselineFinetune(model_dict[self.backbone], **few_shot_params)
-        elif self.method == 'baseline++':
-            model = BaselineFinetune(model_dict[self.backbone], loss_type='dist', **few_shot_params)
-        elif self.method == 'protonet':
-            model = ProtoNet(model_dict[self.backbone], **few_shot_params)
-        elif self.method == 'matchingnet':
-            model = MatchingNet(model_dict[self.backbone], **few_shot_params)
-        elif self.method in ['relationnet', 'relationnet_softmax']:
-            if self.backbone == 'Conv4':
-                feature_model = backbone.Conv4NP
-            elif self.backbone == 'Conv6':
-                feature_model = backbone.Conv6NP
-            elif self.backbone == 'Conv4S':
-                feature_model = backbone.Conv4SNP
-            else:
-                feature_model = lambda: model_dict[self.backbone](flatten=False)
-            loss_type = 'mse' if self.method == 'relationnet' else 'softmax'
-            model = RelationNet(feature_model, loss_type=loss_type, **few_shot_params)
-        elif self.method in ['maml', 'maml_approx']:
-            backbone.ConvBlock.maml = True
-            backbone.SimpleBlock.maml = True
-            backbone.BottleneckBlock.maml = True
-            backbone.ResNet.maml = True
-            model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **few_shot_params)
-            if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
-                model.n_task = 32
-                model.task_update_num = 1
-                model.train_lr = 0.1
-        else:
-            raise ValueError('Unknown method')
-
-        model = model.cuda()
-
-        # Define checkpoint directory
-        checkpoint_dir = path_to_step_output(
+        self.checkpoint_dir = path_to_step_output(
             self.dataset,
             self.backbone,
             self.method,
@@ -119,15 +77,12 @@ class MethodEvaluation(AbstractStep):
             self.train_aug,
         )
 
-        # Fetch model parameters
-        if not self.method in ['baseline', 'baseline++']:
-            if self.save_iter != -1:
-                modelfile = get_assigned_file(checkpoint_dir, self.save_iter)
-            else:
-                modelfile = get_best_file(checkpoint_dir)
-            if modelfile is not None:
-                tmp = torch.load(modelfile)
-                model.load_state_dict(tmp['state'])
+
+    def apply(self, model_state=None, features_and_labels=None):
+
+        acc_all = []
+
+        model = self._load_model(model_state)
 
         split = self.split
         if self.save_iter != -1:
@@ -167,13 +122,12 @@ class MethodEvaluation(AbstractStep):
         else:
             # Fetch feature vectors
             # cl_data_file is a dictionnary where each key is a label and each value is a list of feature vectors
-            novel_file = os.path.join(checkpoint_dir,
+            novel_file = os.path.join(self.checkpoint_dir,
                                       split_str + ".hdf5")  # defaut split = novel, but you can also test base or val classes
             cl_data_file = feat_loader.init_loader(novel_file)
 
             for i in range(self.n_iter):
-                acc = self._feature_evaluation(cl_data_file, model, n_query=15, adaptation=self.adaptation,
-                                         **few_shot_params)
+                acc = self._feature_evaluation(cl_data_file, model, n_query=15)
                 acc_all.append(acc)
                 if i % 10 == 0:
                     print('{}/{}'.format(i, self.n_iter))
@@ -201,24 +155,77 @@ class MethodEvaluation(AbstractStep):
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _feature_evaluation(self, cl_data_file, model, n_way=5, n_support=5, n_query=15, adaptation=False):
+    def _feature_evaluation(self, cl_data_file, model, n_query=15):
         class_list = cl_data_file.keys()
 
-        select_class = random.sample(class_list, n_way)
+        select_class = random.sample(class_list, self.test_n_way)
         z_all = []
         for cl in select_class:
             img_feat = cl_data_file[cl]
             perm_ids = np.random.permutation(len(img_feat)).tolist()
-            z_all.append([np.squeeze(img_feat[perm_ids[i]]) for i in range(n_support + n_query)])  # stack each batch
+            z_all.append([np.squeeze(img_feat[perm_ids[i]]) for i in range(self.n_shot + n_query)])  # stack each batch
 
         z_all = torch.from_numpy(np.array(z_all))
 
         model.n_query = n_query
-        if adaptation:
+        if self.adaptation:
             scores = model.set_forward_adaptation(z_all, is_feature=True)
         else:
             scores = model.set_forward(z_all, is_feature=True)
         pred = scores.data.cpu().numpy().argmax(axis=1)
-        y = np.repeat(range(n_way), n_query)
+        y = np.repeat(range(self.test_n_way), n_query)
         acc = np.mean(pred == y) * 100
         return acc
+
+    def _load_model(self, model_state=None):
+        few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
+
+        # Define model
+        if self.method == 'baseline':
+            model = BaselineFinetune(model_dict[self.backbone], **few_shot_params)
+        elif self.method == 'baseline++':
+            model = BaselineFinetune(model_dict[self.backbone], loss_type='dist', **few_shot_params)
+        elif self.method == 'protonet':
+            model = ProtoNet(model_dict[self.backbone], **few_shot_params)
+        elif self.method == 'matchingnet':
+            model = MatchingNet(model_dict[self.backbone], **few_shot_params)
+        elif self.method in ['relationnet', 'relationnet_softmax']:
+            if self.backbone == 'Conv4':
+                feature_model = backbone.Conv4NP
+            elif self.backbone == 'Conv6':
+                feature_model = backbone.Conv6NP
+            elif self.backbone == 'Conv4S':
+                feature_model = backbone.Conv4SNP
+            else:
+                feature_model = lambda: model_dict[self.backbone](flatten=False)
+            loss_type = 'mse' if self.method == 'relationnet' else 'softmax'
+            model = RelationNet(feature_model, loss_type=loss_type, **few_shot_params)
+        elif self.method in ['maml', 'maml_approx']:
+            backbone.ConvBlock.maml = True
+            backbone.SimpleBlock.maml = True
+            backbone.BottleneckBlock.maml = True
+            backbone.ResNet.maml = True
+            model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **few_shot_params)
+            if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
+                model.n_task = 32
+                model.task_update_num = 1
+                model.train_lr = 0.1
+        else:
+            raise ValueError('Unknown method')
+
+        model = model.cuda()
+
+        # Fetch model parameters
+        if model_state == None:
+            if not self.method in ['baseline', 'baseline++']:
+                if self.save_iter != -1:
+                    modelfile = get_assigned_file(self.checkpoint_dir, self.save_iter)
+                else:
+                    modelfile = get_best_file(self.checkpoint_dir)
+                if modelfile is not None:
+                    tmp = torch.load(modelfile)
+                    model.load_state_dict(tmp['state'])
+        else:
+            model.load_state_dict(model_state)
+
+        return model

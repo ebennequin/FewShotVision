@@ -81,12 +81,22 @@ class Embedding(AbstractStep):
 
         data_loader, outfile = self._get_data_loader_and_outfile()
 
-        self._save_features(model, data_loader, outfile)
+        return self._save_features(model, data_loader, outfile)
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
     def _save_features(self, model, data_loader, outfile):
+        '''
+        Computes and save the embeddings of all images with the given feature extractor
+        Args:
+            model: trained feature extractor
+            data_loader: contains all examples of novel dataset, in batches
+            outfile: where to save features
+
+        Returns:
+            tuple: numpy arrays containing respectively all the features and the corresponding labels
+        '''
         f = h5py.File(outfile, 'w')
         max_count = len(data_loader) * data_loader.batch_size
         print(data_loader.batch_size, max_count)
@@ -111,6 +121,7 @@ class Embedding(AbstractStep):
         count_var = f.create_dataset('count', (1,), dtype='i')
         count_var[0] = count
         f.close()
+        return (all_feats, all_labels)
 
     def _get_data_loader_and_outfile(self):
         '''
