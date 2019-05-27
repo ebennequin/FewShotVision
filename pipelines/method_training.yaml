@@ -4,6 +4,9 @@ variables:
   dataset: &dataset CUB
   backbone: &backbone Conv4
   method: &method baseline
+#  args: &args
+#    - dataset: "baseline'
+
 init:
 
   flows:
@@ -12,19 +15,13 @@ init:
       steps:
       - name: MethodTraining
         init:
-          args:
-          - '--dataset'
-          - *dataset
-          - '--model'
-          - *backbone
-          - '--num_classes'
-          - '4412'
-          - '--stop_epoch'
-          - '1'
-          - '--shallow'
-          - 'True'
-          - '--method'
-          - *method
+          dataset: *dataset
+          backbone: *backbone
+          method: *method
+          num_classes: 4412
+          stop_epoch: 1
+          shallow: True
+
 
 run:
   output_folder: %(output_folder)s/%(dataset)s/%(backbone)s/%(method)s

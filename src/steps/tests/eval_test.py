@@ -1,27 +1,28 @@
+import pytest
+
 from src.steps.method_evaluation import MethodEvaluation
 
-def test_main_does_not_return_error():
 
-    args_without_method = [
-            '--dataset',
-            'CUB',
-            '--model',
-            'Conv4',
-            '--n_iter',
-            '1',
-            '--method',
-    ]
+class TestEvaluation:
 
-    methods=[
-        'baseline',
-        'baseline++',
-        'protonet',
-        'matchingnet',
-        'relationnet',
-        'relationnet_softmax',
-        'maml',
-        'maml_approx',
-    ]
+    @staticmethod
+    @pytest.mark.parametrize(
+        'method',
+        [
+            'baseline',
+            'baseline++',
+            'protonet',
+            'matchingnet',
+            'relationnet',
+            'relationnet_softmax',
+            # TODO 'maml', 'maml_approx',
+        ])
+    def test_step_does_not_return_error(method):
+        args = dict(
+            dataset='omniglot',
+            backbone='Conv4',
+            method=method,
+            n_iter=1,
+        )
 
-    for method in methods:
-        MethodEvaluation().apply(args_without_method+[method])
+        MethodEvaluation(**args).apply()

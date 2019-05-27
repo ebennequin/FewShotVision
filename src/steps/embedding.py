@@ -10,20 +10,76 @@ from src import backbone
 from src.loaders.datamgr import SimpleDataManager
 from src.utils import configs
 from src.utils.io_utils import (
-  model_dict,
-  parse_args,
-  get_resume_file,
-  get_best_file,
-  get_assigned_file,
-  path_to_step_output,
+    model_dict,
+    get_resume_file,
+    get_best_file,
+    get_assigned_file,
+    path_to_step_output,
 )
 
+
 class Embedding(AbstractStep):
-    def apply(self, args):
+    '''
+    This step handles the computing of the embeddings of the evaluation dataset prior to evaluation,
+    for computation efficiency. It does not support methods using meta-models, like MAML.
+    '''
 
-        params = parse_args('save_features', args)
+    def __init__(
+            self,
+            dataset,
+            backbone='Conv4',
+            method='baseline',
+            train_n_way=5,
+            test_n_way=5,
+            n_shot=5,
+            train_aug=False,
+            shallow=False,
+            split='novel',
+            save_iter=-1,
+    ):
+        '''
+        Args:
+            dataset: CUB/miniImagenet/cross/omniglot/cross_char
+            model: Conv{4|6} / ResNet{10|18|34|50|101}
+            method: baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
+            train_n_way: number of labels in a classification task during training
+            test_n_way: number of labels in a classification task during testing
+            n_shot: number of labeled data in each class
+            train_aug: perform data augmentation or not during training
+            shallow: reduces the dataset to 256 images (typically for quick code testing)
+            split: which dataset is considered (base, val or novel)
+            save_iter: save feature from the model trained in x epoch, use the best model if x is -1
+        '''
+        self.dataset = dataset
+        self.backbone = backbone
+        self.method = method
+        self.train_n_way = train_n_way
+        self.test_n_way = test_n_way
+        self.n_shot = n_shot
+        self.train_aug = train_aug
+        self.shallow = shallow
+        self.split = split
+        self.save_iter = save_iter
 
-        model, data_loader, outfile = self._get_data_loader_model_and_outfile(params)
+        if self.dataset in ['omniglot', 'cross_char']:
+            assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
+            self.backbone = 'Conv4S'
+
+        self.checkpoint_dir = path_to_step_output(
+            self.dataset,
+            self.backbone,
+            self.method,
+            self.train_n_way,
+            self.n_shot,
+            self.train_aug,
+        )
+
+    def apply(self, model_state=None):
+
+        # Load trained parameters into backbone
+        model = self._load_model(model_state)
+
+        data_loader, outfile = self._get_data_loader_and_outfile()
 
         self._save_features(model, data_loader, outfile)
 
@@ -56,94 +112,98 @@ class Embedding(AbstractStep):
         count_var[0] = count
         f.close()
 
-    def _get_data_loader_model_and_outfile(self, params):
-        ''' Function that returns data loaders and backbone model and path to outfile
-
-        Args:
-            params: parameters returned by parse_args function from io_utils.py
-
+    def _get_data_loader_and_outfile(self):
+        '''
+        Function that returns data loadersand path to outfile
         Returns:
-            tuple : data_loader, modem and outfile
-
+            tuple : data_loader and outfile
         '''
         # TODO: unify with train.py
-        assert params.method != 'maml' and params.method != 'maml_approx', 'maml do not support save_feature and run'
+        assert self.method != 'maml' and self.method != 'maml_approx', 'maml do not support save_feature and run'
 
         # Defines image size
-        if 'Conv' in params.model:
-            if params.dataset in ['omniglot', 'cross_char']:
+        if 'Conv' in self.backbone:
+            if self.dataset in ['omniglot', 'cross_char']:
                 image_size = 28
             else:
                 image_size = 84
         else:
             image_size = 224
 
-        if params.dataset in ['omniglot', 'cross_char']:
-            assert params.model == 'Conv4' and not params.train_aug, 'omniglot only support Conv4 without augmentation'
-            params.model = 'Conv4S'
-
         # Defines path to data
-        split = params.split
-        if params.dataset == 'cross':
+        split = self.split
+        if self.dataset == 'cross':
             if split == 'base':
                 loadfile = configs.data_dir['miniImagenet'] + 'all.json'
             else:
                 loadfile = configs.data_dir['CUB'] + split + '.json'
-        elif params.dataset == 'cross_char':
+        elif self.dataset == 'cross_char':
             if split == 'base':
                 loadfile = configs.data_dir['omniglot'] + 'noLatin.json'
             else:
                 loadfile = configs.data_dir['emnist'] + split + '.json'
         else:
-            loadfile = configs.data_dir[params.dataset] + split + '.json'
-
-        checkpoint_dir = path_to_step_output(
-            params.dataset,
-            params.model,
-            params.method,
-            params.train_n_way,
-            params.n_shot,
-            params.train_aug,
-        )
-
-        if params.save_iter != -1:
-            modelfile = get_assigned_file(checkpoint_dir, params.save_iter)
-        elif params.method in ['baseline', 'baseline++']:
-            modelfile = get_resume_file(checkpoint_dir)
-        else:
-            modelfile = get_best_file(checkpoint_dir)
+            loadfile = configs.data_dir[self.dataset] + split + '.json'
 
         # Defines output file for computed features
-        if params.save_iter != -1:
-            outfile = os.path.join(checkpoint_dir,
-                                   split + "_" + str(params.save_iter) + ".hdf5")
+        if self.save_iter != -1:
+            outfile = os.path.join(self.checkpoint_dir,
+                                   split + "_" + str(self.save_iter) + ".hdf5")
         else:
-            outfile = os.path.join(checkpoint_dir, split + ".hdf5")
+            outfile = os.path.join(self.checkpoint_dir, split + ".hdf5")
 
         # Return data loader TODO: why do we do batches here ?
         datamgr = SimpleDataManager(image_size, batch_size=64)
-        data_loader = datamgr.get_data_loader(loadfile, aug=False, shallow=params.shallow)
+        data_loader = datamgr.get_data_loader(loadfile, aug=False, shallow=self.shallow)
+
+        dirname = os.path.dirname(outfile)
+        if not os.path.isdir(dirname):
+            os.makedirs(dirname)
+
+        return (data_loader, outfile)
+
+    def _load_model(self, model_state=None):
+        '''
+        Load model from training and returns its feature layers
+        Args:
+            model_state: dict containing the state of the trained model. If None, loads from .tar file
+
+        Returns:
+            model: torch module
+        '''
+        # Get model state from file if necessary
+        if model_state == None:
+            if self.save_iter != -1:
+                modelfile = get_assigned_file(self.checkpoint_dir, self.save_iter)
+            elif self.method in ['baseline', 'baseline++']:
+                modelfile = get_resume_file(self.checkpoint_dir)
+            else:
+                modelfile = get_best_file(self.checkpoint_dir)
+            tmp = torch.load(modelfile)
+            state = tmp['state']
+        else:
+            state = model_state
+
+        state_keys = list(state.keys())
 
         # Create backbone
-        if params.method in ['relationnet', 'relationnet_softmax']:
-            if params.model == 'Conv4':
+        if self.method in ['relationnet', 'relationnet_softmax']:
+            if self.backbone == 'Conv4':
                 model = backbone.Conv4NP()
-            elif params.model == 'Conv6':
+            elif self.backbone == 'Conv6':
                 model = backbone.Conv6NP()
-            elif params.model == 'Conv4S':
+            elif self.backbone == 'Conv4S':
                 model = backbone.Conv4SNP()
             else:
-                model = model_dict[params.model](flatten=False)
-        elif params.method in ['maml', 'maml_approx']:
+                model = model_dict[self.backbone](flatten=False)
+        elif self.method in ['maml', 'maml_approx']:
             raise ValueError('MAML do not support save feature')
         else:
-            model = model_dict[params.model]()
+            model = model_dict[self.backbone]()
 
-        # Load trained parameters into backbone and delete all non-feature layers
         model = model.cuda()
-        tmp = torch.load(modelfile)
-        state = tmp['state']
-        state_keys = list(state.keys())
+
+        # Keep only feature layers
         for i, key in enumerate(state_keys):
             if "feature." in key:
                 newkey = key.replace("feature.",
@@ -155,11 +215,4 @@ class Embedding(AbstractStep):
         model.load_state_dict(state)
         model.eval()
 
-        dirname = os.path.dirname(outfile)
-        if not os.path.isdir(dirname):
-            os.makedirs(dirname)
-
-        return (model,
-                data_loader,
-                outfile,
-                )
+        return model

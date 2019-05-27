@@ -1,41 +1,27 @@
 import pytest
 
-
 from src.steps.embedding import Embedding
 
 
-@pytest.fixture
-def args_without_method():
-    return [
-        '--dataset',
-        'CUB',
-        '--model',
-        'Conv4',
-        # '--shallow',
-        # 'True',
-        '--method',
-    ]
+class TestEmbedding:
 
+    @staticmethod
+    @pytest.mark.parametrize(
+        'method',
+        [
+            'baseline',
+            'baseline++',
+            'protonet',
+            'matchingnet',
+            'relationnet',
+            'relationnet_softmax',
+            # TODO 'maml', 'maml_approx',
+        ])
+    def test_step_does_not_return_error(method):
+        args = dict(
+            dataset='omniglot',
+            backbone='Conv4',
+            method=method,
+        )
 
-def test_baseline(args_without_method):
-    Embedding().apply(args_without_method + ['baseline'])
-
-
-def test_baseline_p(args_without_method):
-    Embedding().apply(args_without_method + ['baseline++'])
-
-
-def test_protonet(args_without_method):
-    Embedding().apply(args_without_method + ['protonet'])
-
-
-def test_matchingnet(args_without_method):
-    Embedding().apply(args_without_method + ['matchingnet'])
-
-
-def test_relationnet(args_without_method):
-    Embedding().apply(args_without_method + ['relationnet'])
-
-
-def test_relationnet_softmax(args_without_method):
-    Embedding().apply(args_without_method + ['relationnet_softmax'])
+        Embedding(**args).apply()
