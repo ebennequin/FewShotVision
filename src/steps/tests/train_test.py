@@ -1,20 +1,34 @@
+import pytest
+
 from src.steps.method_training import MethodTraining
 
+class TestTrainingMethods:
 
-def test_step_does_not_return_error():
-    args = [
-        '--dataset',
-        'omniglot',
-        '--model',
-        'Conv4',
-        '--method',
-        'baseline',
-        '--num_classes',
-        '4412',
-        '--stop_epoch',
-        '1',
-        '--shallow',
-        'True',
-    ]
+    @staticmethod
+    @pytest.mark.parametrize(
+        "method",
+        [
+            'baseline',
+            'baseline++',
+            'protonet',
+            'matchingnet',
+            'relationnet',
+            'relationnet_softmax',
+            # TODO 'maml', 'maml_approx',
+        ])
+    def test_step_does_not_return_error(method):
+        args_without_method = [
+            '--dataset',
+            'CUB',
+            '--model',
+            'Conv4',
+            '--num_classes',
+            '4412',
+            '--stop_epoch',
+            '1',
+            '--shallow',
+            'True',
+            '--method',
+        ]
 
-    MethodTraining().apply(args)
+        MethodTraining(args_without_method+[method]).apply()

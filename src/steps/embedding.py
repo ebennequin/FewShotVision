@@ -9,8 +9,14 @@ from torch.autograd import Variable
 from src import backbone
 from src.loaders.datamgr import SimpleDataManager
 from src.utils import configs
-from src.utils.io_utils import model_dict, parse_args, get_resume_file, get_best_file, get_assigned_file
-
+from src.utils.io_utils import (
+  model_dict,
+  parse_args,
+  get_resume_file,
+  get_best_file,
+  get_assigned_file,
+  path_to_step_output,
+)
 
 class Embedding(AbstractStep):
     def apply(self, args):
@@ -39,9 +45,6 @@ class Embedding(AbstractStep):
             x = x.cuda()
             x_var = Variable(x)
             feats = model(x_var)
-            # if i==528:
-            #     print(x.size())
-            #     print(feats.size())
             if all_feats is None:
                 all_feats = f.create_dataset('all_feats', [max_count] + list(feats.size()[1:]), dtype='f')
             all_feats[count:count + feats.size(
@@ -94,12 +97,14 @@ class Embedding(AbstractStep):
         else:
             loadfile = configs.data_dir[params.dataset] + split + '.json'
 
-        # Compute checkpoint directory and fetch model parameters
-        checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
-        if params.train_aug:
-            checkpoint_dir += '_aug'
-        if not params.method in ['baseline', 'baseline++']:
-            checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
+        checkpoint_dir = path_to_step_output(
+            params.dataset,
+            params.model,
+            params.method,
+            params.train_n_way,
+            params.n_shot,
+            params.train_aug,
+        )
 
         if params.save_iter != -1:
             modelfile = get_assigned_file(checkpoint_dir, params.save_iter)
@@ -110,14 +115,14 @@ class Embedding(AbstractStep):
 
         # Defines output file for computed features
         if params.save_iter != -1:
-            outfile = os.path.join(checkpoint_dir.replace("checkpoints", "features"),
+            outfile = os.path.join(checkpoint_dir,
                                    split + "_" + str(params.save_iter) + ".hdf5")
         else:
-            outfile = os.path.join(checkpoint_dir.replace("checkpoints", "features"), split + ".hdf5")
+            outfile = os.path.join(checkpoint_dir, split + ".hdf5")
 
-            # Return data loader TODO: why do we do batches here ?
+        # Return data loader TODO: why do we do batches here ?
         datamgr = SimpleDataManager(image_size, batch_size=64)
-        data_loader = datamgr.get_data_loader(loadfile, aug=False)
+        data_loader = datamgr.get_data_loader(loadfile, aug=False, shallow=params.shallow)
 
         # Create backbone
         if params.method in ['relationnet', 'relationnet_softmax']:

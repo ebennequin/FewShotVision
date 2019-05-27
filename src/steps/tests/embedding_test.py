@@ -1,13 +1,41 @@
+import pytest
+
+
 from src.steps.embedding import Embedding
 
-def test_main_does_not_return_error():
-    args = [
+
+@pytest.fixture
+def args_without_method():
+    return [
         '--dataset',
-        'omniglot',
+        'CUB',
         '--model',
         'Conv4',
+        # '--shallow',
+        # 'True',
         '--method',
-        'baseline',
     ]
 
-    Embedding().apply(args)
+
+def test_baseline(args_without_method):
+    Embedding().apply(args_without_method + ['baseline'])
+
+
+def test_baseline_p(args_without_method):
+    Embedding().apply(args_without_method + ['baseline++'])
+
+
+def test_protonet(args_without_method):
+    Embedding().apply(args_without_method + ['protonet'])
+
+
+def test_matchingnet(args_without_method):
+    Embedding().apply(args_without_method + ['matchingnet'])
+
+
+def test_relationnet(args_without_method):
+    Embedding().apply(args_without_method + ['relationnet'])
+
+
+def test_relationnet_softmax(args_without_method):
+    Embedding().apply(args_without_method + ['relationnet_softmax'])

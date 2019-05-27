@@ -1,15 +1,27 @@
 from src.steps.method_evaluation import MethodEvaluation
 
 def test_main_does_not_return_error():
-    args = [
-        '--dataset',
-        'omniglot',
-        '--model',
-        'Conv4',
-        '--method',
-        'baseline',
-        '--n_iter',
-        '1',
+
+    args_without_method = [
+            '--dataset',
+            'CUB',
+            '--model',
+            'Conv4',
+            '--n_iter',
+            '1',
+            '--method',
     ]
 
-    MethodEvaluation().apply(args)
+    methods=[
+        'baseline',
+        'baseline++',
+        'protonet',
+        'matchingnet',
+        'relationnet',
+        'relationnet_softmax',
+        'maml',
+        'maml_approx',
+    ]
+
+    for method in methods:
+        MethodEvaluation().apply(args_without_method+[method])

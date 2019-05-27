@@ -17,7 +17,7 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, parse_args, get_best_file, get_assigned_file
+from src.utils.io_utils import model_dict, parse_args, get_best_file, get_assigned_file, path_to_step_output
 
 
 class MethodEvaluation(AbstractStep):
@@ -68,13 +68,14 @@ class MethodEvaluation(AbstractStep):
         model = model.cuda()
 
         # Define checkpoint directory
-        checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (configs.save_dir, params.dataset, params.model, params.method)
-        if params.train_aug:
-            checkpoint_dir += '_aug'
-        if not params.method in ['baseline', 'baseline++']:
-            checkpoint_dir += '_%dway_%dshot' % (params.train_n_way, params.n_shot)
-
-        # modelfile   = get_resume_file(checkpoint_dir)
+        checkpoint_dir = path_to_step_output(
+            params.dataset,
+            params.model,
+            params.method,
+            params.train_n_way,
+            params.n_shot,
+            params.train_aug,
+        )
 
         # Fetch model parameters
         if not params.method in ['baseline', 'baseline++']:
@@ -124,7 +125,7 @@ class MethodEvaluation(AbstractStep):
         else:
             # Fetch feature vectors
             # cl_data_file is a dictionnary where each key is a label and each value is a list of feature vectors
-            novel_file = os.path.join(checkpoint_dir.replace("checkpoints", "features"),
+            novel_file = os.path.join(checkpoint_dir,
                                       split_str + ".hdf5")  # defaut split = novel, but you can also test base or val classes
             cl_data_file = feat_loader.init_loader(novel_file)
 
