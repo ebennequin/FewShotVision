@@ -40,16 +40,16 @@ class Embedding(AbstractStep):
     ):
         '''
         Args:
-            dataset: CUB/miniImagenet/cross/omniglot/cross_char
-            model: Conv{4|6} / ResNet{10|18|34|50|101}
-            method: baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
-            train_n_way: number of labels in a classification task during training
-            test_n_way: number of labels in a classification task during testing
-            n_shot: number of labeled data in each class
-            train_aug: perform data augmentation or not during training
-            shallow: reduces the dataset to 256 images (typically for quick code testing)
-            split: which dataset is considered (base, val or novel)
-            save_iter: save feature from the model trained in x epoch, use the best model if x is -1
+            dataset (str): CUB/miniImagenet/cross/omniglot/cross_char
+            model (str): Conv{4|6} / ResNet{10|18|34|50|101}
+            method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
+            train_n_way (int): number of labels in a classification task during training
+            test_n_way (int): number of labels in a classification task during testing
+            n_shot (int): number of labeled data in each class
+            train_aug (bool): perform data augmentation or not during training
+            shallow (bool): reduces the dataset to 256 images (typically for quick code testing)
+            split (str): which dataset is considered (base, val or novel)
+            save_iter (int): save feature from the model trained in x epoch, use the best model if x is -1
         '''
         self.dataset = dataset
         self.backbone = backbone
@@ -166,7 +166,7 @@ class Embedding(AbstractStep):
         # Defines output file for computed features
         if self.save_iter != -1:
             outfile = os.path.join(self.checkpoint_dir,
-                                   split + "_" + str(self.save_iter) + ".hdf5")
+                                   f'{split}_{self.save_iter}.hdf5')
         else:
             outfile = os.path.join(self.checkpoint_dir, split + ".hdf5")
 
@@ -184,7 +184,7 @@ class Embedding(AbstractStep):
         '''
         Load model from training and returns its feature layers
         Args:
-            model_state: dict containing the state of the trained model. If None, loads from .tar file
+            model_state (dict): contains the state of the trained model. If None, loads from .tar file
 
         Returns:
             model: torch module

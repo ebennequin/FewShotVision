@@ -40,17 +40,17 @@ class MethodEvaluation(AbstractStep):
     ):
         '''
         Args:
-            dataset: CUB/miniImagenet/cross/omniglot/cross_char
-            model: Conv{4|6} / ResNet{10|18|34|50|101}
-            method: baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
-            train_n_way: number of labels in a classification task during training
-            test_n_way: number of labels in a classification task during testing
-            n_shot: number of labeled data in each class
-            train_aug: perform data augmentation or not during training
-            split: which dataset is considered (base, val or novel)
-            save_iter: save feature from the model trained in x epoch, use the best model if x is -1
-            n_iter: number of classification tasks on which the model is tested
-            adaptation: further adaptation in test time or not
+            dataset (str): CUB/miniImagenet/cross/omniglot/cross_char
+            model (str): Conv{4|6} / ResNet{10|18|34|50|101}
+            method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
+            train_n_way (int): number of labels in a classification task during training
+            test_n_way (int): number of labels in a classification task during testing
+            n_shot (int): number of labeled data in each class
+            train_aug (bool): perform data augmentation or not during training
+            split (str): which dataset is considered (base, val or novel)
+            save_iter (int): save feature from the model trained in x epoch, use the best model if x is -1
+            n_iter (int): number of classification tasks on which the model is tested
+            adaptation (boolean): further adaptation in test time or not
         '''
         self.dataset = dataset
         self.backbone = backbone

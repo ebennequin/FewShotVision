@@ -39,20 +39,20 @@ class MethodTraining(AbstractStep):
     ):
         '''
         Args:
-            dataset: CUB/miniImagenet/cross/omniglot/cross_char
-            model: Conv{4|6} / ResNet{10|18|34|50|101}
-            method: baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
-            train_n_way: number of labels in a classification task during training
-            test_n_way: number of labels in a classification task during testing
-            n_shot: number of labeled data in each class
-            train_aug: perform data augmentation or not during training
-            shallow: reduces the dataset to 256 images (typically for quick code testing)
-            num_classes: total number of classes in softmax, only used in baseline #TODO delete this parameter
-            save_freq: save model parameters every {} epoch
-            start_epoch: starting epoch
-            stop_epoch: stopping epoch
-            resume: continue from previous trained model with largest epoch
-            warmup: continue from baseline, neglected if resume is true
+            dataset (str): CUB/miniImagenet/cross/omniglot/cross_char
+            model (str): Conv{4|6} / ResNet{10|18|34|50|101}
+            method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
+            train_n_way (int): number of labels in a classification task during training
+            test_n_way (int): number of labels in a classification task during testing
+            n_shot (int): number of labeled data in each class
+            train_aug (bool): perform data augmentation or not during training
+            shallow (bool): reduces the dataset to 256 images (typically for quick code testing)
+            num_classes (int): total number of classes in softmax, only used in baseline #TODO delete this parameter
+            save_freq (int): save model parameters every {} epoch
+            start_epoch (int): starting epoch
+            stop_epoch (int): stopping epoch
+            resume (bool): continue from previous trained model with largest epoch
+            warmup (bool): continue from baseline, neglected if resume is true
         '''
         np.random.seed(10)
         self.dataset = dataset
