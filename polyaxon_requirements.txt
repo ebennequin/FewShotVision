@@ -39,9 +39,8 @@ requests-toolbelt==0.8.0
 rhea==0.4.5
 six==1.11.0
 tabulate==0.8.2
-torch==1.1.0
-torchvision==0.2.2.post3
 urllib3==1.25.2
 wcwidth==0.1.7
 websocket-client==0.56.0
-git+ssh://git@github.com/sicara/pipeline.git@v0.9.1
+https://download.pytorch.org/whl/cu100/torch-1.1.0-cp36-cp36m-linux_x86_64.whl
+https://download.pytorch.org/whl/cu100/torchvision-0.3.0-cp36-cp36m-linux_x86_64.whl

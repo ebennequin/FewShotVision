@@ -42,5 +42,5 @@ init:
             n_iter: 1
 
 run:
-  output_folder: %(output_folder)s/%(dataset)s/%(backbone)s/%(method)s
+  output_folder: output_folder
   output_folder_permissions: 02775

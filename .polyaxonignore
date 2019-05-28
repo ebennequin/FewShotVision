@@ -1,4 +1,6 @@
-
+data/*
+output/*
+record/*
 .git
 .eggs
 eggs
