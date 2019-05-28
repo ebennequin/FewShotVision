@@ -5,7 +5,6 @@ from pipeline.steps import AbstractStep
 import torch
 import torch.optim
 
-
 from src import backbone
 from src.loaders.datamgr import SimpleDataManager, SetDataManager
 from src.methods import BaselineTrain
@@ -14,33 +13,83 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, parse_args, get_resume_file, path_to_step_output
+from src.utils.io_utils import model_dict, get_resume_file, path_to_step_output
 
 
 class MethodTraining(AbstractStep):
-    def __init__(self, args):
+    '''
+    This step handles the training of the algorithm on the base dataset
+    '''
+    def __init__(
+            self,
+            dataset,
+            backbone='Conv4',
+            method='baseline',
+            train_n_way=5,
+            test_n_way=5,
+            n_shot=5,
+            train_aug=False,
+            shallow=False,
+            num_classes=4412,
+            save_freq=50,
+            start_epoch=0,
+            stop_epoch=-1,
+            resume=False,
+            warmup=False,
+    ):
+        '''
+        Args:
+            dataset (str): CUB/miniImagenet/cross/omniglot/cross_char
+            model (str): Conv{4|6} / ResNet{10|18|34|50|101}
+            method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
+            train_n_way (int): number of labels in a classification task during training
+            test_n_way (int): number of labels in a classification task during testing
+            n_shot (int): number of labeled data in each class
+            train_aug (bool): perform data augmentation or not during training
+            shallow (bool): reduces the dataset to 256 images (typically for quick code testing)
+            num_classes (int): total number of classes in softmax, only used in baseline #TODO delete this parameter
+            save_freq (int): save model parameters every {} epoch
+            start_epoch (int): starting epoch
+            stop_epoch (int): stopping epoch
+            resume (bool): continue from previous trained model with largest epoch
+            warmup (bool): continue from baseline, neglected if resume is true
+        '''
         np.random.seed(10)
-        self.params = parse_args('train', args)
+        self.dataset = dataset
+        self.backbone = backbone
+        self.method = method
+        self.train_n_way = train_n_way
+        self.test_n_way = test_n_way
+        self.n_shot = n_shot
+        self.train_aug = train_aug
+        self.shallow = shallow
+        self.num_classes = num_classes
+        self.save_freq = save_freq
+        self.start_epoch = start_epoch
+        self.stop_epoch = stop_epoch
+        self.resume = resume
+        self.warmup = warmup
 
     def apply(self):
-
-
-        base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params, checkpoint_dir = (
-            self._get_data_loaders_model_and_train_parameters(self.params)
+        base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir = (
+            self._get_data_loaders_model_and_train_parameters()
         )
 
-        self._train(base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params, checkpoint_dir)
+        return self._train(
+            base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir
+        )
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _train(self, base_loader, val_loader, model, optimization, start_epoch, stop_epoch, params, checkpoint_dir):
+    def _train(self, base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir):
         if optimization == 'Adam': #TODO: work on the optimizer. Here lr=0.001 is implicit
             optimizer = torch.optim.Adam(model.parameters())
         else:
             raise ValueError('Unknown optimization, please define by yourself')
 
         max_acc = 0
+        best_model_state = model.state_dict()
 
         for epoch in range(start_epoch, stop_epoch):
             model.train()
@@ -54,122 +103,120 @@ class MethodTraining(AbstractStep):
                 max_acc = acc
                 outfile = os.path.join(checkpoint_dir, 'best_model.tar')
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+                best_model_state=model.state_dict()
 
-            if (epoch % params.save_freq == 0) or (epoch == stop_epoch - 1):
+            if (epoch % self.save_freq == 0) or (epoch == stop_epoch - 1):
                 outfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
-        return model
+        return best_model_state
 
-    def _get_data_loaders_model_and_train_parameters(self, params):
-        """ Function that returns train/val data loaders, the model and the train params
-
-        Args:
-            params: parameters returned by parse_args function from io_utils.py
+    def _get_data_loaders_model_and_train_parameters(self):
+        """ Function that returns train/val data loaders and the model
 
         Returns:
-            tuple: a tuple of 7 elements containing the train/val data loaders, the model and the train params
+            tuple: a tuple of 7 elements containing the train/val data loaders and the model
         """
         # Define path to data depending on dataset
-        if params.dataset == 'cross':
+        if self.dataset == 'cross':
             base_file = configs.data_dir['miniImagenet'] + 'all.json'
             val_file = configs.data_dir['CUB'] + 'val.json'
-        elif params.dataset == 'cross_char':
+        elif self.dataset == 'cross_char':
             base_file = configs.data_dir['omniglot'] + 'noLatin.json'
             val_file = configs.data_dir['emnist'] + 'val.json'
         else:
-            base_file = configs.data_dir[params.dataset] + 'base.json'
-            val_file = configs.data_dir[params.dataset] + 'val.json'
+            base_file = configs.data_dir[self.dataset] + 'base.json'
+            val_file = configs.data_dir[self.dataset] + 'val.json'
 
         # Define size of input image depending on backbone and dataset
-        if 'Conv' in params.model:
-            if params.dataset in ['omniglot', 'cross_char']:
+        if 'Conv' in self.backbone:
+            if self.dataset in ['omniglot', 'cross_char']:
                 image_size = 28
             else:
                 image_size = 84
         else:
             image_size = 224
 
-        if params.dataset in ['omniglot', 'cross_char']:
-            assert params.model == 'Conv4' and not params.train_aug, 'omniglot only support Conv4 without augmentation'
-            params.model = 'Conv4S'
+        if self.dataset in ['omniglot', 'cross_char']:
+            assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
+            self.backbone = 'Conv4S'
 
         optimization = 'Adam'
 
         # Define number of epochs depending on method, dataset and K-shot (if not specified in script arguments)
-        if params.stop_epoch == -1:
-            if params.method in ['baseline', 'baseline++']:
-                if params.dataset in ['omniglot', 'cross_char']:
-                    params.stop_epoch = 5
-                elif params.dataset in ['CUB']:
-                    params.stop_epoch = 200  # This is different as stated in the open-review paper. However, using 400 epoch in baseline actually lead to over-fitting
-                elif params.dataset in ['miniImagenet', 'cross']:
-                    params.stop_epoch = 400
+        if self.stop_epoch == -1:
+            if self.method in ['baseline', 'baseline++']:
+                if self.dataset in ['omniglot', 'cross_char']:
+                    self.stop_epoch = 5
+                elif self.dataset in ['CUB']:
+                    self.stop_epoch = 200  # This is different as stated in the open-review paper. However, using 400 epoch in baseline actually lead to over-fitting
+                elif self.dataset in ['miniImagenet', 'cross']:
+                    self.stop_epoch = 400
                 else:
-                    params.stop_epoch = 400  # default
+                    self.stop_epoch = 400  # default
             else:  # meta-learning methods
-                if params.n_shot == 1:
-                    params.stop_epoch = 600
-                elif params.n_shot == 5:
-                    params.stop_epoch = 400
+                if self.n_shot == 1:
+                    self.stop_epoch = 600
+                elif self.n_shot == 5:
+                    self.stop_epoch = 400
                 else:
-                    params.stop_epoch = 600  # default
+                    self.stop_epoch = 600  # default
 
         # Define data loaders and model
-        if params.method in ['baseline', 'baseline++']:
+        if self.method in ['baseline', 'baseline++']:
             base_datamgr = SimpleDataManager(image_size, batch_size=16)
-            base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug, shallow=params.shallow)
+            base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug, shallow=self.shallow)
             val_datamgr = SimpleDataManager(image_size, batch_size=64)
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
 
-            if params.dataset == 'omniglot':
+            if self.dataset == 'omniglot':
                 # TODO : change num_classes
-                assert params.num_classes >= 4112, 'class number need to be larger than max label id in base class'
-            if params.dataset == 'cross_char':
-                assert params.num_classes >= 1597, 'class number need to be larger than max label id in base class'
+                assert self.num_classes >= 4112, 'class number need to be larger than max label id in base class'
+            if self.dataset == 'cross_char':
+                assert self.num_classes >= 1597, 'class number need to be larger than max label id in base class'
 
-            if params.method == 'baseline':
-                model = BaselineTrain(model_dict[params.model], params.num_classes)
-            elif params.method == 'baseline++':
-                model = BaselineTrain(model_dict[params.model], params.num_classes, loss_type='dist')
+            if self.method == 'baseline':
+                model = BaselineTrain(model_dict[self.backbone], self.num_classes)
+            elif self.method == 'baseline++':
+                model = BaselineTrain(model_dict[self.backbone], self.num_classes, loss_type='dist')
 
-        elif params.method in ['protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
+        elif self.method in ['protonet', 'matchingnet', 'relationnet', 'relationnet_softmax', 'maml', 'maml_approx']:
             n_query = max(1, int(
-                16 * params.test_n_way / params.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
+                16 * self.test_n_way / self.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
-            train_few_shot_params = dict(n_way=params.train_n_way, n_support=params.n_shot)
+            train_few_shot_params = dict(n_way=self.train_n_way, n_support=self.n_shot)
             base_datamgr = SetDataManager(image_size, n_query=n_query, **train_few_shot_params)
-            base_loader = base_datamgr.get_data_loader(base_file, aug=params.train_aug)
+            base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug)
 
-            test_few_shot_params = dict(n_way=params.test_n_way, n_support=params.n_shot)
+            test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
             val_datamgr = SetDataManager(image_size, n_query=n_query,
                                          **test_few_shot_params)  # TODO: if test_n_way!=train_n_way, then n_query must be different here
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
-            if params.method == 'protonet':
-                model = ProtoNet(model_dict[params.model], **train_few_shot_params)
-            elif params.method == 'matchingnet':
-                model = MatchingNet(model_dict[params.model], **train_few_shot_params)
-            elif params.method in ['relationnet', 'relationnet_softmax']:
-                if params.model == 'Conv4':
+            if self.method == 'protonet':
+                model = ProtoNet(model_dict[self.backbone], **train_few_shot_params)
+            elif self.method == 'matchingnet':
+                model = MatchingNet(model_dict[self.backbone], **train_few_shot_params)
+            elif self.method in ['relationnet', 'relationnet_softmax']:
+                if self.backbone == 'Conv4':
                     feature_model = backbone.Conv4NP
-                elif params.model == 'Conv6':
+                elif self.backbone == 'Conv6':
                     feature_model = backbone.Conv6NP
-                elif params.model == 'Conv4S':
+                elif self.backbone == 'Conv4S':
                     feature_model = backbone.Conv4SNP
                 else:
-                    feature_model = lambda: model_dict[params.model](flatten=False)
-                loss_type = 'mse' if params.method == 'relationnet' else 'softmax'
+                    feature_model = lambda: model_dict[self.backbone](flatten=False)
+                loss_type = 'mse' if self.method == 'relationnet' else 'softmax'
 
                 model = RelationNet(feature_model, loss_type=loss_type, **train_few_shot_params)
-            elif params.method in ['maml', 'maml_approx']:
+            elif self.method in ['maml', 'maml_approx']:
                 backbone.ConvBlock.maml = True
                 backbone.SimpleBlock.maml = True
                 backbone.BottleneckBlock.maml = True
                 backbone.ResNet.maml = True
-                model = MAML(model_dict[params.model], approx=(params.method == 'maml_approx'), **train_few_shot_params)
-                if params.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
+                model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **train_few_shot_params)
+                if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
                     model.n_task = 32
                     model.task_update_num = 1
                     model.train_lr = 0.1
@@ -179,29 +226,29 @@ class MethodTraining(AbstractStep):
         model = model.cuda()
 
         checkpoint_dir= path_to_step_output(
-            params.dataset,
-            params.model,
-            params.method,
-            params.train_n_way,
-            params.n_shot,
-            params.train_aug,
+            self.dataset,
+            self.backbone,
+            self.method,
+            self.train_n_way,
+            self.n_shot,
+            self.train_aug,
         )
 
-        start_epoch = params.start_epoch
-        stop_epoch = params.stop_epoch
-        if params.method == 'maml' or params.method == 'maml_approx':
-            stop_epoch = params.stop_epoch * model.n_task  # maml use multiple tasks in one update
+        start_epoch = self.start_epoch
+        stop_epoch = self.stop_epoch
+        if self.method == 'maml' or self.method == 'maml_approx':
+            stop_epoch = self.stop_epoch * model.n_task  # maml use multiple tasks in one update
 
-        if params.resume:
+        if self.resume:
             resume_file = get_resume_file(checkpoint_dir)
             if resume_file is not None:
                 tmp = torch.load(resume_file)
                 start_epoch = tmp['epoch'] + 1
                 model.load_state_dict(tmp['state'])
-        elif params.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
+        elif self.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
             baseline_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (
-                configs.save_dir, params.dataset, params.model, 'baseline')
-            if params.train_aug:
+                configs.save_dir, self.dataset, self.backbone, 'baseline')
+            if self.train_aug:
                 baseline_checkpoint_dir += '_aug'
             warmup_resume_file = get_resume_file(baseline_checkpoint_dir)
             tmp = torch.load(warmup_resume_file)
@@ -226,7 +273,6 @@ class MethodTraining(AbstractStep):
             optimization,
             start_epoch,
             stop_epoch,
-            params,
             checkpoint_dir,
         )
 

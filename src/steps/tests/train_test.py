@@ -6,7 +6,7 @@ class TestTrainingMethods:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "method",
+        'method',
         [
             'baseline',
             'baseline++',
@@ -17,18 +17,13 @@ class TestTrainingMethods:
             # TODO 'maml', 'maml_approx',
         ])
     def test_step_does_not_return_error(method):
-        args_without_method = [
-            '--dataset',
-            'CUB',
-            '--model',
-            'Conv4',
-            '--num_classes',
-            '4412',
-            '--stop_epoch',
-            '1',
-            '--shallow',
-            'True',
-            '--method',
-        ]
+        args = dict(
+            dataset='omniglot',
+            backbone='Conv4',
+            num_classes=4412,
+            stop_epoch= 1,
+            shallow=True,
+            method=method,
+        )
 
-        MethodTraining(args_without_method+[method]).apply()
+        MethodTraining(**args).apply()
