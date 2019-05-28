@@ -21,8 +21,8 @@ build:
 run:
   cmd:
     # Allow to access the mounted data_folder as if it was in ./data
-    - ln -s /data/{YOUR_NAME} ./data
+    - ln -s /data/etienneb ./data
     # Allow to access the mounted output_folder as if it was in ./output
     - ln -s $POLYAXON_RUN_OUTPUTS_PATH ./output
     # Run the pipeline defined in the pipelines folder
-    - run-pipeline pipelines/fashion-mnist-simple-cnn-pipeline.yaml
+    - run-pipeline pipelines/run_experiment.yaml

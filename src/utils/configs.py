@@ -1,4 +1,4 @@
-save_dir                    = './save_dir'
+save_dir                    = './output'
 data_dir = {}
 data_dir['CUB']             = './data/CUB/'
 data_dir['miniImagenet']    = './data/miniImagenet/'
