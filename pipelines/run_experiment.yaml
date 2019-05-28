@@ -1,7 +1,7 @@
 ---
 variables:
   output_folder: save_dir
-  dataset: &dataset omniglot
+  dataset: &dataset CUB
   backbone: &backbone Conv4
   method: &method matchingnet
 
@@ -30,9 +30,9 @@ init:
           method: *method
 
     method_evaluation_flow:
-#      inputs:
-#        - method_training_flow
-#        - embedding_flow
+      inputs:
+        - method_training_flow
+        - embedding_flow
       steps:
         - name: MethodEvaluation
           init:

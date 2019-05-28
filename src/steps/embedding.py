@@ -1,6 +1,7 @@
 import os
 
 import h5py
+import numpy as np
 from pipeline.steps import AbstractStep
 import torch
 import torch.optim
@@ -102,6 +103,8 @@ class Embedding(AbstractStep):
         print(data_loader.batch_size, max_count)
         all_labels = f.create_dataset('all_labels', (max_count,), dtype='i')
         all_feats = None
+        all_labels_array=np.zeros((max_count,), dtype=int)
+        all_feats_array=None
         count = 0
         # TODO: here, last batch is smaller than batch_size, thus the last columns of all_feats are empty (and deleted in feature_loader.py)
         for i, (x, y) in enumerate(data_loader):
@@ -113,15 +116,19 @@ class Embedding(AbstractStep):
             feats = model(x_var)
             if all_feats is None:
                 all_feats = f.create_dataset('all_feats', [max_count] + list(feats.size()[1:]), dtype='f')
+                all_feats_array=np.zeros((max_count,feats.size(1)), dtype=np.float32)
             all_feats[count:count + feats.size(
                 0)] = feats.data.cpu().numpy()  # TODO: why .cpu().numpy() ? probably to fit expected input of h5py dataset
             all_labels[count:count + feats.size(0)] = y.cpu().numpy()
+            all_feats_array[count:count + feats.size(
+                0)] = feats.data.cpu().numpy()  # TODO: why .cpu().numpy() ? probably to fit expected input of h5py dataset
+            all_labels_array[count:count + feats.size(0)] = y.cpu().numpy()
             count = count + feats.size(0)
 
         count_var = f.create_dataset('count', (1,), dtype='i')
         count_var[0] = count
         f.close()
-        return (all_feats, all_labels)
+        return (all_feats_array, all_labels_array)
 
     def _get_data_loader_and_outfile(self):
         '''
@@ -193,7 +200,7 @@ class Embedding(AbstractStep):
             tmp = torch.load(modelfile)
             state = tmp['state']
         else:
-            state = model_state
+            state = model_state.copy()
 
         state_keys = list(state.keys())
 

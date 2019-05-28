@@ -4,8 +4,6 @@ variables:
   dataset: &dataset CUB
   backbone: &backbone Conv4
   method: &method baseline
-#  args: &args
-#    - dataset: "baseline'
 
 init:
 

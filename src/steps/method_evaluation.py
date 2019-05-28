@@ -124,7 +124,7 @@ class MethodEvaluation(AbstractStep):
             # cl_data_file is a dictionnary where each key is a label and each value is a list of feature vectors
             novel_file = os.path.join(self.checkpoint_dir,
                                       split_str + ".hdf5")  # defaut split = novel, but you can also test base or val classes
-            cl_data_file = feat_loader.init_loader(novel_file)
+            cl_data_file = feat_loader.init_loader(novel_file, features_and_labels)
 
             for i in range(self.n_iter):
                 acc = self._feature_evaluation(cl_data_file, model, n_query=15)
@@ -178,6 +178,14 @@ class MethodEvaluation(AbstractStep):
         return acc
 
     def _load_model(self, model_state=None):
+        '''
+        Load model from training
+        Args:
+            model_state: dict containing the state of the trained model. If None, loads from .tar file
+
+        Returns:
+            model: torch module
+        '''
         few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
 
         # Define model
@@ -216,8 +224,8 @@ class MethodEvaluation(AbstractStep):
         model = model.cuda()
 
         # Fetch model parameters
-        if model_state == None:
-            if not self.method in ['baseline', 'baseline++']:
+        if not self.method in ['baseline', 'baseline++']:
+            if model_state == None:
                 if self.save_iter != -1:
                     modelfile = get_assigned_file(self.checkpoint_dir, self.save_iter)
                 else:
@@ -225,7 +233,7 @@ class MethodEvaluation(AbstractStep):
                 if modelfile is not None:
                     tmp = torch.load(modelfile)
                     model.load_state_dict(tmp['state'])
-        else:
-            model.load_state_dict(model_state)
+            else:
+                model.load_state_dict(model_state)
 
         return model
