@@ -137,7 +137,7 @@ class MethodEvaluation(AbstractStep):
             acc_std = np.std(acc_all)
             print('%d Test Acc = %4.2f%% +- %4.2f%%' % (self.n_iter, acc_mean, 1.96 * acc_std / np.sqrt(
                 self.n_iter)))  # 1.96 is the approximation for 95% confidence interval
-        with open('./record/results.txt', 'a') as f:
+        with open(os.path.join(self.checkpoint_dir, 'results.txt'), 'w') as f:
             timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
             aug_str = '-aug' if self.train_aug else ''
             aug_str += '-adapted' if self.adaptation else ''
