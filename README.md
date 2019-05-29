@@ -22,12 +22,10 @@ year={2019}
 
 ## Getting started
 ### CUB
-* Change directory to `./filelists/CUB`
-* run `source ./download_CUB.sh`
+* run `source ./scripts/downloaders/download_CUB.sh`
 
 ### mini-ImageNet
-* Change directory to `./filelists/miniImagenet`
-* run `source ./download_miniImagenet.sh` 
+* run `source ./scripts/downloaders/download_miniImagenet.sh` WARNING: not tested yet
 
 (WARNING: This would download the 155G ImageNet dataset. You can comment out correponded line 5-6 in `download_miniImagenet.sh` if you already have one.) 
 
@@ -35,10 +33,9 @@ year={2019}
 * Finish preparation for CUB and mini-ImageNet and you are done!
 
 ### Omniglot
-* Change directory to `./filelists/omniglot`
-* run `source ./download_omniglot.sh` 
+* run `source ./scripts/downloaders/download_omniglot.sh` 
 
-### Omniglot->EMNIST (cross_char)
+### Omniglot->EMNIST (cross_char) WARNING: not tested yet
 * Finish preparation for omniglot first
 * Change directory to `./filelists/emnist`
 * run `source ./download_emnist.sh`  
