@@ -2,7 +2,7 @@
 
 import torch
 import torchvision.transforms as transforms
-from src import loaders as add_transforms
+from src.loaders import additional_transforms as add_transforms
 from src.loaders.dataset import SimpleDataset, SetDataset, EpisodicBatchSampler
 from abc import abstractmethod
 
