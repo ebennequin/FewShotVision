@@ -40,7 +40,7 @@ class MethodEvaluation(AbstractStep):
     ):
         '''
         Args:
-            dataset (str): CUB/miniImagenet/cross/omniglot/cross_char
+            dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
             model (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
@@ -102,7 +102,7 @@ class MethodEvaluation(AbstractStep):
 
             if self.dataset == 'cross':
                 if split == 'base':
-                    loadfile = configs.data_dir['miniImagenet'] + 'all.json'
+                    loadfile = configs.data_dir['miniImageNet'] + 'all.json'
                 else:
                     loadfile = configs.data_dir['CUB'] + split + '.json'
             elif self.dataset == 'cross_char':

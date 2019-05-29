@@ -1,9 +1,9 @@
 ---
 variables:
   output_folder: output
-  dataset: &dataset CUB
+  dataset: &dataset miniImageNet
   backbone: &backbone Conv4
-  method: &method matchingnet
+  method: &method baseline
 
 init:
 
