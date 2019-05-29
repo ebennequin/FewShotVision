@@ -3,7 +3,6 @@
 from src import backbone
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 import numpy as np
 from src.methods.meta_template import MetaTemplate
 
@@ -29,15 +28,11 @@ class MAML(MetaTemplate):
     def set_forward(self, x, is_feature=False):
         assert is_feature == False, 'MAML do not support fixed feature'
         x = x.cuda()
-        x_var = Variable(x)
-        # TODO: variable name unclear
-        x_a_i = x_var[:, :self.n_support, :, :, :].contiguous().view(self.n_way * self.n_support,
+        x_a_i = x[:, :self.n_support, :, :, :].contiguous().view(self.n_way * self.n_support,
                                                                      *x.size()[2:])  # support data
-        x_b_i = x_var[:, self.n_support:, :, :, :].contiguous().view(self.n_way * self.n_query,
+        x_b_i = x[:, self.n_support:, :, :, :].contiguous().view(self.n_way * self.n_query,
                                                                      *x.size()[2:])  # query data
-        # TODO: Variable has been deprecated. Delete all usage
-        y_a_i = Variable(
-            torch.from_numpy(np.repeat(range(self.n_way), self.n_support))).cuda()  # label for support data
+        y_a_i = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()  # label for support data
 
         fast_parameters = list(self.parameters())  # the first gradient calcuated in line 45 is based on original weight
         for weight in self.parameters():
@@ -72,7 +67,7 @@ class MAML(MetaTemplate):
 
     def set_forward_loss(self, x):
         scores = self.set_forward(x, is_feature=False)
-        y_b_i = Variable(torch.from_numpy(np.repeat(range(self.n_way), self.n_query))).cuda()
+        y_b_i = torch.from_numpy(np.repeat(range(self.n_way), self.n_query)).cuda()
         loss = self.loss_fn(scores, y_b_i)
 
         return loss
