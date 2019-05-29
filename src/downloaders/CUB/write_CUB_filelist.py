@@ -2,16 +2,11 @@ import numpy as np
 from os import listdir
 from os.path import isfile, isdir, join
 import os
-import json
 import random
 
-cwd = os.getcwd() 
-data_path = join(cwd,'CUB_200_2011/images')
-savedir = './'
+working_dir = './data/CUB/'
+data_path = join(working_dir,'CUB_200_2011/images')
 dataset_list = ['base','val','novel']
-
-#if not os.path.exists(savedir):
-#    os.makedirs(savedir)
 
 folder_list = [f for f in listdir(data_path) if isdir(join(data_path, f))]
 folder_list.sort()
@@ -42,7 +37,7 @@ for dataset in dataset_list:
                 file_list = file_list + classfile_list
                 label_list = label_list + np.repeat(i, len(classfile_list)).tolist()
 
-    fo = open(savedir + dataset + ".json", "w")
+    fo = open(working_dir + dataset + ".json", "w")
     fo.write('{"label_names": [')
     fo.writelines(['"%s",' % item  for item in folder_list])
     fo.seek(0, os.SEEK_END) 

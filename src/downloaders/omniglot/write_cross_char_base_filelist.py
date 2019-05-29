@@ -2,16 +2,10 @@ import numpy as np
 from os import listdir
 from os.path import isfile, isdir, join
 import os
-import json
 import random
-import re
 
-cwd = os.getcwd() 
-data_path = join(cwd,'images')
-savedir = './'
-
-#if not os.path.exists(savedir):
-#    os.makedirs(savedir)
+working_dir = './data/omniglot/'
+data_path = join(working_dir,'images')
 
 cl = -1
 folderlist = []
@@ -41,7 +35,7 @@ for key, filelist in filelists.items():
     filelists_flat += filelist
     labellists_flat += np.repeat(cl, len(filelist)).tolist() 
 
-fo = open(join(savedir, "noLatin.json"), "w")
+fo = open(join(working_dir, "noLatin.json"), "w")
 fo.write('{"label_names": [')
 fo.writelines(['"%s",' % item  for item in folderlist])
 fo.seek(0, os.SEEK_END) 
