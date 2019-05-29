@@ -40,7 +40,7 @@ class MethodEvaluation(AbstractStep):
     ):
         '''
         Args:
-            dataset (str): CUB/miniImagenet/cross/omniglot/cross_char
+            dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
             model (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
@@ -102,7 +102,7 @@ class MethodEvaluation(AbstractStep):
 
             if self.dataset == 'cross':
                 if split == 'base':
-                    loadfile = configs.data_dir['miniImagenet'] + 'all.json'
+                    loadfile = configs.data_dir['miniImageNet'] + 'all.json'
                 else:
                     loadfile = configs.data_dir['CUB'] + split + '.json'
             elif self.dataset == 'cross_char':
@@ -137,7 +137,7 @@ class MethodEvaluation(AbstractStep):
             acc_std = np.std(acc_all)
             print('%d Test Acc = %4.2f%% +- %4.2f%%' % (self.n_iter, acc_mean, 1.96 * acc_std / np.sqrt(
                 self.n_iter)))  # 1.96 is the approximation for 95% confidence interval
-        with open('./record/results.txt', 'a') as f:
+        with open(os.path.join(self.checkpoint_dir, 'results.txt'), 'w') as f:
             timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
             aug_str = '-aug' if self.train_aug else ''
             aug_str += '-adapted' if self.adaptation else ''

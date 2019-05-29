@@ -18,12 +18,13 @@ class TestTrainingMethods:
         ])
     def test_step_does_not_return_error(method):
         args = dict(
-            dataset='omniglot',
+            dataset='CUB',
             backbone='Conv4',
             num_classes=4412,
             stop_epoch= 1,
             shallow=True,
             method=method,
+            train_aug=True
         )
 
         MethodTraining(**args).apply()

@@ -1,6 +1,6 @@
 ---
 variables:
-  output_folder: save_dir
+  output_folder: output
   dataset: &dataset CUB
   backbone: &backbone Conv4
   method: &method baseline

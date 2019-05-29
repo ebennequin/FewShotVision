@@ -19,10 +19,9 @@ mv $DATADIR/images_evaluation/* $DATADIR/
 rmdir $DATADIR/images_background
 rmdir $DATADIR/images_evaluation
 
-python ../../src/downloaders/omniglot/rot_omniglot.py
-python ../../src/downloaders/omniglot/write_omniglot_filelist.py
-python ../../src/downloaders/omniglot/write_cross_char_base_filelist.py
-
-rm images_background.zip images_evaluation.zip test.txt train.txt val.txt
-
 cd ../..
+
+python src/downloaders/omniglot/rot_omniglot.py
+python src/downloaders/omniglot/write_omniglot_filelist.py
+python src/downloaders/omniglot/write_cross_char_base_filelist.py
+

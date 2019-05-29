@@ -39,7 +39,7 @@ class MethodTraining(AbstractStep):
     ):
         '''
         Args:
-            dataset (str): CUB/miniImagenet/cross/omniglot/cross_char
+            dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
             model (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
@@ -119,7 +119,7 @@ class MethodTraining(AbstractStep):
         """
         # Define path to data depending on dataset
         if self.dataset == 'cross':
-            base_file = configs.data_dir['miniImagenet'] + 'all.json'
+            base_file = configs.data_dir['miniImageNet'] + 'all.json'
             val_file = configs.data_dir['CUB'] + 'val.json'
         elif self.dataset == 'cross_char':
             base_file = configs.data_dir['omniglot'] + 'noLatin.json'
@@ -150,7 +150,7 @@ class MethodTraining(AbstractStep):
                     self.stop_epoch = 5
                 elif self.dataset in ['CUB']:
                     self.stop_epoch = 200  # This is different as stated in the open-review paper. However, using 400 epoch in baseline actually lead to over-fitting
-                elif self.dataset in ['miniImagenet', 'cross']:
+                elif self.dataset in ['miniImageNet', 'cross']:
                     self.stop_epoch = 400
                 else:
                     self.stop_epoch = 400  # default
