@@ -37,6 +37,7 @@ class MethodTraining(AbstractStep):
             resume=False,
             warmup=False,
             optimizer='Adam',
+            learning_rate=0.001,
     ):
         '''
         Args:
@@ -55,6 +56,7 @@ class MethodTraining(AbstractStep):
             resume (bool): continue from previous trained model with largest epoch
             warmup (bool): continue from baseline, neglected if resume is true
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
+            learning_rate (float): learning rate fed to the optimizer
         '''
         np.random.seed(10)
         self.dataset = dataset
@@ -72,6 +74,7 @@ class MethodTraining(AbstractStep):
         self.resume = resume
         self.warmup = warmup
         self.optimizer = optimizer
+        self.learning_rate = learning_rate
 
     def apply(self):
         base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir = (
@@ -120,8 +123,7 @@ class MethodTraining(AbstractStep):
 
         """
         assert hasattr(torch.optim, self.optimizer), "The optimization method is not a torch.optim object"
-        optimizer=getattr(torch.optim, self.optimizer)(model.parameters())
-        #TODO: work on the optimizer. Here lr=0.001 is implicit
+        optimizer=getattr(torch.optim, self.optimizer)(model.parameters(), lr=self.learning_rate)
         return optimizer
 
     def _get_data_loaders_model_and_train_parameters(self):
