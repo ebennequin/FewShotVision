@@ -38,6 +38,7 @@ class MethodTraining(AbstractStep):
             warmup=False,
             optimizer='Adam',
             learning_rate=0.001,
+            n_episode=100,
     ):
         '''
         Args:
@@ -57,6 +58,7 @@ class MethodTraining(AbstractStep):
             warmup (bool): continue from baseline, neglected if resume is true
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
             learning_rate (float): learning rate fed to the optimizer
+            n_episode (int): number of episodes per epoch during meta-training
         '''
         np.random.seed(10)
         self.dataset = dataset
@@ -75,6 +77,7 @@ class MethodTraining(AbstractStep):
         self.warmup = warmup
         self.optimizer = optimizer
         self.learning_rate = learning_rate
+        self.n_episode = n_episode
 
     def apply(self):
         base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir = (
@@ -198,12 +201,17 @@ class MethodTraining(AbstractStep):
                 16 * self.test_n_way / self.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
             train_few_shot_params = dict(n_way=self.train_n_way, n_support=self.n_shot)
-            base_datamgr = SetDataManager(image_size, n_query=n_query, **train_few_shot_params)
+            base_datamgr = SetDataManager(
+                image_size,
+                n_query=n_query,
+                n_episode=self.n_episode,
+                **train_few_shot_params,
+            )
             base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug)
 
             test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
-            val_datamgr = SetDataManager(image_size, n_query=n_query,
-                                         **test_few_shot_params)  # TODO: if test_n_way!=train_n_way, then n_query must be different here
+            # TODO: if test_n_way!=train_n_way, then n_query must be different here
+            val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 

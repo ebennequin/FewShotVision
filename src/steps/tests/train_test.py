@@ -24,7 +24,10 @@ class TestTrainingMethods:
             stop_epoch= 1,
             shallow=True,
             method=method,
-            train_aug=True
+            train_aug=True,
+            optimizer='SGD',
+            learning_rate=0.01,
+            n_episode=10,
         )
 
         MethodTraining(**args).apply()
