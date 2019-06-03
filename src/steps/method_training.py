@@ -20,6 +20,7 @@ class MethodTraining(AbstractStep):
     '''
     This step handles the training of the algorithm on the base dataset
     '''
+
     def __init__(
             self,
             dataset,
@@ -36,11 +37,14 @@ class MethodTraining(AbstractStep):
             stop_epoch=-1,
             resume=False,
             warmup=False,
+            optimizer='Adam',
+            learning_rate=0.001,
+            n_episode=100,
     ):
         '''
         Args:
             dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
-            model (str): Conv{4|6} / ResNet{10|18|34|50|101}
+            backbone (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
             test_n_way (int): number of labels in a classification task during testing
@@ -53,6 +57,9 @@ class MethodTraining(AbstractStep):
             stop_epoch (int): stopping epoch
             resume (bool): continue from previous trained model with largest epoch
             warmup (bool): continue from baseline, neglected if resume is true
+            optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
+            learning_rate (float): learning rate fed to the optimizer
+            n_episode (int): number of episodes per epoch during meta-training
         '''
         np.random.seed(10)
         self.dataset = dataset
@@ -69,25 +76,24 @@ class MethodTraining(AbstractStep):
         self.stop_epoch = stop_epoch
         self.resume = resume
         self.warmup = warmup
+        self.optimizer = optimizer
+        self.learning_rate = learning_rate
+        self.n_episode = n_episode
 
     def apply(self):
-        base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir = (
+        base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir = (
             self._get_data_loaders_model_and_train_parameters()
         )
 
         return self._train(
-            base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir
+            base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir
         )
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _train(self, base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir):
-        if optimization == 'Adam': #TODO: work on the optimizer. Here lr=0.001 is implicit
-            optimizer = torch.optim.Adam(model.parameters())
-        else:
-            raise ValueError('Unknown optimization, please define by yourself')
-
+    def _train(self, base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir):
+        optimizer = self._get_optimizer(model)
         max_acc = 0
         best_model_state = model.state_dict()
 
@@ -103,13 +109,27 @@ class MethodTraining(AbstractStep):
                 max_acc = acc
                 outfile = os.path.join(checkpoint_dir, 'best_model.tar')
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-                best_model_state=model.state_dict()
+                best_model_state = model.state_dict()
 
             if (epoch % self.save_freq == 0) or (epoch == stop_epoch - 1):
                 outfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
         return best_model_state
+
+    def _get_optimizer(self, model):
+        """
+        Get the optimizer from string self.optimizer
+        Args:
+            model (torch.nn.Module): the model to be trained
+
+        Returns: a torch.optim.Optimizer object parameterized with model parameters
+
+        """
+        assert hasattr(torch.optim, self.optimizer), "The optimization method is not a torch.optim object"
+        optimizer = getattr(torch.optim, self.optimizer)(model.parameters(), lr=self.learning_rate)
+
+        return optimizer
 
     def _get_data_loaders_model_and_train_parameters(self):
         """ Function that returns train/val data loaders and the model
@@ -140,8 +160,6 @@ class MethodTraining(AbstractStep):
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
             self.backbone = 'Conv4S'
-
-        optimization = 'Adam'
 
         # Define number of epochs depending on method, dataset and K-shot (if not specified in script arguments)
         if self.stop_epoch == -1:
@@ -185,12 +203,17 @@ class MethodTraining(AbstractStep):
                 16 * self.test_n_way / self.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
             train_few_shot_params = dict(n_way=self.train_n_way, n_support=self.n_shot)
-            base_datamgr = SetDataManager(image_size, n_query=n_query, **train_few_shot_params)
+            base_datamgr = SetDataManager(
+                image_size,
+                n_query=n_query,
+                n_episode=self.n_episode,
+                **train_few_shot_params,
+            )
             base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug)
 
             test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
-            val_datamgr = SetDataManager(image_size, n_query=n_query,
-                                         **test_few_shot_params)  # TODO: if test_n_way!=train_n_way, then n_query must be different here
+            # TODO: if test_n_way!=train_n_way, then n_query must be different here
+            val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
@@ -225,7 +248,7 @@ class MethodTraining(AbstractStep):
 
         model = model.cuda()
 
-        checkpoint_dir= path_to_step_output(
+        checkpoint_dir = path_to_step_output(
             self.dataset,
             self.backbone,
             self.method,
@@ -270,9 +293,7 @@ class MethodTraining(AbstractStep):
             base_loader,
             val_loader,
             model,
-            optimization,
             start_epoch,
             stop_epoch,
             checkpoint_dir,
         )
-

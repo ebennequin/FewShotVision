@@ -22,6 +22,7 @@ class TestEmbedding:
             dataset='omniglot',
             backbone='Conv4',
             method=method,
+            train_aug=True,
         )
 
         Embedding(**args).apply()

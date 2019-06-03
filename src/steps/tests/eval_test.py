@@ -22,6 +22,7 @@ class TestEvaluation:
             dataset='omniglot',
             backbone='Conv4',
             method=method,
+            train_aug=True,
             n_iter=1,
         )
 
