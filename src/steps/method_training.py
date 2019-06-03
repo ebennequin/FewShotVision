@@ -36,11 +36,12 @@ class MethodTraining(AbstractStep):
             stop_epoch=-1,
             resume=False,
             warmup=False,
+            optimizer='Adam',
     ):
         '''
         Args:
             dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
-            model (str): Conv{4|6} / ResNet{10|18|34|50|101}
+            backbone (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
             test_n_way (int): number of labels in a classification task during testing
@@ -53,6 +54,7 @@ class MethodTraining(AbstractStep):
             stop_epoch (int): stopping epoch
             resume (bool): continue from previous trained model with largest epoch
             warmup (bool): continue from baseline, neglected if resume is true
+            optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
         '''
         np.random.seed(10)
         self.dataset = dataset
@@ -69,25 +71,22 @@ class MethodTraining(AbstractStep):
         self.stop_epoch = stop_epoch
         self.resume = resume
         self.warmup = warmup
+        self.optimizer = optimizer
 
     def apply(self):
-        base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir = (
+        base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir = (
             self._get_data_loaders_model_and_train_parameters()
         )
 
         return self._train(
-            base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir
+            base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir
         )
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _train(self, base_loader, val_loader, model, optimization, start_epoch, stop_epoch, checkpoint_dir):
-        if optimization == 'Adam': #TODO: work on the optimizer. Here lr=0.001 is implicit
-            optimizer = torch.optim.Adam(model.parameters())
-        else:
-            raise ValueError('Unknown optimization, please define by yourself')
-
+    def _train(self, base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir):
+        optimizer = self._get_optimizer(model)
         max_acc = 0
         best_model_state = model.state_dict()
 
@@ -110,6 +109,20 @@ class MethodTraining(AbstractStep):
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
         return best_model_state
+
+    def _get_optimizer(self, model):
+        """
+        Get the optimizer from string self.optimizer
+        Args:
+            model (torch.nn.Module): the model to be trained
+
+        Returns: a torch.optim.Optimizer object parameterized with model parameters
+
+        """
+        assert hasattr(torch.optim, self.optimizer), "The optimization method is not a torch.optim object"
+        optimizer=getattr(torch.optim, self.optimizer)(model.parameters())
+        #TODO: work on the optimizer. Here lr=0.001 is implicit
+        return optimizer
 
     def _get_data_loaders_model_and_train_parameters(self):
         """ Function that returns train/val data loaders and the model
@@ -140,8 +153,6 @@ class MethodTraining(AbstractStep):
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
             self.backbone = 'Conv4S'
-
-        optimization = 'Adam'
 
         # Define number of epochs depending on method, dataset and K-shot (if not specified in script arguments)
         if self.stop_epoch == -1:
@@ -270,7 +281,6 @@ class MethodTraining(AbstractStep):
             base_loader,
             val_loader,
             model,
-            optimization,
             start_epoch,
             stop_epoch,
             checkpoint_dir,
