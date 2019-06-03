@@ -20,6 +20,7 @@ class MethodTraining(AbstractStep):
     '''
     This step handles the training of the algorithm on the base dataset
     '''
+
     def __init__(
             self,
             dataset,
@@ -108,7 +109,7 @@ class MethodTraining(AbstractStep):
                 max_acc = acc
                 outfile = os.path.join(checkpoint_dir, 'best_model.tar')
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-                best_model_state=model.state_dict()
+                best_model_state = model.state_dict()
 
             if (epoch % self.save_freq == 0) or (epoch == stop_epoch - 1):
                 outfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(epoch))
@@ -126,7 +127,8 @@ class MethodTraining(AbstractStep):
 
         """
         assert hasattr(torch.optim, self.optimizer), "The optimization method is not a torch.optim object"
-        optimizer=getattr(torch.optim, self.optimizer)(model.parameters(), lr=self.learning_rate)
+        optimizer = getattr(torch.optim, self.optimizer)(model.parameters(), lr=self.learning_rate)
+
         return optimizer
 
     def _get_data_loaders_model_and_train_parameters(self):
@@ -246,7 +248,7 @@ class MethodTraining(AbstractStep):
 
         model = model.cuda()
 
-        checkpoint_dir= path_to_step_output(
+        checkpoint_dir = path_to_step_output(
             self.dataset,
             self.backbone,
             self.method,
@@ -295,4 +297,3 @@ class MethodTraining(AbstractStep):
             stop_epoch,
             checkpoint_dir,
         )
-

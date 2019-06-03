@@ -33,7 +33,7 @@ init:
           save_freq: 50
           resume: False
           warmup: False
-          optimizer: 'Adam'
+          optimizer: Adam
           learning_rate: 0.001
           n_episode: 100
 
