@@ -1,0 +1,71 @@
+---
+variables:
+  output_folder: output
+  dataset: &dataset CUB
+  backbone: &backbone Conv4
+  method: &method protonet
+  train_aug: &train_aug True
+  train_n_way: &train_n_way 5
+  test_n_way: &test_n_way 5
+  n_shot: &n_shot 5
+  split: &split novel
+  save_iter: &save_iter -1
+
+init:
+
+  flows:
+
+    method_training_flow:
+      steps:
+      - name: MethodTraining
+        init:
+          dataset: *dataset
+          backbone: *backbone
+          method: *method
+          train_aug: *train_aug
+          train_n_way: *train_n_way
+          test_n_way: *test_n_way
+          n_shot: *n_shot
+          num_classes: 4412
+          stop_epoch: 1
+          start_epoch: 0
+          shallow: True
+          save_freq: 50
+          resume: False
+          warmup: False
+          optimizer: 'Adam'
+          learning_rate: 0.001
+          n_episode: 5
+
+    embedding_flow:
+      inputs: method_training_flow
+      steps:
+      - name: Embedding
+        init:
+          dataset: *dataset
+          backbone: *backbone
+          method: *method
+          train_aug: *train_aug
+          split: *split
+          save_iter: *save_iter
+          shallow: False
+
+    method_evaluation_flow:
+      inputs:
+        - method_training_flow
+        - embedding_flow
+      steps:
+        - name: MethodEvaluation
+          init:
+            dataset: *dataset
+            backbone: *backbone
+            method: *method
+            train_aug: *train_aug
+            split: *split
+            save_iter: *save_iter
+            n_iter: 1
+            adaptation: False
+
+run:
+  output_folder: output
+  output_folder_permissions: 02775
