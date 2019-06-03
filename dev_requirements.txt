@@ -1,2 +1,2 @@
--r polyaxon_requirements.txt
+-r requirements.txt
 git+ssh://git@github.com/sicara/pipeline.git@v0.9.1

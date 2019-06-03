@@ -21,6 +21,24 @@ year={2019}
  - json
 
 ## Getting started
+
+### Installation
+
+Git clone the repo:
+
+```
+git clone git@github.com:sicara/FewShotLearning.git
+```
+
+Then `cd FewShotLearning` and install virtualenv:
+
+```
+virtualenv venv --python=python3
+source venv/bin/activate
+```
+
+Then install dependencies: `pip install -r requirements.txt`.
+
 ### CUB
 * run `source ./scripts/downloaders/download_CUB.sh`
 
