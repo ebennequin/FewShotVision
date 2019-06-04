@@ -25,9 +25,9 @@ class TestTrainingMethods:
             shallow=True,
             method=method,
             train_aug=True,
-            optimizer='SGD',
-            learning_rate=0.01,
-            n_episode=10,
+            optimizer='Adam',
+            learning_rate=0.001,
+            n_episode=2,
         )
 
         MethodTraining(**args).apply()

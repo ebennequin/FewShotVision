@@ -80,24 +80,51 @@ class MethodTraining(AbstractStep):
         self.learning_rate = learning_rate
         self.n_episode = n_episode
 
-    def apply(self):
-        base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir = (
-            self._get_data_loaders_model_and_train_parameters()
+        if self.dataset in ['omniglot', 'cross_char']:
+            assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
+            self.backbone = 'Conv4S'
+
+        self.checkpoint_dir = path_to_step_output(
+            self.dataset,
+            self.backbone,
+            self.method,
+            self.train_n_way,
+            self.n_shot,
+            self.train_aug,
         )
 
-        return self._train(
-            base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir
-        )
+
+    def apply(self):
+        '''
+        Execute the MethodTraining step
+        Returns:
+            dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
+
+        '''
+        base_loader, val_loader, model = self._get_data_loaders_and_model()
+
+        return self._train(base_loader, val_loader, model)
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _train(self, base_loader, val_loader, model, start_epoch, stop_epoch, checkpoint_dir):
+    def _train(self, base_loader, val_loader, model):
+        '''
+        Trains the model on the base set
+        Args:
+            base_loader (torch.utils.data.DataLoader): data loader for base set
+            val_loader (torch.utils.data.DataLoader): data loader for validation set
+            model (torch.nn.Module): neural network model to train
+
+        Returns:
+            dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
+
+        '''
         optimizer = self._get_optimizer(model)
         max_acc = 0
         best_model_state = model.state_dict()
 
-        for epoch in range(start_epoch, stop_epoch):
+        for epoch in range(self.start_epoch, self.stop_epoch):
             model.train()
             model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
             model.eval()
@@ -107,12 +134,12 @@ class MethodTraining(AbstractStep):
             if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
                 print("best model! save...")
                 max_acc = acc
-                outfile = os.path.join(checkpoint_dir, 'best_model.tar')
+                outfile = os.path.join(self.checkpoint_dir, 'best_model.tar')
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
                 best_model_state = model.state_dict()
 
-            if (epoch % self.save_freq == 0) or (epoch == stop_epoch - 1):
-                outfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(epoch))
+            if (epoch % self.save_freq == 0) or (epoch == self.stop_epoch - 1):
+                outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
         return best_model_state
@@ -131,11 +158,11 @@ class MethodTraining(AbstractStep):
 
         return optimizer
 
-    def _get_data_loaders_model_and_train_parameters(self):
+    def _get_data_loaders_and_model(self):
         """ Function that returns train/val data loaders and the model
 
         Returns:
-            tuple: a tuple of 7 elements containing the train/val data loaders and the model
+            tuple: a tuple of 3 elements containing the train/val data loaders and the model
         """
         # Define path to data depending on dataset
         if self.dataset == 'cross':
@@ -156,10 +183,6 @@ class MethodTraining(AbstractStep):
                 image_size = 84
         else:
             image_size = 224
-
-        if self.dataset in ['omniglot', 'cross_char']:
-            assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
-            self.backbone = 'Conv4S'
 
         # Define number of epochs depending on method, dataset and K-shot (if not specified in script arguments)
         if self.stop_epoch == -1:
@@ -248,25 +271,15 @@ class MethodTraining(AbstractStep):
 
         model = model.cuda()
 
-        checkpoint_dir = path_to_step_output(
-            self.dataset,
-            self.backbone,
-            self.method,
-            self.train_n_way,
-            self.n_shot,
-            self.train_aug,
-        )
 
-        start_epoch = self.start_epoch
-        stop_epoch = self.stop_epoch
         if self.method == 'maml' or self.method == 'maml_approx':
-            stop_epoch = self.stop_epoch * model.n_task  # maml use multiple tasks in one update
+            self.stop_epoch = self.stop_epoch * model.n_task  # maml use multiple tasks in one update
 
         if self.resume:
-            resume_file = get_resume_file(checkpoint_dir)
+            resume_file = get_resume_file(self.checkpoint_dir)
             if resume_file is not None:
                 tmp = torch.load(resume_file)
-                start_epoch = tmp['epoch'] + 1
+                self.start_epoch = tmp['epoch'] + 1
                 model.load_state_dict(tmp['state'])
         elif self.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
             baseline_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (
@@ -293,7 +306,4 @@ class MethodTraining(AbstractStep):
             base_loader,
             val_loader,
             model,
-            start_epoch,
-            stop_epoch,
-            checkpoint_dir,
         )
