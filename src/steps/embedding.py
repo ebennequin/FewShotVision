@@ -200,7 +200,7 @@ class Embedding(AbstractStep):
             tmp = torch.load(modelfile)
             state = tmp['state']
         else:
-            state = model_state.copy()
+            state = model_state['state'].copy()
 
         state_keys = list(state.keys())
 

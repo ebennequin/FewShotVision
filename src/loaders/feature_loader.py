@@ -12,7 +12,7 @@ class SimpleHDF5Dataset:
             self.total = 0
         else:
             self.f = file_handle
-            self.all_features_dset = self.f['all_features'][...]
+            self.all_features_dset = self.f['all_feats'][...]
             self.all_labels = self.f['all_labels'][...]
             self.total = self.f['count'][0]
 

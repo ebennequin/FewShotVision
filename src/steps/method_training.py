@@ -122,6 +122,7 @@ class MethodTraining(AbstractStep):
         '''
         optimizer = self._get_optimizer(model)
         max_acc = 0
+        best_model_epoch = -1
         best_model_state = model.state_dict()
 
         for epoch in range(self.start_epoch, self.stop_epoch):
@@ -136,13 +137,14 @@ class MethodTraining(AbstractStep):
                 max_acc = acc
                 outfile = os.path.join(self.checkpoint_dir, 'best_model.tar')
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+                best_model_epoch = epoch
                 best_model_state = model.state_dict()
 
             if (epoch % self.save_freq == 0) or (epoch == self.stop_epoch - 1):
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
-        return best_model_state
+        return {'epoch': best_model_epoch, 'state': best_model_state}
 
     def _get_optimizer(self, model):
         """

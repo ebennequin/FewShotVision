@@ -22,8 +22,9 @@ class FetchModel(AbstractStep):
             dict: contains the model state
         '''
         assert self.path_to_model.endswith(".tar"), "Input path to file must end in .tar"
-        tmp = torch.load(self.path_to_model)
-        return tmp['state']
+        model_state = torch.load(self.path_to_model)
+
+        return model_state
 
     def dump_output(output_object, output_folder, output_name, mode):
         pass

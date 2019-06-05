@@ -234,6 +234,6 @@ class MethodEvaluation(AbstractStep):
                     tmp = torch.load(modelfile)
                     model.load_state_dict(tmp['state'])
             else:
-                model.load_state_dict(model_state)
+                model.load_state_dict(model_state['state'])
 
         return model

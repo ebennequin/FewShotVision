@@ -19,7 +19,7 @@ class TestEvaluation:
         ])
     def test_step_does_not_return_error(method):
         args = dict(
-            dataset='omniglot',
+            dataset='CUB',
             backbone='Conv4',
             method=method,
             train_aug=True,
