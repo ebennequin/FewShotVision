@@ -1,9 +1,8 @@
 ---
 variables:
-  output_folder: output
   dataset: &dataset CUB
   backbone: &backbone Conv4
-  method: &method relationnet
+  method: &method protonet
   train_aug: &train_aug True
   train_n_way: &train_n_way 5
   test_n_way: &test_n_way 5
@@ -45,6 +44,9 @@ init:
           dataset: *dataset
           backbone: *backbone
           method: *method
+          train_n_way: *train_n_way
+          test_n_way: *test_n_way
+          n_shot: *n_shot
           train_aug: *train_aug
           split: *split
           save_iter: *save_iter
@@ -60,6 +62,9 @@ init:
             dataset: *dataset
             backbone: *backbone
             method: *method
+            train_n_way: *train_n_way
+            test_n_way: *test_n_way
+            n_shot: *n_shot
             train_aug: *train_aug
             split: *split
             save_iter: *save_iter
