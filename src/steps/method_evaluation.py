@@ -125,12 +125,10 @@ class MethodEvaluation(AbstractStep):
                     print('{}/{}'.format(i, self.n_iter))
 
             acc_all = np.asarray(acc_all)
-            acc_mean = np.mean(acc_all)
-            acc_std = np.std(acc_all)
-            print('%d Test Acc = %4.2f%% +- %4.2f%%' % (self.n_iter, acc_mean, 1.96 * acc_std / np.sqrt(
-                self.n_iter)))  # 1.96 is the approximation for 95% confidence interval
+            acc_mean = float(np.mean(acc_all))
+            acc_std = float(np.std(acc_all))
+            print('%d Test Acc = %4.2f%% +- %4.2f%%' % (self.n_iter, acc_mean, self._confidence_interval(acc_std)))
         with open(os.path.join(self.checkpoint_dir, 'results.txt'), 'w') as f:
-            timestamp = time.strftime("%Y%m%d-%H%M%S", time.localtime())
             aug_str = '-aug' if self.train_aug else ''
             aug_str += '-adapted' if self.adaptation else ''
             if self.method in ['baseline', 'baseline++']:
@@ -141,8 +139,12 @@ class MethodEvaluation(AbstractStep):
                     self.dataset, split_str, self.backbone, self.method, aug_str, self.n_shot, self.train_n_way,
                     self.test_n_way)
             acc_str = '%d Test Acc = %4.2f%% +- %4.2f%%' % (
-                self.n_iter, acc_mean, 1.96 * acc_std / np.sqrt(self.n_iter))  # TODO : redite
-            f.write('Time: %s, Setting: %s, Acc: %s \n' % (timestamp, exp_setting, acc_str))
+                self.n_iter, acc_mean, self._confidence_interval(acc_std))
+            f.write(
+                'Setting: %s\n Retrieved model from epoch %s\n Acc: %s \n' % (
+                    exp_setting, model_state['epoch'], acc_str
+                )
+            )
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
@@ -245,3 +247,14 @@ class MethodEvaluation(AbstractStep):
             features_per_label[labels[ind]].append(features[ind])
 
         return features_per_label
+
+    def _confidence_interval(self, std):
+        '''
+        Computes statistical confidence interval of the results from standard deviation and number of iterations
+        Args:
+            std (float): standard deviation
+
+        Returns:
+            float: confidence interval
+        '''
+        return 1.96 * std / np.sqrt(self.n_iter)
