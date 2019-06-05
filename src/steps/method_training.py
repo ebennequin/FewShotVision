@@ -88,9 +88,6 @@ class MethodTraining(AbstractStep):
             self.dataset,
             self.backbone,
             self.method,
-            self.train_n_way,
-            self.n_shot,
-            self.train_aug,
         )
 
 
