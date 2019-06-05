@@ -26,5 +26,5 @@ class FetchModel(AbstractStep):
 
         return model_state
 
-    def dump_output(output_object, output_folder, output_name, mode):
+    def dump_output(self, _, output_folder, output_name, **__):
         pass
