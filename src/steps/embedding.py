@@ -70,12 +70,9 @@ class Embedding(AbstractStep):
             self.dataset,
             self.backbone,
             self.method,
-            self.train_n_way,
-            self.n_shot,
-            self.train_aug,
         )
 
-    def apply(self, model_state=None):
+    def apply(self, model_state):
 
         # Load trained parameters into backbone
         model = self._load_model(model_state)
@@ -189,18 +186,7 @@ class Embedding(AbstractStep):
         Returns:
             model: torch module
         '''
-        # Get model state from file if necessary
-        if model_state == None:
-            if self.save_iter != -1:
-                modelfile = get_assigned_file(self.checkpoint_dir, self.save_iter)
-            elif self.method in ['baseline', 'baseline++']:
-                modelfile = get_resume_file(self.checkpoint_dir)
-            else:
-                modelfile = get_best_file(self.checkpoint_dir)
-            tmp = torch.load(modelfile)
-            state = tmp['state']
-        else:
-            state = model_state['state'].copy()
+        state = model_state['state'].copy()
 
         state_keys = list(state.keys())
 

@@ -72,13 +72,10 @@ class MethodEvaluation(AbstractStep):
             self.dataset,
             self.backbone,
             self.method,
-            self.train_n_way,
-            self.n_shot,
-            self.train_aug,
         )
 
 
-    def apply(self, model_state=None, features_and_labels=None):
+    def apply(self, model_state, features_and_labels=None):
 
         acc_all = []
 
@@ -225,15 +222,6 @@ class MethodEvaluation(AbstractStep):
 
         # Fetch model parameters
         if not self.method in ['baseline', 'baseline++']:
-            if model_state == None:
-                if self.save_iter != -1:
-                    modelfile = get_assigned_file(self.checkpoint_dir, self.save_iter)
-                else:
-                    modelfile = get_best_file(self.checkpoint_dir)
-                if modelfile is not None:
-                    tmp = torch.load(modelfile)
-                    model.load_state_dict(tmp['state'])
-            else:
-                model.load_state_dict(model_state['state'])
+            model.load_state_dict(model_state['state'])
 
         return model
