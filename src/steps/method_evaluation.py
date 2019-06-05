@@ -9,7 +9,6 @@ import torch.optim
 import torch.utils.data.sampler
 
 from src import backbone
-import src.loaders.feature_loader as feat_loader  # TODO : ambiguous
 from src.loaders.datamgr import SetDataManager
 from src.methods import BaselineFinetune
 from src.methods import ProtoNet
@@ -17,7 +16,7 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, get_best_file, get_assigned_file, path_to_step_output
+from src.utils.io_utils import model_dict, path_to_step_output
 
 
 class MethodEvaluation(AbstractStep):
@@ -117,11 +116,7 @@ class MethodEvaluation(AbstractStep):
             acc_mean, acc_std = model.test_loop(novel_loader, return_std=True)
 
         else:
-            # Fetch feature vectors
-            # cl_data_file is a dictionnary where each key is a label and each value is a list of feature vectors
-            novel_file = os.path.join(self.checkpoint_dir,
-                                      split_str + ".hdf5")  # defaut split = novel, but you can also test base or val classes
-            cl_data_file = feat_loader.init_loader(novel_file, features_and_labels)
+            cl_data_file = self._process_features(features_and_labels)
 
             for i in range(self.n_iter):
                 acc = self._feature_evaluation(cl_data_file, model, n_query=15)
@@ -225,3 +220,28 @@ class MethodEvaluation(AbstractStep):
             model.load_state_dict(model_state['state'])
 
         return model
+
+    def _process_features(self, features_and_labels):
+        '''
+        Process features from numpy arrays to a dictionary
+        Args:
+            features_and_labels (tuple): a tuple (features, labels)
+
+        Returns:
+            dict: a dict where keys are the labels and values are the corresponding feature vectors
+        '''
+        features, labels = features_and_labels
+
+        while not features[-1].any():
+            features = np.delete(features, -1, axis=0)
+            labels = np.delete(labels, -1, axis=0)
+
+        features_per_label = {
+            label: []
+            for label in np.unique(np.array(labels)).tolist()
+        }
+
+        for ind in range(len(labels)):
+            features_per_label[labels[ind]].append(features[ind])
+
+        return features_per_label
