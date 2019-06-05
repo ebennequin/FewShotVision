@@ -1,6 +1,7 @@
 data/*
 output/*
 record/*
+fake_outputs/*
 .git
 .eggs
 eggs
