@@ -2,11 +2,11 @@
 variables:
   dataset: &dataset CUB
   backbone: &backbone Conv4
-  method: &method protonet
+  method: &method matchingnet
   train_aug: &train_aug True
   train_n_way: &train_n_way 5
   test_n_way: &test_n_way 5
-  n_shot: &n_shot 5
+  n_shot: &n_shot 1
   split: &split novel
   save_iter: &save_iter -1
 
@@ -18,7 +18,7 @@ init:
       steps:
       - name: FetchModel
         init:
-          path_to_model: ./fake_outputs/CUB/Conv4/protonet_aug_5way_5shot/best_model.tar
+          path_to_model: output/../457/CUB/Conv4/matchingnet_aug_5way_1shot/best_model.tar
 
     embedding_flow:
       inputs: method_training_flow
@@ -52,7 +52,7 @@ init:
             train_aug: *train_aug
             split: *split
             save_iter: *save_iter
-            n_iter: 2
+            n_iter: 600
             adaptation: False
 
 run:

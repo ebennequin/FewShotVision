@@ -3,6 +3,8 @@ import os
 from pipeline.steps import AbstractStep
 import torch
 
+from src.utils import configs
+
 class FetchModel(AbstractStep):
     '''
     This step returns the state of a trained model in a dictionary, from the path to a .tar file
@@ -23,6 +25,8 @@ class FetchModel(AbstractStep):
         '''
         assert self.path_to_model.endswith(".tar"), "Input path to file must end in .tar"
         model_state = torch.load(self.path_to_model)
+
+        torch.save(model_state, os.path.join(configs.save_dir, 'loaded_model.tar'))
 
         return model_state
 
