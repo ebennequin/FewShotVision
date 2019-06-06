@@ -18,7 +18,8 @@ init:
       steps:
       - name: FetchModel
         init:
-          path_to_model: output/../458/CUB/Conv4/protonet_aug_5way_1shot/best_model.tar
+#          path_to_model: output/../458/CUB/Conv4/protonet_aug_5way_1shot/best_model.tar
+          path_to_model: output/../../groups/13/516/miniImageNet/protonet_Conv4/best_model.tar
 
     embedding_flow:
       inputs: method_training_flow

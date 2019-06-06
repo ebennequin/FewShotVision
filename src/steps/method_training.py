@@ -31,7 +31,6 @@ class MethodTraining(AbstractStep):
             train_aug=False,
             shallow=False,
             num_classes=4412,
-            save_freq=50,
             start_epoch=0,
             stop_epoch=-1,
             resume=False,
@@ -51,7 +50,6 @@ class MethodTraining(AbstractStep):
             train_aug (bool): perform data augmentation or not during training
             shallow (bool): reduces the dataset to 256 images (typically for quick code testing)
             num_classes (int): total number of classes in softmax, only used in baseline #TODO delete this parameter
-            save_freq (int): save model parameters every {} epoch
             start_epoch (int): starting epoch
             stop_epoch (int): stopping epoch
             resume (bool): continue from previous trained model with largest epoch
@@ -70,7 +68,6 @@ class MethodTraining(AbstractStep):
         self.train_aug = train_aug
         self.shallow = shallow
         self.num_classes = num_classes
-        self.save_freq = save_freq
         self.start_epoch = start_epoch
         self.stop_epoch = stop_epoch
         self.resume = resume
@@ -136,7 +133,7 @@ class MethodTraining(AbstractStep):
                 best_model_epoch = epoch
                 best_model_state = model.state_dict()
 
-            if (epoch % self.save_freq == 0) or (epoch == self.stop_epoch - 1):
+            if epoch == self.stop_epoch - 1:
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
