@@ -3,7 +3,6 @@ import os
 import numpy as np
 from pipeline.steps import AbstractStep
 import torch
-import torch.optim
 
 from src import backbone
 from src.loaders.datamgr import SimpleDataManager, SetDataManager

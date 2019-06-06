@@ -15,8 +15,7 @@ class TestEmbedding:
             'baseline++',
             'protonet',
             'matchingnet',
-            # 'relationnet',
-            # 'relationnet_softmax',
+            # TODO 'relationnet', 'relationnet_softmax',
             # TODO 'maml', 'maml_approx',
         ])
     def test_step_does_not_return_error(method):
@@ -24,7 +23,7 @@ class TestEmbedding:
         backbone = 'Conv4'
 
         args = dict(
-            dataset= dataset,
+            dataset=dataset,
             backbone=backbone,
             method=method,
             train_aug=True,
