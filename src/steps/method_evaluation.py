@@ -145,6 +145,7 @@ class MethodEvaluation(AbstractStep):
                     exp_setting, model_state['epoch'], acc_str
                 )
             )
+        return acc_mean
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
