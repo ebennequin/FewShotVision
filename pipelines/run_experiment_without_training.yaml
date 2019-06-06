@@ -6,7 +6,7 @@ variables:
   train_aug: &train_aug True
   train_n_way: &train_n_way 5
   test_n_way: &test_n_way 5
-  n_shot: &n_shot 5
+  n_shot: &n_shot 1
   split: &split novel
   save_iter: &save_iter -1
 
@@ -16,25 +16,9 @@ init:
 
     method_training_flow:
       steps:
-      - name: MethodTraining
+      - name: FetchModel
         init:
-          dataset: *dataset
-          backbone: *backbone
-          method: *method
-          train_aug: *train_aug
-          train_n_way: *train_n_way
-          test_n_way: *test_n_way
-          n_shot: *n_shot
-          num_classes: 4412
-          stop_epoch: -1
-          start_epoch: 0
-          shallow: False
-          save_freq: 50
-          resume: False
-          warmup: False
-          optimizer: Adam
-          learning_rate: 0.001
-          n_episode: 100
+          path_to_model: output/../458/CUB/Conv4/protonet_aug_5way_1shot/best_model.tar
 
     embedding_flow:
       inputs: method_training_flow

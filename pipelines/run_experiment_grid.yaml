@@ -1,12 +1,13 @@
 ---
 variables:
-  dataset: &dataset CUB
+  output_folder: output
+  dataset: &dataset %(dataset)s
   backbone: &backbone Conv4
-  method: &method protonet
+  method: &method %(method)s
   train_aug: &train_aug True
   train_n_way: &train_n_way 5
   test_n_way: &test_n_way 5
-  n_shot: &n_shot 5
+  n_shot: &n_shot %(n_shot)s
   split: &split novel
   save_iter: &save_iter -1
 
@@ -44,9 +45,6 @@ init:
           dataset: *dataset
           backbone: *backbone
           method: *method
-          train_n_way: *train_n_way
-          test_n_way: *test_n_way
-          n_shot: *n_shot
           train_aug: *train_aug
           split: *split
           save_iter: *save_iter
@@ -62,9 +60,6 @@ init:
             dataset: *dataset
             backbone: *backbone
             method: *method
-            train_n_way: *train_n_way
-            test_n_way: *test_n_way
-            n_shot: *n_shot
             train_aug: *train_aug
             split: *split
             save_iter: *save_iter

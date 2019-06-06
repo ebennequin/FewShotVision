@@ -12,7 +12,7 @@ class SimpleHDF5Dataset:
             self.total = 0
         else:
             self.f = file_handle
-            self.all_features_dset = self.f['all_features'][...]
+            self.all_features_dset = self.f['all_feats'][...]
             self.all_labels = self.f['all_labels'][...]
             self.total = self.f['count'][0]
 
@@ -22,35 +22,18 @@ class SimpleHDF5Dataset:
     def __len__(self):
         return self.total
 
-
-def init_loader(filename, features_and_labels=None):
+def load_features_and_labels_from_file(filename):
     '''
 
     Args:
         filename (str): path to .h5py file containing the features and labels
-        features_and_labels (tuple): a tuple (features, labels). if None, loads from .h5py file
 
     Returns:
-        dict: a dict where keys are the labels and values are the corresponding feature vectors
+        array: extracted features
+        array: extracted labels
     '''
-    if features_and_labels is None:
-        with h5py.File(filename, 'r') as f:
-            fileset = SimpleHDF5Dataset(f)
-        features = fileset.all_features_dset
-        labels = fileset.all_labels
-    else:
-        features, labels = features_and_labels
-
-    while not features[-1].any():
-        features = np.delete(features, -1, axis=0)
-        labels = np.delete(labels, -1, axis=0)
-
-    features_per_label = {
-        label: []
-        for label in np.unique(np.array(labels)).tolist()
-    }
-
-    for ind in range(len(labels)):
-        features_per_label[labels[ind]].append(features[ind])
-
-    return features_per_label
+    with h5py.File(filename, 'r') as f:
+        fileset = SimpleHDF5Dataset(f)
+    features = fileset.all_features_dset
+    labels = fileset.all_labels
+    return features, labels

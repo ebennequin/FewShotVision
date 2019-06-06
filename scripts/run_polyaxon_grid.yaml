@@ -2,13 +2,23 @@
 ---
 version: 1
 
-kind: experiment
+kind: group
 
 environment:
   resources:
     gpu:
       requests: 1
       limits: 1
+
+declarations:
+  dataset: miniImageNet
+
+hptuning:
+  matrix:
+    method:
+      values: [protonet, matchingnet]
+    n_shot:
+      values: [1, 5]
 
 build:
   image: sicara/leto-stack:tf1.13.0rc0-gpu-pipeline0.7.1-chani0.0.8
@@ -24,5 +34,10 @@ run:
     - ln -s /data/etienneb ./data
     # Allow to access the mounted output_folder as if it was in ./output
     - ln -s $POLYAXON_RUN_OUTPUTS_PATH ./output
+    # Create grid
+    - touch grid_search_parameters.yaml
+    - 'echo "method: {{ method }}" >> grid_search_parameters.yaml'
+    - 'echo "n_shot: {{ n_shot }}" >> grid_search_parameters.yaml'
+    - 'echo "dataset: {{ dataset }}" >> grid_search_parameters.yaml'
     # Run the pipeline defined in the pipelines folder
-    - run-pipeline pipelines/run_experiment_without_training.yaml
+    - run-pipeline pipelines/run_experiment_grid.yaml -v grid_search_parameters.yaml

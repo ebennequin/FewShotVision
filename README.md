@@ -17,8 +17,8 @@ year={2019}
 
 ## Enviroment
  - Python3
- - [Pytorch](http://pytorch.org/) before 0.4 (for newer vesion, please see issue #3 )
- - json
+ - [Pytorch](http://pytorch.org/) 1.1
+ - CUDA 10
 
 ## Getting started
 
@@ -43,9 +43,9 @@ Then install dependencies: `pip install -r requirements.txt`.
 * run `source ./scripts/downloaders/download_CUB.sh`
 
 ### mini-ImageNet
-* run `source ./scripts/downloaders/download_miniImagenet.sh` WARNING: not tested yet
+* run `source ./scripts/downloaders/download_miniImagenet.sh`
 
-(WARNING: This would download the 155G ImageNet dataset. You can comment out correponded line 5-6 in `download_miniImagenet.sh` if you already have one.) 
+(WARNING: This would download the 155G ImageNet dataset.)
 
 ### mini-ImageNet->CUB (cross)
 * Finish preparation for CUB and mini-ImageNet and you are done!

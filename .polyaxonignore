@@ -1,6 +1,8 @@
 data/*
 output/*
 record/*
+fake_outputs/*
+grid_search_parameters.yaml
 .git
 .eggs
 eggs
