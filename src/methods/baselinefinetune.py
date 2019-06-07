@@ -1,4 +1,4 @@
-from src import backbone
+from src import modules
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -27,7 +27,7 @@ class BaselineFinetune(MetaTemplate):
         if self.loss_type == 'softmax':
             linear_clf = nn.Linear(self.feat_dim, self.n_way)
         elif self.loss_type == 'dist':        
-            linear_clf = backbone.distLinear(self.feat_dim, self.n_way)
+            linear_clf = modules.distLinear(self.feat_dim, self.n_way)
         linear_clf = linear_clf.cuda()
 
         set_optimizer = torch.optim.SGD(linear_clf.parameters(), lr = 0.01, momentum=0.9, dampening=0.9, weight_decay=0.001)

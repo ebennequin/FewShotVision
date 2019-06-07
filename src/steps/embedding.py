@@ -7,7 +7,7 @@ import torch
 import torch.optim
 from torch.autograd import Variable
 
-from src import backbone
+from src import modules
 from src.loaders.datamgr import SimpleDataManager
 from src.utils import configs
 from src.utils.io_utils import (
@@ -113,12 +113,10 @@ class Embedding(AbstractStep):
             feats = model(x_var)
             if all_feats is None:
                 all_feats = f.create_dataset('all_feats', [max_count] + list(feats.size()[1:]), dtype='f')
-                all_feats_array=np.zeros((max_count,feats.size(1)), dtype=np.float32)
-            all_feats[count:count + feats.size(
-                0)] = feats.data.cpu().numpy()  # TODO: why .cpu().numpy() ? probably to fit expected input of h5py dataset
+                all_feats_array=np.zeros([max_count] + list(feats.size()[1:]), dtype=np.float32)
+            all_feats[count:count + feats.size(0)] = feats.data.cpu().numpy()
             all_labels[count:count + feats.size(0)] = y.cpu().numpy()
-            all_feats_array[count:count + feats.size(
-                0)] = feats.data.cpu().numpy()  # TODO: why .cpu().numpy() ? probably to fit expected input of h5py dataset
+            all_feats_array[count:count + feats.size(0)] = feats.data.cpu().numpy()
             all_labels_array[count:count + feats.size(0)] = y.cpu().numpy()
             count = count + feats.size(0)
 
@@ -193,11 +191,11 @@ class Embedding(AbstractStep):
         # Create backbone
         if self.method in ['relationnet', 'relationnet_softmax']:
             if self.backbone == 'Conv4':
-                model = backbone.Conv4NP()
+                model = modules.Conv4NP()
             elif self.backbone == 'Conv6':
-                model = backbone.Conv6NP()
+                model = modules.Conv6NP()
             elif self.backbone == 'Conv4S':
-                model = backbone.Conv4SNP()
+                model = modules.Conv4SNP()
             else:
                 model = model_dict[self.backbone](flatten=False)
         elif self.method in ['maml', 'maml_approx']:
