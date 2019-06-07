@@ -15,8 +15,8 @@ class TestEmbedding:
             'baseline++',
             'protonet',
             'matchingnet',
-            # TODO 'relationnet', 'relationnet_softmax',
-            # TODO 'maml', 'maml_approx',
+            'relationnet',
+            'relationnet_softmax',
         ])
     def test_step_does_not_return_error(method):
         dataset = 'CUB'

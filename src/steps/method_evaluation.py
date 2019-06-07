@@ -94,7 +94,7 @@ class MethodEvaluation(AbstractStep):
             else:
                 image_size = 224
 
-            datamgr = SetDataManager(image_size, n_episode=self.n_iter, n_query=15, **few_shot_params)
+            set_data_manager = SetDataManager(image_size, n_episode=self.n_iter, n_query=15, n_way=self.test_n_way, n_support=self.n_shot)
 
             if self.dataset == 'cross':
                 if split == 'base':
@@ -109,7 +109,7 @@ class MethodEvaluation(AbstractStep):
             else:
                 loadfile = configs.data_dir[self.dataset] + split + '.json'
 
-            novel_loader = datamgr.get_data_loader(loadfile, aug=False)
+            novel_loader = set_data_manager.get_data_loader(loadfile, aug=False)
             if self.adaptation:
                 model.task_update_num = 100  # We perform adaptation on MAML simply by updating more times.
             model.eval()
