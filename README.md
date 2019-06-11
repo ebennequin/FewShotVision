@@ -37,26 +37,17 @@ virtualenv venv --python=python3
 source venv/bin/activate
 ```
 
-Then install dependencies: `pip install -r requirements.txt`.
+Then install dependencies. If you are on linux run `pip install -r dev_requirements.txt`. If you are on macOS
+run `pip install -r dev_requirements_macOS.txt`
 
 ### CUB
 * run `source ./scripts/downloaders/download_CUB.sh`
+You will need wget for that script.
 
 ### mini-ImageNet
 * run `source ./scripts/downloaders/download_miniImagenet.sh`
 
-(WARNING: This would download the 155G ImageNet dataset.)
-
-### mini-ImageNet->CUB (cross)
-* Finish preparation for CUB and mini-ImageNet and you are done!
-
-### Omniglot
-* run `source ./scripts/downloaders/download_omniglot.sh` 
-
-### Omniglot->EMNIST (cross_char) WARNING: not tested yet
-* Finish preparation for omniglot first
-* Change directory to `./filelists/emnist`
-* run `source ./download_emnist.sh`  
+(WARNING: This would download the 155G ImageNet dataset.) The compress file of mini-ImageNet is on muaddib.
 
 ### Self-defined setting
 * Require three data split json file: 'base.json', 'val.json', 'novel.json' for each dataset  
