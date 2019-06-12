@@ -130,7 +130,7 @@ class Embedding(AbstractStep):
 
     def _get_data_loader_and_outfile(self):
         '''
-        Function that returns data loaders and path to outfile
+        Returns data loaders and path to outfile
         Returns:
             tuple : data_loader and outfile
         '''
@@ -180,7 +180,7 @@ class Embedding(AbstractStep):
 
     def _load_model(self, model_state):
         '''
-        Load model from training and returns its feature layers
+        Loads model from training and returns its feature layers
         Args:
             model_state (dict): contains the state of the trained model. If None, loads from .tar file
 
