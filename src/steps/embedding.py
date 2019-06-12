@@ -159,6 +159,7 @@ class Embedding(AbstractStep):
             loadfile = configs.data_dir[self.dataset] + split + '.json'
 
         # Defines output file for computed features
+        #TODO no need for outfile anymore
         if self.save_iter != -1:
             outfile = os.path.join(self.checkpoint_dir,
                                    f'{split}_{self.save_iter}.hdf5')
@@ -206,13 +207,13 @@ class Embedding(AbstractStep):
         model = model.cuda()
 
         # Keep only feature layers
-        for i, key in enumerate(state_keys):
-            if "feature." in key:
-                newkey = key.replace("feature.",
-                                     "")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'
-                state[newkey] = state.pop(key)
+        for state_key in state_keys:
+            if "feature." in state_key:
+                newkey = state_key.replace("feature.", "")
+                # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'
+                state[newkey] = state.pop(state_key)
             else:
-                state.pop(key)
+                state.pop(state_key)
 
         model.load_state_dict(state)
         model.eval()

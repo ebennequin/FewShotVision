@@ -38,6 +38,7 @@ class MethodTraining(AbstractStep):
             optimizer='Adam',
             learning_rate=0.001,
             n_episode=100,
+            random_seed=np.random.randint(0, 2**32-1),
     ):
         '''
         Args:
@@ -57,12 +58,10 @@ class MethodTraining(AbstractStep):
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
             learning_rate (float): learning rate fed to the optimizer
             n_episode (int): number of episodes per epoch during meta-training
+            random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
         '''
-        # The following lines are used to ensure the reproducibility of the training
-        torch.manual_seed(0)
-        np.random.seed(0)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+
+        self._set_and_print_random_seed(random_seed)
 
         self.dataset = dataset
         self.backbone = backbone
@@ -307,3 +306,18 @@ class MethodTraining(AbstractStep):
             val_loader,
             model,
         )
+
+    @staticmethod
+    def _set_and_print_random_seed(random_seed):
+        '''
+        Set and print numpy random seed, for reproducibility of the training,
+        and set torch seed based on numpy random seed
+        Args:
+            random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+
+        '''
+        np.random.seed(random_seed)
+        torch.manual_seed(np.random.randint(0, 2**32-1))
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        print('Random seed: ', random_seed)
