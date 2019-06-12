@@ -1,19 +1,4 @@
-# A Closer Look at Few-shot Classification
-
-This repo contains the reference source code for the paper [A Closer Look at Few-shot Classification](https://openreview.net/pdf?id=HkxLXnAcFQ) in International Conference on Learning Representations (ICLR 2019). In this project, we provide a integrated testbed for a detailed empirical study for few-shot classification.
-
-
-## Citation
-If you find our code useful, please consider citing our work using the bibtex:
-```
-@inproceedings{
-chen2019closerfewshot,
-title={A Closer Look at Few-shot Classification},
-author={Chen, Wei-Yu and Liu, Yen-Cheng and Kira, Zsolt and Wang, Yu-Chiang and  Huang, Jia-Bin},
-booktitle={International Conference on Learning Representations},
-year={2019}
-}
-```
+# Few Shot Learning
 
 ## Enviroment
  - Python3
@@ -56,28 +41,27 @@ You will need wget for that script.
 See test.json for reference
 * Put these file in the same folder and change data_dir['DATASETNAME'] in configs.py to the folder path  
 
-## Train
-Run
-```python ./train.py --dataset [DATASETNAME] --model [BACKBONENAME] --method [METHODNAME] [--OPTIONARG]```
+## Run
+To launch an experiment, run :
+```
+run-pipeline pipelines/run_experiment.yaml 
+```
+All the parameters of the experiment (dataset, backbone, method, number of examples per class ...) can be customized in the pipeline.
 
-For example, run `python ./train.py --dataset miniImagenet --model Conv4 --method baseline --train_aug`  
-Commands below follow this example, and please refer to io_utils.py for additional options.
+## Outputs \& results
+You can find the outputs of your experiment in `./output/{dataset}/{method}_{backbone}/`
+- The `.tar` files contain the state of the trained model after different number of epochs. `best_model.tar` contains the model with the best validation accuracy, which is used for evaluation.
+- The `.hdf5` file contains the features vector of all images in the evaluation dataset, along with their labels.
 
-## Save features
-Save the extracted feature before the classifaction layer to increase test speed. This is not applicable to MAML, but are required for other methods.
-Run
-```python ./save_features.py --dataset miniImagenet --model Conv4 --method baseline --train_aug```
-
-## Test
-Run
-```python ./test.py --dataset miniImagenet --model Conv4 --method baseline --train_aug```
-
-## Results
-* The test results will be recorded in `./record/results.txt`
-* For all the pre-computed results, please see `./record/few_shot_exp_figures.xlsx`. This will be helpful for including your own results for a fair comparison.
+Notes:
+- Baseline and baseline++ don't save a `best_model.tar` file, and use the model with the highest number of epochs for evaluation.
+- MAML-like algorithms don't save feature vectors.
+ 
 
 ## References
-Our testbed builds upon several existing publicly available code. Specifically, we have modified and integrated the following code into this project:
+This code is modified from https://github.com/wyharveychen/CloserLookFewShot.
+
+Their code was using modified and integrated code from:
 
 * Framework, Backbone, Method: Matching Network
 https://github.com/facebookresearch/low-shot-shrink-hallucinate 
