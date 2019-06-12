@@ -10,16 +10,17 @@ environment:
       requests: 1
       limits: 1
 
-declarations:
-  dataset: miniImageNet
-
 hptuning:
-  matrix:
-    method:
-      values: [protonet, matchingnet]
-    n_shot:
-      values: [1, 5]
 
+  concurrency: 2
+
+  matrix:
+    dataset:
+      values: [CUB]
+    method:
+      values: [protonet, protonet, protonet, protonet, protonet, protonet, protonet, protonet, protonet]
+    n_shot:
+      values: [5]
 build:
   image: sicara/leto-stack:tf1.13.0rc0-gpu-pipeline0.7.1-chani0.0.8
   build_steps:
