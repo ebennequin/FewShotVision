@@ -175,7 +175,7 @@ class Embedding(AbstractStep):
 
         return (data_loader, outfile)
 
-    def _load_model(self, model_state=None):
+    def _load_model(self, model_state):
         '''
         Load model from training and returns its feature layers
         Args:

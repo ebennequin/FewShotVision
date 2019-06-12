@@ -172,7 +172,7 @@ class MethodEvaluation(AbstractStep):
         acc = np.mean(pred == y) * 100
         return acc
 
-    def _load_model(self, model_state=None):
+    def _load_model(self, model_state):
         '''
         Load model from training
         Args:
