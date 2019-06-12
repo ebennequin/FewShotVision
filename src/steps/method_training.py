@@ -39,6 +39,7 @@ class MethodTraining(AbstractStep):
             learning_rate=0.001,
             n_episode=100,
             random_seed=np.random.randint(0, 2**32-1),
+            output_dir=configs.save_dir
     ):
         '''
         Args:
@@ -88,6 +89,7 @@ class MethodTraining(AbstractStep):
             self.dataset,
             self.backbone,
             self.method,
+            output_dir
         )
 
 

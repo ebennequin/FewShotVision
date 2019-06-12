@@ -37,6 +37,7 @@ class Embedding(AbstractStep):
             shallow=False,
             split='novel',
             save_iter=-1,
+            output_dir=configs.save_dir
     ):
         '''
         Args:
@@ -70,6 +71,7 @@ class Embedding(AbstractStep):
             self.dataset,
             self.backbone,
             self.method,
+            output_dir=output_dir
         )
 
     def apply(self, model_state):
