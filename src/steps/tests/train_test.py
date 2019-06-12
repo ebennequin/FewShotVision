@@ -14,7 +14,8 @@ class TestTrainingMethods:
             'matchingnet',
             'relationnet',
             'relationnet_softmax',
-            # TODO 'maml', 'maml_approx',
+            'maml',
+            'maml_approx',
         ])
     def test_step_does_not_return_error(method):
         args = dict(

@@ -4,7 +4,7 @@ import numpy as np
 from pipeline.steps import AbstractStep
 import torch
 
-from src import backbone
+from src import modules
 from src.loaders.datamgr import SimpleDataManager, SetDataManager
 from src.methods import BaselineTrain
 from src.methods import ProtoNet
@@ -31,7 +31,6 @@ class MethodTraining(AbstractStep):
             train_aug=False,
             shallow=False,
             num_classes=4412,
-            save_freq=50,
             start_epoch=0,
             stop_epoch=-1,
             resume=False,
@@ -51,7 +50,6 @@ class MethodTraining(AbstractStep):
             train_aug (bool): perform data augmentation or not during training
             shallow (bool): reduces the dataset to 256 images (typically for quick code testing)
             num_classes (int): total number of classes in softmax, only used in baseline #TODO delete this parameter
-            save_freq (int): save model parameters every {} epoch
             start_epoch (int): starting epoch
             stop_epoch (int): stopping epoch
             resume (bool): continue from previous trained model with largest epoch
@@ -70,7 +68,6 @@ class MethodTraining(AbstractStep):
         self.train_aug = train_aug
         self.shallow = shallow
         self.num_classes = num_classes
-        self.save_freq = save_freq
         self.start_epoch = start_epoch
         self.stop_epoch = stop_epoch
         self.resume = resume
@@ -136,7 +133,7 @@ class MethodTraining(AbstractStep):
                 best_model_epoch = epoch
                 best_model_state = model.state_dict()
 
-            if (epoch % self.save_freq == 0) or (epoch == self.stop_epoch - 1):
+            if epoch == self.stop_epoch - 1:
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
@@ -244,21 +241,21 @@ class MethodTraining(AbstractStep):
                 model = MatchingNet(model_dict[self.backbone], **train_few_shot_params)
             elif self.method in ['relationnet', 'relationnet_softmax']:
                 if self.backbone == 'Conv4':
-                    feature_model = backbone.Conv4NP
+                    feature_model = modules.Conv4NP
                 elif self.backbone == 'Conv6':
-                    feature_model = backbone.Conv6NP
+                    feature_model = modules.Conv6NP
                 elif self.backbone == 'Conv4S':
-                    feature_model = backbone.Conv4SNP
+                    feature_model = modules.Conv4SNP
                 else:
                     feature_model = lambda: model_dict[self.backbone](flatten=False)
                 loss_type = 'mse' if self.method == 'relationnet' else 'softmax'
 
                 model = RelationNet(feature_model, loss_type=loss_type, **train_few_shot_params)
             elif self.method in ['maml', 'maml_approx']:
-                backbone.ConvBlock.maml = True
-                backbone.SimpleBlock.maml = True
-                backbone.BottleneckBlock.maml = True
-                backbone.ResNet.maml = True
+                modules.ConvBlock.maml = True
+                modules.SimpleBlock.maml = True
+                modules.BottleneckBlock.maml = True
+                modules.ResNet.maml = True
                 model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **train_few_shot_params)
                 if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
                     model.n_task = 32

@@ -1,4 +1,4 @@
-data/*
+data
 output/*
 record/*
 fake_outputs/*

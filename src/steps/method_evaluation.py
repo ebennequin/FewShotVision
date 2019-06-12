@@ -8,7 +8,7 @@ import torch
 import torch.optim
 import torch.utils.data.sampler
 
-from src import backbone
+from src import modules
 from src.loaders.datamgr import SetDataManager
 from src.methods import BaselineFinetune
 from src.methods import ProtoNet
@@ -94,7 +94,7 @@ class MethodEvaluation(AbstractStep):
             else:
                 image_size = 224
 
-            datamgr = SetDataManager(image_size, n_episode=self.n_iter, n_query=15, **few_shot_params)
+            set_data_manager = SetDataManager(image_size, n_episode=self.n_iter, n_query=15, n_way=self.test_n_way, n_support=self.n_shot)
 
             if self.dataset == 'cross':
                 if split == 'base':
@@ -109,7 +109,7 @@ class MethodEvaluation(AbstractStep):
             else:
                 loadfile = configs.data_dir[self.dataset] + split + '.json'
 
-            novel_loader = datamgr.get_data_loader(loadfile, aug=False)
+            novel_loader = set_data_manager.get_data_loader(loadfile, aug=False)
             if self.adaptation:
                 model.task_update_num = 100  # We perform adaptation on MAML simply by updating more times.
             model.eval()
@@ -145,6 +145,7 @@ class MethodEvaluation(AbstractStep):
                     exp_setting, model_state['epoch'], acc_str
                 )
             )
+        return acc_mean
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
@@ -193,20 +194,20 @@ class MethodEvaluation(AbstractStep):
             model = MatchingNet(model_dict[self.backbone], **few_shot_params)
         elif self.method in ['relationnet', 'relationnet_softmax']:
             if self.backbone == 'Conv4':
-                feature_model = backbone.Conv4NP
+                feature_model = modules.Conv4NP
             elif self.backbone == 'Conv6':
-                feature_model = backbone.Conv6NP
+                feature_model = modules.Conv6NP
             elif self.backbone == 'Conv4S':
-                feature_model = backbone.Conv4SNP
+                feature_model = modules.Conv4SNP
             else:
                 feature_model = lambda: model_dict[self.backbone](flatten=False)
             loss_type = 'mse' if self.method == 'relationnet' else 'softmax'
             model = RelationNet(feature_model, loss_type=loss_type, **few_shot_params)
         elif self.method in ['maml', 'maml_approx']:
-            backbone.ConvBlock.maml = True
-            backbone.SimpleBlock.maml = True
-            backbone.BottleneckBlock.maml = True
-            backbone.ResNet.maml = True
+            modules.ConvBlock.maml = True
+            modules.SimpleBlock.maml = True
+            modules.BottleneckBlock.maml = True
+            modules.ResNet.maml = True
             model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **few_shot_params)
             if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
                 model.n_task = 32

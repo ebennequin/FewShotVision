@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
 from src.methods.meta_template import MetaTemplate
-from src import backbone
+from src import modules
 from src.utils import utils
 
 
@@ -120,7 +120,7 @@ class RelationConvBlock(nn.Module):
         self.parametrized_layers = [self.C, self.BN, self.relu, self.pool]
 
         for layer in self.parametrized_layers:
-            backbone.init_layer(layer)
+            modules.init_layer(layer)
 
         self.trunk = nn.Sequential(*self.parametrized_layers)
 
@@ -153,7 +153,7 @@ class RelationModule(nn.Module):
         out = out.view(out.size(0), -1)
         out = F.relu(self.fc1(out))
         if self.loss_type == 'mse':
-            out = F.sigmoid(self.fc2(out))
+            out = torch.sigmoid(self.fc2(out))
         elif self.loss_type == 'softmax':
             out = self.fc2(out)
 
