@@ -58,7 +58,12 @@ class MethodTraining(AbstractStep):
             learning_rate (float): learning rate fed to the optimizer
             n_episode (int): number of episodes per epoch during meta-training
         '''
-        np.random.seed(10)
+        # The following lines are used to ensure the reproducibility of the training
+        torch.manual_seed(0)
+        np.random.seed(0)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
         self.dataset = dataset
         self.backbone = backbone
         self.method = method
