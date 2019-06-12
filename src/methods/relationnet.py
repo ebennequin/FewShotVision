@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
 from src.methods.meta_template import MetaTemplate
-from src import modules
+from src import backbones
 from src.utils import utils
 
 
@@ -120,7 +120,7 @@ class RelationConvBlock(nn.Module):
         self.parametrized_layers = [self.C, self.BN, self.relu, self.pool]
 
         for layer in self.parametrized_layers:
-            modules.init_layer(layer)
+            backbones.init_layer(layer)
 
         self.trunk = nn.Sequential(*self.parametrized_layers)
 

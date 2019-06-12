@@ -1,4 +1,4 @@
-from src import modules
+from src import backbones
 
 import torch.nn as nn
 from torch.autograd import Variable
@@ -12,7 +12,7 @@ class BaselineTrain(nn.Module):
             self.classifier = nn.Linear(self.feature.final_feat_dim, num_class)
             self.classifier.bias.data.fill_(0)
         elif loss_type == 'dist': #Baseline ++
-            self.classifier = modules.distLinear(self.feature.final_feat_dim, num_class)
+            self.classifier = backbones.distLinear(self.feature.final_feat_dim, num_class)
         self.loss_type = loss_type  #'softmax' #'dist'
         self.num_class = num_class
         self.loss_fn = nn.CrossEntropyLoss()

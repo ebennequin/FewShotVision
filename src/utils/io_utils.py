@@ -1,18 +1,18 @@
 import numpy as np
 import os
 import glob
-from src import modules
+from src import backbones
 from src.utils import configs
 
 model_dict = dict(
-    Conv4=modules.Conv4,
-    Conv4S=modules.Conv4S,
-    Conv6=modules.Conv6,
-    ResNet10=modules.ResNet10,
-    ResNet18=modules.ResNet18,
-    ResNet34=modules.ResNet34,
-    ResNet50=modules.ResNet50,
-    ResNet101=modules.ResNet101,
+    Conv4=backbones.Conv4,
+    Conv4S=backbones.Conv4S,
+    Conv6=backbones.Conv6,
+    ResNet10=backbones.ResNet10,
+    ResNet18=backbones.ResNet18,
+    ResNet34=backbones.ResNet34,
+    ResNet50=backbones.ResNet50,
+    ResNet101=backbones.ResNet101,
 )
 
 
