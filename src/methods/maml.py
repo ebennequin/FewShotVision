@@ -1,6 +1,6 @@
 # This code is modified from https://github.com/dragen1860/MAML-Pytorch and https://github.com/katerakelly/pytorch-maml 
 
-from src import modules
+from src import backbones
 import torch
 import torch.nn as nn
 import numpy as np
@@ -12,7 +12,7 @@ class MAML(MetaTemplate):
         super(MAML, self).__init__(model_func, n_way, n_support, change_way=False)
 
         self.loss_fn = nn.CrossEntropyLoss()
-        self.classifier = modules.Linear_fw(self.feat_dim, n_way)
+        self.classifier = backbones.Linear_fw(self.feat_dim, n_way)
         self.classifier.bias.data.fill_(0)  # TODO why
 
         self.n_task = 4
@@ -50,7 +50,7 @@ class MAML(MetaTemplate):
             # TODO: first order approximation should hold only when task_update_num is small
             fast_parameters = []
             for k, weight in enumerate(self.parameters()):
-                # for usage of weight.fast, please see Linear_fw, Conv_fw in modules.py
+                # for usage of weight.fast, please see Linear_fw, Conv_fw in backbones.py
                 if weight.fast is None:
                     weight.fast = weight - self.train_lr * grad[k]  # create weight.fast
                 else:

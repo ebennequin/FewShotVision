@@ -4,7 +4,7 @@ import numpy as np
 from pipeline.steps import AbstractStep
 import torch
 
-from src import modules
+from src import backbones
 from src.loaders.datamgr import SimpleDataManager, SetDataManager
 from src.methods import BaselineTrain
 from src.methods import ProtoNet
@@ -246,21 +246,21 @@ class MethodTraining(AbstractStep):
                 model = MatchingNet(model_dict[self.backbone], **train_few_shot_params)
             elif self.method in ['relationnet', 'relationnet_softmax']:
                 if self.backbone == 'Conv4':
-                    feature_model = modules.Conv4NP
+                    feature_model = backbones.Conv4NP
                 elif self.backbone == 'Conv6':
-                    feature_model = modules.Conv6NP
+                    feature_model = backbones.Conv6NP
                 elif self.backbone == 'Conv4S':
-                    feature_model = modules.Conv4SNP
+                    feature_model = backbones.Conv4SNP
                 else:
                     feature_model = lambda: model_dict[self.backbone](flatten=False)
                 loss_type = 'mse' if self.method == 'relationnet' else 'softmax'
 
                 model = RelationNet(feature_model, loss_type=loss_type, **train_few_shot_params)
             elif self.method in ['maml', 'maml_approx']:
-                modules.ConvBlock.maml = True
-                modules.SimpleBlock.maml = True
-                modules.BottleneckBlock.maml = True
-                modules.ResNet.maml = True
+                backbones.ConvBlock.maml = True
+                backbones.SimpleBlock.maml = True
+                backbones.BottleneckBlock.maml = True
+                backbones.ResNet.maml = True
                 model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **train_few_shot_params)
                 if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
                     model.n_task = 32

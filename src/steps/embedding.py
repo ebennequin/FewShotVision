@@ -7,7 +7,7 @@ import torch
 import torch.optim
 from torch.autograd import Variable
 
-from src import modules
+from src import backbones
 from src.loaders.datamgr import SimpleDataManager
 from src.utils import configs
 from src.utils.io_utils import (
@@ -191,11 +191,11 @@ class Embedding(AbstractStep):
         # Create backbone
         if self.method in ['relationnet', 'relationnet_softmax']:
             if self.backbone == 'Conv4':
-                model = modules.Conv4NP()
+                model = backbones.Conv4NP()
             elif self.backbone == 'Conv6':
-                model = modules.Conv6NP()
+                model = backbones.Conv6NP()
             elif self.backbone == 'Conv4S':
-                model = modules.Conv4SNP()
+                model = backbones.Conv4SNP()
             else:
                 model = model_dict[self.backbone](flatten=False)
         elif self.method in ['maml', 'maml_approx']:
