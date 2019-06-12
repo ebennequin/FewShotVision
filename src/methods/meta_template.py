@@ -51,7 +51,7 @@ class MetaTemplate(nn.Module):
         top1_correct = np.sum(topk_ind[:, 0] == y_query)
         return float(top1_correct), len(y_query)
 
-    #TODO: est-ce que c'est toujours les memes images dans les episodes ?
+    #TODO: is this always the same images in the episodes ?
     def train_loop(self, epoch, train_loader, optimizer):
         '''
 
@@ -75,9 +75,12 @@ class MetaTemplate(nn.Module):
 
             avg_loss = avg_loss + loss.item()
             if episode_index % print_freq == 0:
-                # print(optimizer.state_dict()['param_groups'][0]['lr'])
-                print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, episode_index, len(train_loader),
-                                                                        avg_loss / float(episode_index + 1)))
+                print('Epoch {epoch} | Batch {episode_index}/{n_batches} | Loss {loss}'.format(
+                    epoch=epoch,
+                    episode_index=episode_index,
+                    n_batches=len(train_loader),
+                    loss=avg_loss/float(episode_index + 1)
+                ))
 
     def test_loop(self, test_loader, record=None):
         '''
@@ -85,6 +88,8 @@ class MetaTemplate(nn.Module):
         Args:
             test_loader (DataLoader): loader of a given number of episodes
 
+        Returns:
+            float: average accuracy on evaluation set
         '''
         correct = 0
         count = 0
