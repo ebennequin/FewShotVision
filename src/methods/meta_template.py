@@ -51,26 +51,41 @@ class MetaTemplate(nn.Module):
         top1_correct = np.sum(topk_ind[:, 0] == y_query)
         return float(top1_correct), len(y_query)
 
+    #TODO: est-ce que c'est toujours les memes images dans les episodes ?
     def train_loop(self, epoch, train_loader, optimizer):
+        '''
+
+        Args:
+            epoch (int): current epoch
+            train_loader (DataLoader): loader of a given number of episodes
+            optimizer (torch.optim.Optimizer): model optimizer
+
+        '''
         print_freq = 10
 
         avg_loss = 0
-        for i, (x, _) in enumerate(train_loader):
-            self.n_query = x.size(1) - self.n_support
+        for episode_index, (episode, _) in enumerate(train_loader):
+            self.n_query = episode.size(1) - self.n_support
             if self.change_way:
-                self.n_way = x.size(0)
+                self.n_way = episode.size(0)
             optimizer.zero_grad()
-            loss = self.set_forward_loss(x)
+            loss = self.set_forward_loss(episode)
             loss.backward()
             optimizer.step()
-            avg_loss = avg_loss + loss.item()
 
-            if i % print_freq == 0:
+            avg_loss = avg_loss + loss.item()
+            if episode_index % print_freq == 0:
                 # print(optimizer.state_dict()['param_groups'][0]['lr'])
-                print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader),
-                                                                        avg_loss / float(i + 1)))
+                print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, episode_index, len(train_loader),
+                                                                        avg_loss / float(episode_index + 1)))
 
     def test_loop(self, test_loader, record=None):
+        '''
+
+        Args:
+            test_loader (DataLoader): loader of a given number of episodes
+
+        '''
         correct = 0
         count = 0
         acc_all = []
