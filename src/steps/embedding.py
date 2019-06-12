@@ -74,6 +74,9 @@ class Embedding(AbstractStep):
 
     def apply(self, model_state):
 
+        if self.method in ['maml', 'maml_approx']:
+            print("MAML doesn't support the step Embedding. Going on to the next step ...")
+            return None
         # Load trained parameters into backbone
         model = self._load_model(model_state)
 
@@ -127,7 +130,7 @@ class Embedding(AbstractStep):
 
     def _get_data_loader_and_outfile(self):
         '''
-        Function that returns data loadersand path to outfile
+        Returns data loaders and path to outfile
         Returns:
             tuple : data_loader and outfile
         '''
@@ -176,9 +179,9 @@ class Embedding(AbstractStep):
 
         return (data_loader, outfile)
 
-    def _load_model(self, model_state=None):
+    def _load_model(self, model_state):
         '''
-        Load model from training and returns its feature layers
+        Loads model from training and returns its feature layers
         Args:
             model_state (dict): contains the state of the trained model. If None, loads from .tar file
 
@@ -199,8 +202,6 @@ class Embedding(AbstractStep):
                 model = backbones.Conv4SNP()
             else:
                 model = model_dict[self.backbone](flatten=False)
-        elif self.method in ['maml', 'maml_approx']:
-            raise ValueError('MAML do not support save feature')
         else:
             model = model_dict[self.backbone]()
 

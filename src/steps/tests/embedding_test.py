@@ -27,6 +27,7 @@ class TestEmbedding:
             backbone=backbone,
             method=method,
             train_aug=True,
+            shallow=True,
         )
         path = os.path.join(path_to_step_output(dataset, backbone, method, 'fake_outputs'), '0.tar')
 
