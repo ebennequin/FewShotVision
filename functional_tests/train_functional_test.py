@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from src.steps.method_training import MethodTraining
@@ -18,6 +20,7 @@ class TestTrainingMethods:
             'maml_approx',
         ])
     def test_step_does_not_return_error(method):
+        current_dir = os.path.dirname(__file__)
         args = dict(
             dataset='CUB',
             backbone='Conv4',
@@ -29,6 +32,7 @@ class TestTrainingMethods:
             optimizer='Adam',
             learning_rate=0.001,
             n_episode=2,
+            output_dir=os.path.join(current_dir, 'tests_data')
         )
 
         MethodTraining(**args).apply()
