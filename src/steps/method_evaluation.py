@@ -1,6 +1,4 @@
 import os
-import random
-import time
 
 import numpy as np
 from pipeline.steps import AbstractStep
@@ -16,7 +14,7 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, path_to_step_output
+from src.utils.io_utils import model_dict, path_to_step_output, set_and_print_random_seed
 
 
 class MethodEvaluation(AbstractStep):
@@ -36,6 +34,7 @@ class MethodEvaluation(AbstractStep):
             save_iter=-1,
             n_iter=600,
             adaptation=False,
+            random_seed=None,
     ):
         '''
         Args:
@@ -50,7 +49,10 @@ class MethodEvaluation(AbstractStep):
             save_iter (int): save feature from the model trained in x epoch, use the best model if x is -1
             n_iter (int): number of classification tasks on which the model is tested
             adaptation (boolean): further adaptation in test time or not
+            random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+
         '''
+
         self.dataset = dataset
         self.backbone = backbone
         self.method = method
@@ -62,6 +64,7 @@ class MethodEvaluation(AbstractStep):
         self.save_iter = save_iter
         self.n_iter = n_iter
         self.adaptation = adaptation
+        self.random_seed = random_seed
 
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
@@ -73,8 +76,17 @@ class MethodEvaluation(AbstractStep):
             self.method,
         )
 
-
     def apply(self, model_state, features_and_labels=None):
+        '''
+        Executes MethodEvaluation step
+        Args:
+            model_state (dict): contains the state of the trained model and the number of training epochs
+            features_and_labels: contains the features and labels of all images in the evaluation dataset
+
+        Returns:
+            float: average accuracy on few shot classification tasks sampled from the evaluation dataset
+        '''
+        set_and_print_random_seed(self.random_seed)
 
         acc_all = []
 
@@ -85,6 +97,7 @@ class MethodEvaluation(AbstractStep):
             split_str = split + "_" + str(self.save_iter)
         else:
             split_str = split
+
         if self.method in ['maml', 'maml_approx']:  # maml do not support testing with feature
             if 'Conv' in self.backbone:
                 if self.dataset in ['omniglot', 'cross_char']:
@@ -153,7 +166,7 @@ class MethodEvaluation(AbstractStep):
     def _feature_evaluation(self, cl_data_file, model, n_query=15):
         class_list = cl_data_file.keys()
 
-        select_class = random.sample(class_list, self.test_n_way)
+        select_class = np.random.choice(list(class_list), size = self.test_n_way, replace = False)
         z_all = []
         for cl in select_class:
             img_feat = cl_data_file[cl]

@@ -74,6 +74,15 @@ class SetDataManager(DataManager):
         self.trans_loader = TransformLoader(image_size)
 
     def get_data_loader(self, data_file, aug):  # parameters that would change on train/val set
+        '''
+
+        Args:
+            data_file (str): path to JSON file describing the data
+            aug (bool): whether or not to perform data augmentation on the dataset
+
+        Returns:
+            DataLoader: data loader containing episodes sampled from the dataset
+        '''
         transform = self.trans_loader.get_composed_transform(aug)
         dataset = SetDataset(data_file, self.batch_size, transform)
         sampler = EpisodicBatchSampler(len(dataset), self.n_way, self.n_episode)
