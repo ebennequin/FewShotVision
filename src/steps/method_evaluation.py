@@ -176,10 +176,10 @@ class MethodEvaluation(AbstractStep):
         '''
         Load model from training
         Args:
-            model_state: dict containing the state of the trained model. If None, loads from .tar file
+            model_state: dict containing the state of the trained model
 
         Returns:
-            model: torch module
+            torch.nn.Module: model with loaded parameters, ready for evaluation
         '''
         few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
 
