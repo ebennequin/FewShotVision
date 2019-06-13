@@ -6,9 +6,10 @@ variables:
   train_aug: &train_aug True
   train_n_way: &train_n_way 5
   test_n_way: &test_n_way 5
-  n_shot: &n_shot 1
+  n_shot: &n_shot 5
   split: &split novel
   save_iter: &save_iter -1
+  random_seed: &random_seed 1
 
 init:
 
@@ -19,7 +20,8 @@ init:
       - name: FetchModel
         init:
 #          path_to_model: output/../458/CUB/Conv4/protonet_aug_5way_1shot/best_model.tar
-          path_to_model: output/../../groups/13/516/miniImageNet/protonet_Conv4/best_model.tar
+#          path_to_model: output/../../groups/13/516/miniImageNet/protonet_Conv4/best_model.tar
+          path_to_model: output/CUB/protonet_Conv4/best_model_681.tar
 
     embedding_flow:
       inputs: method_training_flow
@@ -36,6 +38,7 @@ init:
           split: *split
           save_iter: *save_iter
           shallow: False
+          random_seed: *random_seed
 
     method_evaluation_flow:
       inputs:
@@ -55,6 +58,7 @@ init:
             save_iter: *save_iter
             n_iter: 600
             adaptation: False
+            random_seed: *random_seed
 
 run:
   output_folder: output

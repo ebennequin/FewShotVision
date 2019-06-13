@@ -3,8 +3,6 @@ import os
 import h5py
 import numpy as np
 from pipeline.steps import AbstractStep
-import torch
-import torch.optim
 from torch.autograd import Variable
 
 from src import backbones
@@ -12,10 +10,8 @@ from src.loaders.datamgr import SimpleDataManager
 from src.utils import configs
 from src.utils.io_utils import (
     model_dict,
-    get_resume_file,
-    get_best_file,
-    get_assigned_file,
     path_to_step_output,
+    set_and_print_random_seed,
 )
 
 
@@ -37,7 +33,8 @@ class Embedding(AbstractStep):
             shallow=False,
             split='novel',
             save_iter=-1,
-            output_dir=configs.save_dir
+            output_dir=configs.save_dir,
+            random_seed=None,
     ):
         '''
         Args:
@@ -62,6 +59,7 @@ class Embedding(AbstractStep):
         self.shallow = shallow
         self.split = split
         self.save_iter = save_iter
+        self.random_seed = random_seed
 
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
@@ -75,6 +73,7 @@ class Embedding(AbstractStep):
         )
 
     def apply(self, model_state):
+        set_and_print_random_seed(self.random_seed)
 
         if self.method in ['maml', 'maml_approx']:
             print("MAML doesn't support the step Embedding. Going on to the next step ...")
