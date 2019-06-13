@@ -46,10 +46,12 @@ def set_and_print_random_seed(random_seed):
     Set and print numpy random seed, for reproducibility of the training,
     and set torch seed based on numpy random seed
     Args:
-        random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+        random_seed (int/None): seed for random instantiations ; if none is provided, a seed is randomly defined
+    Returns:
+        int: numpy random seed
 
     '''
-    if not random_seed:
+    if random_seed is None:
         random_seed = np.random.randint(0, 2 ** 32 - 1)
     np.random.seed(random_seed)
     torch.manual_seed(np.random.randint(0, 2**32-1))
@@ -57,6 +59,7 @@ def set_and_print_random_seed(random_seed):
     torch.backends.cudnn.benchmark = False
     print('Random seed: ', random_seed)
 
+    return random_seed
 
 def get_assigned_file(checkpoint_dir, num):
     # TODO: returns path to .tar file corresponding to epoch num in checkpoint_dir (even if it doesn't exist)
