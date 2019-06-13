@@ -46,7 +46,7 @@ def set_and_print_random_seed(random_seed):
     Set and print numpy random seed, for reproducibility of the training,
     and set torch seed based on numpy random seed
     Args:
-        random_seed (int/None): seed for random instantiations ; if none is provided, a seed is randomly defined
+        random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
     Returns:
         int: numpy random seed
 
