@@ -222,6 +222,8 @@ class MethodEvaluation(AbstractStep):
         if not self.method in ['baseline', 'baseline++']:
             model.load_state_dict(model_state['state'])
 
+        model.eval()
+
         return model
 
     def _process_features(self, features_and_labels):
