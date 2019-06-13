@@ -26,6 +26,8 @@ __pycache__/
 /record/*
 output/*
 fake_outputs/*
+functional_tests/tests_data/*
+
 
 .polyaxon/
 
