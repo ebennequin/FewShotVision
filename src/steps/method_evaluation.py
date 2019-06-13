@@ -1,6 +1,5 @@
 import os
 import random
-import time
 
 import numpy as np
 from pipeline.steps import AbstractStep

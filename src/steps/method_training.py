@@ -39,7 +39,7 @@ class MethodTraining(AbstractStep):
             learning_rate=0.001,
             n_episode=100,
             random_seed=None,
-            output_dir=configs.save_dir
+            output_dir=configs.save_dir,
     ):
         '''
         Args:
@@ -60,6 +60,7 @@ class MethodTraining(AbstractStep):
             learning_rate (float): learning rate fed to the optimizer
             n_episode (int): number of episodes per epoch during meta-training
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+            output_dir (str): path to experiments output directory
         '''
         set_and_print_random_seed(random_seed)
 
