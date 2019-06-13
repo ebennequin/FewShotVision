@@ -1,11 +1,14 @@
 # This code is modified from https://github.com/facebookresearch/low-shot-shrink-hallucinate
 
-import torch
-from PIL import Image
 import json
-import numpy as np
-import torchvision.transforms as transforms
 import os
+from PIL import Image
+
+import numpy as np
+import torch
+import torchvision.transforms as transforms
+
+
 identity = lambda x:x
 # TODO: why not extend torch.utils.data.Dataset ?
 class SimpleDataset:
@@ -59,6 +62,7 @@ class SetDataset:
     def __len__(self):
         return len(self.cl_list)
 
+
 class SubDataset:
     def __init__(self, sub_meta, cl, transform=transforms.ToTensor(), target_transform=identity): #TODO: why this assignment to transform
         self.sub_meta = sub_meta
@@ -77,8 +81,19 @@ class SubDataset:
     def __len__(self):
         return len(self.sub_meta)
 
-class EpisodicBatchSampler(object):
+
+class EpisodicBatchSampler(torch.utils.data.Sampler):
+    '''
+    Samples elements randomly in episodes of defined shape
+    '''
     def __init__(self, n_classes, n_way, n_episodes):
+        '''
+
+        Args:
+            n_classes (int): number of classes in the dataset
+            n_way (int): number of classes in an episode
+            n_episodes (int): number of episodes
+        '''
         self.n_classes = n_classes
         self.n_way = n_way
         self.n_episodes = n_episodes

@@ -37,4 +37,3 @@ class TestEmbedding:
         model = FetchModel(path).apply()
 
         features, labels = Embedding(**args).apply(model)
-
