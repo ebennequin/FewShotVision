@@ -12,7 +12,7 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, get_resume_file, path_to_step_output
+from src.utils.io_utils import model_dict, get_resume_file, path_to_step_output, set_and_print_random_seed
 
 
 class MethodTraining(AbstractStep):
@@ -38,7 +38,7 @@ class MethodTraining(AbstractStep):
             optimizer='Adam',
             learning_rate=0.001,
             n_episode=100,
-            random_seed=np.random.randint(0, 2**32-1),
+            random_seed=None,
             output_dir=configs.save_dir
     ):
         '''
@@ -61,8 +61,7 @@ class MethodTraining(AbstractStep):
             n_episode (int): number of episodes per epoch during meta-training
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
         '''
-
-        self._set_and_print_random_seed(random_seed)
+        set_and_print_random_seed(random_seed)
 
         self.dataset = dataset
         self.backbone = backbone
@@ -308,18 +307,3 @@ class MethodTraining(AbstractStep):
             val_loader,
             model,
         )
-
-    @staticmethod
-    def _set_and_print_random_seed(random_seed):
-        '''
-        Set and print numpy random seed, for reproducibility of the training,
-        and set torch seed based on numpy random seed
-        Args:
-            random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
-
-        '''
-        np.random.seed(random_seed)
-        torch.manual_seed(np.random.randint(0, 2**32-1))
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        print('Random seed: ', random_seed)

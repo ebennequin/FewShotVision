@@ -1,6 +1,9 @@
-import numpy as np
-import os
 import glob
+import os
+
+import numpy as np
+import torch
+
 from src import backbones
 from src.utils import configs
 
@@ -17,6 +20,17 @@ model_dict = dict(
 
 
 def path_to_step_output(dataset, backbone, method, output_dir=configs.save_dir):
+    '''
+    Defines the path where the outputs will be saved on the disk
+    Args:
+        dataset (str): name of the dataset
+        backbone (str): name of the backbone of the model
+        method (str): name of the used method
+        output_dir (str): may be common to other experiments
+
+    Returns:
+        str: path to the output of the step
+    '''
     checkpoint_dir = os.path.join(
         output_dir,
         dataset,
@@ -26,6 +40,22 @@ def path_to_step_output(dataset, backbone, method, output_dir=configs.save_dir):
     if not os.path.isdir(checkpoint_dir):
         os.makedirs(checkpoint_dir)
     return checkpoint_dir
+
+def set_and_print_random_seed(random_seed):
+    '''
+    Set and print numpy random seed, for reproducibility of the training,
+    and set torch seed based on numpy random seed
+    Args:
+        random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+
+    '''
+    if not random_seed:
+        random_seed = np.random.randint(0, 2 ** 32 - 1)
+    np.random.seed(random_seed)
+    torch.manual_seed(np.random.randint(0, 2**32-1))
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    print('Random seed: ', random_seed)
 
 
 def get_assigned_file(checkpoint_dir, num):
