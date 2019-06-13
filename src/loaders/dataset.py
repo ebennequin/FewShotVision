@@ -16,7 +16,7 @@ class SimpleDataset:
         with open(data_file, 'r') as f:
             self.meta = json.load(f)
         if shallow: # We return a reduced dataset
-            self.meta['image_names'] = self.meta['image_names'][:256]
+            self.meta['image_names'] = self.meta['image_names'][:256] # TODO: shallow not applied to SetDataset
             self.meta['image_labels'] = self.meta['image_labels'][:256]
         self.transform = transform
         self.target_transform = target_transform

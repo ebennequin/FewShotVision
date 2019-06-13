@@ -62,7 +62,6 @@ class MethodTraining(AbstractStep):
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
         '''
-        set_and_print_random_seed(random_seed)
 
         self.dataset = dataset
         self.backbone = backbone
@@ -80,6 +79,7 @@ class MethodTraining(AbstractStep):
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.n_episode = n_episode
+        self.random_seed = random_seed
 
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
@@ -100,6 +100,8 @@ class MethodTraining(AbstractStep):
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
         '''
+        set_and_print_random_seed(self.random_seed)
+
         base_loader, val_loader, model = self._get_data_loaders_and_model()
 
         return self._train(base_loader, val_loader, model)
