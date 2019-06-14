@@ -7,6 +7,14 @@ from abc import abstractmethod
 
 class MetaTemplate(nn.Module):
     def __init__(self, model_func, n_way, n_support, change_way=True):
+        '''
+
+        Args:
+            model_func (src.backbones object): backbone function
+            n_way (int): number of classes in a classification task
+            n_support (int): number of labeled examples per class in the support set
+            change_way (bool): allow n_way to be different in training and evaluation
+        '''
         super(MetaTemplate, self).__init__()
         self.n_way = n_way
         self.n_support = n_support
@@ -30,7 +38,7 @@ class MetaTemplate(nn.Module):
     # is_features tells wether x is a feature vector (True) or rough image tensor (False)
     # parse_features returns the features vectors of the support and query sets
     def parse_feature(self, x, is_feature):
-        x = Variable(x.cuda())
+        x = x.cuda()
         if is_feature:
             z_all = x
         else:
