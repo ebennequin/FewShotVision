@@ -114,7 +114,13 @@ class MethodEvaluation(AbstractStep):
             else:
                 image_size = 224
 
-            set_data_manager = SetDataManager(image_size, n_episode=self.n_iter, n_query=self.n_query, n_way=self.test_n_way, n_support=self.n_shot)
+            set_data_manager = SetDataManager(
+                image_size,
+                n_episode=self.n_iter,
+                n_query=self.n_query,
+                n_way=self.test_n_way,
+                n_support=self.n_shot,
+            )
 
             if self.dataset == 'cross':
                 if split == 'base':
@@ -201,21 +207,54 @@ class MethodEvaluation(AbstractStep):
 
         Returns:
             torch.Tensor: shape(self.test_n_way, self.n_shot+self.n_query, feature_vector_dim) features vectors for
-            support and query, set by class
+            support and query, set by class, with self.n_swaps swaps in the label (cf _random_swap)
 
         '''
         class_list = features_per_label.keys()
 
-        select_class = np.random.choice(list(class_list), size = self.test_n_way, replace = False)
+        select_class = np.random.choice(list(class_list), size=self.test_n_way, replace=False)
         z_all = []
         for cl in select_class:
             img_feat = features_per_label[cl]
             perm_ids = np.random.permutation(len(img_feat)).tolist()
             z_all.append([np.squeeze(img_feat[perm_ids[i]]) for i in range(self.n_shot + self.n_query)])  # stack each batch
 
-        z_all = torch.from_numpy(np.array(z_all))
+        z_all = np.array(z_all)
+        z_all = self._random_swap(z_all)
+        z_all = torch.from_numpy(z_all)
 
         return z_all
+
+    def _random_swap(self, classification_task):
+        '''
+        Apply self.n_swaps swaps randomly to the support set
+        Args:
+            classification_task (ndarray): shape=(test_n_way, self.n_shot + self.n_query,dim_of_img) one classification
+            task, which is composed of a support set and a query set
+
+        Returns:
+            ndarray: shape=(test_n_way, self.n_shot + self.n_query,dim_of_img) same classification task, with swaped
+            elements.
+        '''
+        support_set = classification_task[:, :self.n_shot]
+        for _ in range(self.n_swaps):
+            swaped_classes = np.random.choice(self.test_n_way, size=2, replace=False)
+            swaped_images = np.random.choice(self.n_shot, size=2, replace=False)
+            support_set[
+                swaped_classes[0],
+                swaped_images[0]
+            ], support_set[
+                swaped_classes[1],
+                swaped_images[1]
+            ] = support_set[
+                swaped_classes[1],
+                swaped_images[1]
+            ], support_set[
+                swaped_classes[0],
+                swaped_images[0]
+            ]
+        return classification_task
+
 
     def _load_model(self, model_state):
         '''
