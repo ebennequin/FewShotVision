@@ -29,12 +29,14 @@ class MethodEvaluation(AbstractStep):
             train_n_way=5,
             test_n_way=5,
             n_shot=5,
+            n_query=15,
             train_aug=False,
             split='novel',
             save_iter=-1,
             n_iter=600,
             adaptation=False,
             random_seed=None,
+            n_swaps=0,
     ):
         '''
         Args:
@@ -43,13 +45,16 @@ class MethodEvaluation(AbstractStep):
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
             test_n_way (int): number of labels in a classification task during testing
-            n_shot (int): number of labeled data in each class
+            n_shot (int): number of labeled data in each class in a classification task
+            n_query (int): number of query data for each class in a classification task
             train_aug (bool): perform data augmentation or not during training
             split (str): which dataset is considered (base, val or novel)
             save_iter (int): save feature from the model trained in x epoch, use the best model if x is -1
             n_iter (int): number of classification tasks on which the model is tested
             adaptation (boolean): further adaptation in test time or not
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+            n_swaps (int): number of swaps between labels in the support set of each classification task, in order to
+            test the robustness to label noise
 
         '''
 
@@ -59,12 +64,14 @@ class MethodEvaluation(AbstractStep):
         self.train_n_way = train_n_way
         self.test_n_way = test_n_way
         self.n_shot = n_shot
+        self.n_query = n_query
         self.train_aug = train_aug
         self.split = split
         self.save_iter = save_iter
         self.n_iter = n_iter
         self.adaptation = adaptation
         self.random_seed = random_seed
+        self.n_swaps = n_swaps
 
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
@@ -107,7 +114,7 @@ class MethodEvaluation(AbstractStep):
             else:
                 image_size = 224
 
-            set_data_manager = SetDataManager(image_size, n_episode=self.n_iter, n_query=15, n_way=self.test_n_way, n_support=self.n_shot)
+            set_data_manager = SetDataManager(image_size, n_episode=self.n_iter, n_query=self.n_query, n_way=self.test_n_way, n_support=self.n_shot)
 
             if self.dataset == 'cross':
                 if split == 'base':
@@ -129,10 +136,10 @@ class MethodEvaluation(AbstractStep):
             acc_mean, acc_std = model.test_loop(novel_loader, return_std=True)
 
         else:
-            cl_data_file = self._process_features(features_and_labels)
+            features_per_label = self._process_features(features_and_labels)
 
             for i in range(self.n_iter):
-                acc = self._feature_evaluation(cl_data_file, model, n_query=15)
+                acc = self._feature_evaluation(features_per_label, model)
                 acc_all.append(acc)
                 if i % 10 == 0:
                     print('{}/{}'.format(i, self.n_iter))
@@ -163,27 +170,52 @@ class MethodEvaluation(AbstractStep):
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _feature_evaluation(self, cl_data_file, model, n_query=15):
-        class_list = cl_data_file.keys()
+    def _feature_evaluation(self, features_per_label, model):
+        '''
+        Evaluates the model on one classification task
+        Args:
+            features_per_label (dict): a dict containing the feature vectors for each label
+            model (torch.nn.Module): model to evaluate
 
-        select_class = np.random.choice(list(class_list), size = self.test_n_way, replace = False)
-        z_all = []
-        for cl in select_class:
-            img_feat = cl_data_file[cl]
-            perm_ids = np.random.permutation(len(img_feat)).tolist()
-            z_all.append([np.squeeze(img_feat[perm_ids[i]]) for i in range(self.n_shot + n_query)])  # stack each batch
+        Returns:
+            float: accuracy on the classification of query data, in percents
 
-        z_all = torch.from_numpy(np.array(z_all))
+        '''
+        z_all = self._set_classification_task(features_per_label)
 
-        model.n_query = n_query
+        model.n_query = self.n_query
         if self.adaptation:
             scores = model.set_forward_adaptation(z_all, is_feature=True)
         else:
             scores = model.set_forward(z_all, is_feature=True)
         pred = scores.data.cpu().numpy().argmax(axis=1)
-        y = np.repeat(range(self.test_n_way), n_query)
+        y = np.repeat(range(self.test_n_way), self.n_query)
         acc = np.mean(pred == y) * 100
         return acc
+
+    def _set_classification_task(self, features_per_label):
+        '''
+        Defines one classification task, which is composed of a support set and a query set.
+        Args:
+            features_per_label (dict): a dict containing the feature vectors for each label
+
+        Returns:
+            torch.Tensor: shape(self.test_n_way, self.n_shot+self.n_query, feature_vector_dim) features vectors for
+            support and query, set by class
+
+        '''
+        class_list = features_per_label.keys()
+
+        select_class = np.random.choice(list(class_list), size = self.test_n_way, replace = False)
+        z_all = []
+        for cl in select_class:
+            img_feat = features_per_label[cl]
+            perm_ids = np.random.permutation(len(img_feat)).tolist()
+            z_all.append([np.squeeze(img_feat[perm_ids[i]]) for i in range(self.n_shot + self.n_query)])  # stack each batch
+
+        z_all = torch.from_numpy(np.array(z_all))
+
+        return z_all
 
     def _load_model(self, model_state):
         '''
