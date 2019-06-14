@@ -229,31 +229,34 @@ class MethodEvaluation(AbstractStep):
         '''
         Apply self.n_swaps swaps randomly to the support set
         Args:
-            classification_task (ndarray): shape=(test_n_way, self.n_shot + self.n_query,dim_of_img) one classification
+            classification_task (ndarray): shape=(test_n_way, self.n_shot + self.n_query,dim_of_features) one classification
             task, which is composed of a support set and a query set
 
         Returns:
-            ndarray: shape=(test_n_way, self.n_shot + self.n_query,dim_of_img) same classification task, with swaped
+            ndarray: shape=(test_n_way, self.n_shot + self.n_query,dim_of_features) same classification task, with swaped
             elements.
         '''
-        support_set = classification_task[:, :self.n_shot]
+        result = classification_task.copy()
+        support_set = result[:, :self.n_shot]
         for _ in range(self.n_swaps):
             swaped_classes = np.random.choice(self.test_n_way, size=2, replace=False)
-            swaped_images = np.random.choice(self.n_shot, size=2, replace=False)
+            swaped_images = np.random.choice(self.n_shot, size=2, replace=True)
+            support_set_buffer = support_set[
+                swaped_classes[1],
+                swaped_images[1]
+            ].copy(), support_set[
+                swaped_classes[0],
+                swaped_images[0]
+            ].copy()
             support_set[
                 swaped_classes[0],
                 swaped_images[0]
             ], support_set[
                 swaped_classes[1],
                 swaped_images[1]
-            ] = support_set[
-                swaped_classes[1],
-                swaped_images[1]
-            ], support_set[
-                swaped_classes[0],
-                swaped_images[0]
-            ]
-        return classification_task
+            ] = support_set_buffer
+
+        return result
 
 
     def _load_model(self, model_state):
