@@ -4,11 +4,12 @@ variables:
   backbone: &backbone Conv4
   method: &method %(method)s
   train_aug: &train_aug True
-  train_n_way: &train_n_way 5
-  test_n_way: &test_n_way 5
+  train_n_way: &train_n_way %(train_n_way)s
+  test_n_way: &test_n_way %(test_n_way)s
   n_shot: &n_shot %(n_shot)s
   split: &split novel
   save_iter: &save_iter -1
+  random_seed: &random_seed 96
 
 init:
 
@@ -25,8 +26,9 @@ init:
           train_n_way: *train_n_way
           test_n_way: *test_n_way
           n_shot: *n_shot
+          random_seed: *random_seed
           num_classes: 4412
-          stop_epoch: -1
+          stop_epoch: 2
           start_epoch: 0
           shallow: False
           resume: False
@@ -49,6 +51,7 @@ init:
           train_aug: *train_aug
           split: *split
           save_iter: *save_iter
+          random_seed: *random_seed
           shallow: False
 
     method_evaluation_flow:
@@ -67,8 +70,10 @@ init:
             train_aug: *train_aug
             split: *split
             save_iter: *save_iter
+            random_seed: *random_seed
             n_iter: 600
             adaptation: False
+            n_swaps: 1
 
 run:
   output_folder: output
