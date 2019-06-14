@@ -154,12 +154,13 @@ class MethodEvaluation(AbstractStep):
             acc_mean = float(np.mean(acc_all))
             acc_std = float(np.std(acc_all))
             print('%d Test Acc = %4.2f%% +- %4.2f%%' % (self.n_iter, acc_mean, self._confidence_interval(acc_std)))
-        with open(os.path.join(self.checkpoint_dir, 'results.txt'), 'w') as f:
+        with open(os.path.join(self.checkpoint_dir, 'results.txt'), 'a') as f:
             aug_str = '-aug' if self.train_aug else ''
             aug_str += '-adapted' if self.adaptation else ''
             if self.method in ['baseline', 'baseline++']:
-                exp_setting = '%s-%s-%s-%s%s %sshot %sway_test' % (
-                    self.dataset, split_str, self.backbone, self.method, aug_str, self.n_shot, self.test_n_way)
+                exp_setting = '%s-%s-%s-%s%s %sshot %sway_test %sswaps' % (
+                    self.dataset, split_str, self.backbone, self.method, aug_str, self.n_shot,
+                    self.test_n_way, self.n_swaps)
             else:
                 exp_setting = '%s-%s-%s-%s%s %sshot %sway_train %sway_test' % (
                     self.dataset, split_str, self.backbone, self.method, aug_str, self.n_shot, self.train_n_way,

@@ -28,7 +28,7 @@ init:
           n_shot: *n_shot
           random_seed: *random_seed
           num_classes: 4412
-          stop_epoch: 2
+          stop_epoch: 400
           start_epoch: 0
           shallow: False
           resume: False
@@ -54,7 +54,7 @@ init:
           random_seed: *random_seed
           shallow: False
 
-    method_evaluation_flow:
+    method_evaluation_flow_0swap:
       inputs:
         - method_training_flow
         - embedding_flow
@@ -73,7 +73,71 @@ init:
             random_seed: *random_seed
             n_iter: 600
             adaptation: False
-            n_swaps: 1
+            n_swaps: 0
+
+    method_evaluation_flow_3swap:
+      inputs:
+        - method_training_flow
+        - embedding_flow
+      steps:
+        - name: MethodEvaluation
+          init:
+            dataset: *dataset
+            backbone: *backbone
+            method: *method
+            train_n_way: *train_n_way
+            test_n_way: *test_n_way
+            n_shot: *n_shot
+            train_aug: *train_aug
+            split: *split
+            save_iter: *save_iter
+            random_seed: *random_seed
+            n_iter: 600
+            adaptation: False
+            n_swaps: 3
+
+    method_evaluation_flow_6swap:
+      inputs:
+        - method_training_flow
+        - embedding_flow
+      steps:
+        - name: MethodEvaluation
+          init:
+            dataset: *dataset
+            backbone: *backbone
+            method: *method
+            train_n_way: *train_n_way
+            test_n_way: *test_n_way
+            n_shot: *n_shot
+            train_aug: *train_aug
+            split: *split
+            save_iter: *save_iter
+            random_seed: *random_seed
+            n_iter: 600
+            adaptation: False
+            n_swaps: 6
+
+    method_evaluation_flow_10swap:
+      inputs:
+        - method_training_flow
+        - embedding_flow
+      steps:
+        - name: MethodEvaluation
+          init:
+            dataset: *dataset
+            backbone: *backbone
+            method: *method
+            train_n_way: *train_n_way
+            test_n_way: *test_n_way
+            n_shot: *n_shot
+            train_aug: *train_aug
+            split: *split
+            save_iter: *save_iter
+            random_seed: *random_seed
+            n_iter: 600
+            adaptation: False
+            n_swaps: 10
+
 
 run:
   output_folder: output
