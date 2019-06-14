@@ -48,4 +48,4 @@ run:
     - 'echo "train_n_way: {{ train_n_way }}" >> grid_search_parameters.yaml'
     - 'echo "test_n_way: {{ test_n_way }}" >> grid_search_parameters.yaml'
     # Run the pipeline defined in the pipelines folder
-    - run-pipeline pipelines/run_experiment_grid.yaml -v grid_search_parameters.yaml
+    - run-pipeline pipelines/archives/06_14_experiment_grid.yaml -v grid_search_parameters.yaml

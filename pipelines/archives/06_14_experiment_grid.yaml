@@ -28,7 +28,7 @@ init:
           n_shot: *n_shot
           random_seed: *random_seed
           num_classes: 4412
-          stop_epoch: 2
+          stop_epoch: 400
           start_epoch: 0
           shallow: False
           resume: False
