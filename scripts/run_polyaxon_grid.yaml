@@ -16,9 +16,9 @@ hptuning:
 
   matrix:
     dataset:
-      values: [CUB]
+      values: [CUB, miniImageNet]
     method:
-      values: [protonet]
+      values: [baseline, baseline++, matchingnet, protonet, relationnet]
     n_shot:
       values: [5]
     train_n_way:
