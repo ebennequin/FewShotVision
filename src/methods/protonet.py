@@ -13,6 +13,15 @@ class ProtoNet(MetaTemplate):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def set_forward(self, x, is_feature=False):
+        '''
+        Computes classification scores for query data in x
+        Args:
+            x (torch.Tensor): shape (n_way, n_support+n_query, (dim)) input data
+            is_feature (bool): whether input data is an image (False) or a feature vector (True)
+
+        Returns:
+            torch.Tensor: shape(n_query*n_way, n_way), classification prediction for each query data
+        '''
         z_support, z_query = self.parse_feature(x, is_feature)
 
         z_support = z_support.contiguous()
@@ -24,6 +33,14 @@ class ProtoNet(MetaTemplate):
         return scores
 
     def set_forward_loss(self, x):
+        '''
+        Compute loss from classification of query data in x
+        Args:
+            x (torch.Tensor): shape (n_way, n_support+n_query, (dim)) input data
+
+        Returns:
+            torch.Tensor: shape(1), loss from classification
+        '''
         y_query = torch.from_numpy(np.repeat(range(self.n_way), self.n_query))
         y_query = Variable(y_query.cuda())
 

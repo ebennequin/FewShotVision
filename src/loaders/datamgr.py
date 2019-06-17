@@ -81,7 +81,9 @@ class SetDataManager(DataManager):
             aug (bool): whether or not to perform data augmentation on the dataset
 
         Returns:
-            DataLoader: data loader containing episodes sampled from the dataset
+            DataLoader: data loader containing episodes sampled from the dataset.
+            Each episode is a tuple composed of a torch.Tensor with shape (n_way, n_support+n_query, (image_dim))
+            and a torch.Tensor with shape (n_way, n_support+n_query) containing the associated labels.
         '''
         transform = self.trans_loader.get_composed_transform(aug)
         dataset = SetDataset(data_file, self.batch_size, transform)
