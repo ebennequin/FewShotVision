@@ -73,7 +73,7 @@ class Embedding(AbstractStep):
         )
 
     def apply(self, model_state):
-        set_and_print_random_seed(self.random_seed)
+        set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         if self.method in ['maml', 'maml_approx']:
             print("MAML doesn't support the step Embedding. Going on to the next step ...")

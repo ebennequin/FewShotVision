@@ -41,12 +41,14 @@ def path_to_step_output(dataset, backbone, method, output_dir=configs.save_dir):
         os.makedirs(checkpoint_dir)
     return checkpoint_dir
 
-def set_and_print_random_seed(random_seed):
+def set_and_print_random_seed(random_seed, save=False, checkpoint_dir='./'):
     '''
     Set and print numpy random seed, for reproducibility of the training,
     and set torch seed based on numpy random seed
     Args:
         random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+        save (bool): if True, the numpy random seed is saved in seeds.txt
+        checkpoint_dir (str): output folder where the seed is saved
     Returns:
         int: numpy random seed
 
@@ -57,7 +59,12 @@ def set_and_print_random_seed(random_seed):
     torch.manual_seed(np.random.randint(0, 2**32-1))
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    print('Random seed: ', random_seed)
+    prompt = 'Random seed : {}\n'.format(random_seed)
+    print(prompt)
+
+    if save:
+        with open(os.path.join(checkpoint_dir, 'seeds.txt'), 'a') as f:
+            f.write(prompt)
 
     return random_seed
 
