@@ -100,7 +100,7 @@ class MethodTraining(AbstractStep):
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
         '''
-        set_and_print_random_seed(self.random_seed)
+        set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         base_loader, val_loader, model = self._get_data_loaders_and_model()
 

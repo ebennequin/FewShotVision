@@ -93,7 +93,7 @@ class MethodEvaluation(AbstractStep):
         Returns:
             float: average accuracy on few shot classification tasks sampled from the evaluation dataset
         '''
-        set_and_print_random_seed(self.random_seed)
+        set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         acc_all = []
 
