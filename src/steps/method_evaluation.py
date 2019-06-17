@@ -15,6 +15,7 @@ from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
 from src.utils.io_utils import model_dict, path_to_step_output, set_and_print_random_seed
+from src.utils.utils import random_swap_numpy
 
 
 class MethodEvaluation(AbstractStep):
@@ -221,44 +222,10 @@ class MethodEvaluation(AbstractStep):
             z_all.append([np.squeeze(img_feat[perm_ids[i]]) for i in range(self.n_shot + self.n_query)])  # stack each batch
 
         z_all = np.array(z_all)
-        z_all = self._random_swap(z_all)
+        z_all = random_swap_numpy(z_all, self.n_swaps, self.n_shot)
         z_all = torch.from_numpy(z_all)
 
         return z_all
-
-    def _random_swap(self, classification_task):
-        '''
-        Apply self.n_swaps swaps randomly to the support set
-        Args:
-            classification_task (ndarray): shape=(test_n_way, self.n_shot + self.n_query,dim_of_features) one classification
-            task, which is composed of a support set and a query set
-
-        Returns:
-            ndarray: shape=(test_n_way, self.n_shot + self.n_query,dim_of_features) same classification task, with swaped
-            elements.
-        '''
-        result = classification_task.copy()
-        support_set = result[:, :self.n_shot]
-        for _ in range(self.n_swaps):
-            swaped_classes = np.random.choice(self.test_n_way, size=2, replace=False)
-            swaped_images = np.random.choice(self.n_shot, size=2, replace=True)
-            support_set_buffer = support_set[
-                swaped_classes[1],
-                swaped_images[1]
-            ].copy(), support_set[
-                swaped_classes[0],
-                swaped_images[0]
-            ].copy()
-            support_set[
-                swaped_classes[0],
-                swaped_images[0]
-            ], support_set[
-                swaped_classes[1],
-                swaped_images[1]
-            ] = support_set_buffer
-
-        return result
-
 
     def _load_model(self, model_state):
         '''
