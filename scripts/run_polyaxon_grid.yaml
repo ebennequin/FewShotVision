@@ -18,13 +18,15 @@ hptuning:
     dataset:
       values: [CUB, miniImageNet]
     method:
-      values: [baseline, baseline++, matchingnet, protonet, relationnet]
+      values: [matchingnet, protonet, relationnet]
     n_shot:
       values: [5]
     train_n_way:
-      values: [5, 10]
+      values: [5]
     test_n_way:
       values: [5]
+    n_swaps:
+      values: [3, 6]
 
 build:
   image: sicara/leto-stack:tf1.13.0rc0-gpu-pipeline0.7.1-chani0.0.8
@@ -47,5 +49,6 @@ run:
     - 'echo "dataset: {{ dataset }}" >> grid_search_parameters.yaml'
     - 'echo "train_n_way: {{ train_n_way }}" >> grid_search_parameters.yaml'
     - 'echo "test_n_way: {{ test_n_way }}" >> grid_search_parameters.yaml'
+    - 'echo "n_swaps: {{ n_swaps }}" >> grid_search_parameters.yaml'
     # Run the pipeline defined in the pipelines folder
-    - run-pipeline pipelines/archives/06_14_experiment_grid.yaml -v grid_search_parameters.yaml
+    - run-pipeline pipelines/archives/06_17_experiment_grid.yaml -v grid_search_parameters.yaml

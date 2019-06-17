@@ -104,7 +104,7 @@ class MAML(MetaTemplate):
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader),
                                                                         avg_loss / float(i + 1)))
 
-    def test_loop(self, test_loader, return_std=False):  # overwrite parrent function
+    def test_loop(self, test_loader, n_swaps=0, return_std=False):  # overwrite parrent function
         correct = 0
         count = 0
         acc_all = []
@@ -113,6 +113,7 @@ class MAML(MetaTemplate):
         for i, (x, _) in enumerate(test_loader):
             self.n_query = x.size(1) - self.n_support
             assert self.n_way == x.size(0), "MAML do not support way change"
+            x = random_swap_tensor(x, n_swaps, self.n_support)
             correct_this, count_this = self.correct(x)
             acc_all.append(correct_this / count_this * 100)
 

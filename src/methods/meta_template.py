@@ -97,11 +97,13 @@ class MetaTemplate(nn.Module):
                     loss=avg_loss/float(episode_index + 1)
                 ))
 
-    def test_loop(self, test_loader, record=None):
+    def test_loop(self, test_loader, n_swaps=0):
         '''
 
         Args:
             test_loader (DataLoader): loader of a given number of episodes
+            n_swaps (int): number of swaps between labels in the support set of each episode, in order to
+            test the robustness to label noise
 
         Returns:
             float: average accuracy on evaluation set
@@ -115,6 +117,7 @@ class MetaTemplate(nn.Module):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way = x.size(0)
+            x = random_swap_tensor(x, n_swaps, self.n_support)
             correct_this, count_this = self.correct(x)
             acc_all.append(correct_this / count_this * 100)
 
