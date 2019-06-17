@@ -36,6 +36,7 @@ init:
           optimizer: Adam
           learning_rate: 0.001
           n_episode: 100
+          n_swaps: 5
 
     embedding_flow:
       inputs: method_training_flow
