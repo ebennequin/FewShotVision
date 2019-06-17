@@ -40,6 +40,7 @@ class MethodTraining(AbstractStep):
             n_episode=100,
             random_seed=None,
             output_dir=configs.save_dir,
+            n_swaps=0,
     ):
         '''
         Args:
@@ -61,6 +62,7 @@ class MethodTraining(AbstractStep):
             n_episode (int): number of episodes per epoch during meta-training
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
+            n_swaps (int): number of swaps at each episode during meta-training
         '''
 
         self.dataset = dataset
@@ -80,6 +82,7 @@ class MethodTraining(AbstractStep):
         self.learning_rate = learning_rate
         self.n_episode = n_episode
         self.random_seed = random_seed
+        self.n_swaps = n_swaps
 
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
@@ -238,7 +241,6 @@ class MethodTraining(AbstractStep):
             base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug)
 
             test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
-            # TODO: if test_n_way!=train_n_way, then n_query must be different here
             val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
