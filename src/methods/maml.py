@@ -1,11 +1,12 @@
 # This code is modified from https://github.com/dragen1860/MAML-Pytorch and https://github.com/katerakelly/pytorch-maml 
 
-from src import backbones
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from src.methods.meta_template import MetaTemplate
 
+from src import backbones
+from src.methods.meta_template import MetaTemplate
+from src.utils.utils import random_swap_tensor
 
 class MAML(MetaTemplate):
     def __init__(self, model_func, n_way, n_support, approx=False):
@@ -72,7 +73,7 @@ class MAML(MetaTemplate):
 
         return loss
 
-    def train_loop(self, epoch, train_loader, optimizer):  # overwrite parrent function
+    def train_loop(self, epoch, train_loader, optimizer, n_swaps):  # overwrite parrent function
         print_freq = 10
         avg_loss = 0
         task_count = 0
@@ -83,6 +84,7 @@ class MAML(MetaTemplate):
         for i, (x, _) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             assert self.n_way == x.size(0), "MAML do not support way change"
+            x = random_swap_tensor(x, n_swaps, self.n_support)
 
             loss = self.set_forward_loss(x)
             avg_loss = avg_loss + loss.item()

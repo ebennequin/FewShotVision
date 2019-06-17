@@ -62,7 +62,8 @@ class MethodTraining(AbstractStep):
             n_episode (int): number of episodes per epoch during meta-training
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
-            n_swaps (int): number of swaps at each episode during meta-training
+            n_swaps (int): number of swaps between labels in the support set of each episode, in order to
+            test the robustness to label noise
         '''
 
         self.dataset = dataset
@@ -131,7 +132,7 @@ class MethodTraining(AbstractStep):
 
         for epoch in range(self.start_epoch, self.stop_epoch):
             model.train()
-            model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
+            model.train_loop(epoch, base_loader, optimizer, self.n_swaps)  # model are called by reference, no need to return
             model.eval()
 
             acc = model.test_loop(val_loader)
