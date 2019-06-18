@@ -14,7 +14,12 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, path_to_step_output, set_and_print_random_seed
+from src.utils.io_utils import (
+    model_dict,
+    path_to_step_output,
+    set_and_print_random_seed,
+    get_path_to_json
+)
 from src.utils.utils import random_swap_numpy
 
 
@@ -123,24 +128,13 @@ class MethodEvaluation(AbstractStep):
                 n_support=self.n_shot,
             )
 
-            if self.dataset == 'cross':
-                if split == 'base':
-                    loadfile = configs.data_dir['miniImageNet'] + 'all.json'
-                else:
-                    loadfile = configs.data_dir['CUB'] + split + '.json'
-            elif self.dataset == 'cross_char':
-                if split == 'base':
-                    loadfile = configs.data_dir['omniglot'] + 'noLatin.json'
-                else:
-                    loadfile = configs.data_dir['emnist'] + split + '.json'
-            else:
-                loadfile = configs.data_dir[self.dataset] + split + '.json'
+            path_to_data_file = get_path_to_json(self.dataset, self.split)
 
-            novel_loader = set_data_manager.get_data_loader(loadfile, aug=False)
+            novel_loader = set_data_manager.get_data_loader(path_to_data_file, aug=False)
             if self.adaptation:
                 model.task_update_num = 100  # We perform adaptation on MAML simply by updating more times.
             model.eval()
-            acc_mean, acc_std = model.test_loop(novel_loader, n_swaps=self.n_swaps, return_std=True)
+            acc_mean, acc_std = model.eval_loop(novel_loader, n_swaps=self.n_swaps, return_std=True)
 
         else:
             features_per_label = self._process_features(features_and_labels)
@@ -209,7 +203,7 @@ class MethodEvaluation(AbstractStep):
 
         Returns:
             torch.Tensor: shape(self.test_n_way, self.n_shot+self.n_query, feature_vector_dim) features vectors for
-            support and query, set by class, with self.n_swaps swaps in the label (cf _random_swap)
+            support and query, set by class, with self.n_swaps swaps in the label (cf random_swap_numpy)
 
         '''
         class_list = features_per_label.keys()

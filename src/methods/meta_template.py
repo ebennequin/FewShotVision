@@ -97,7 +97,7 @@ class MetaTemplate(nn.Module):
                     loss=avg_loss/float(episode_index + 1)
                 ))
 
-    def test_loop(self, test_loader, n_swaps=0):
+    def eval_loop(self, test_loader, n_swaps=0):
         '''
 
         Args:

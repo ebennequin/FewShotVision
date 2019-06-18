@@ -12,6 +12,7 @@ from src.utils.io_utils import (
     model_dict,
     path_to_step_output,
     set_and_print_random_seed,
+    get_path_to_json,
 )
 
 
@@ -147,20 +148,7 @@ class Embedding(AbstractStep):
         else:
             image_size = 224
 
-        # Defines path to data
-        split = self.split
-        if self.dataset == 'cross':
-            if split == 'base':
-                loadfile = configs.data_dir['miniImageNet'] + 'all.json'
-            else:
-                loadfile = configs.data_dir['CUB'] + split + '.json'
-        elif self.dataset == 'cross_char':
-            if split == 'base':
-                loadfile = configs.data_dir['omniglot'] + 'noLatin.json'
-            else:
-                loadfile = configs.data_dir['emnist'] + split + '.json'
-        else:
-            loadfile = configs.data_dir[self.dataset] + split + '.json'
+        path_to_data_file = get_path_to_json(self.dataset, self.split)
 
         # Defines output file for computed features
         #TODO no need for outfile anymore
@@ -172,7 +160,7 @@ class Embedding(AbstractStep):
 
         # Return data loader TODO: why do we do batches here ?
         datamgr = SimpleDataManager(image_size, batch_size=64)
-        data_loader = datamgr.get_data_loader(loadfile, aug=False, shallow=self.shallow)
+        data_loader = datamgr.get_data_loader(path_to_data_file, aug=False, shallow=self.shallow)
 
         dirname = os.path.dirname(outfile)
         if not os.path.isdir(dirname):

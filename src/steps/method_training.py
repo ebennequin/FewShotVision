@@ -12,7 +12,12 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, get_resume_file, path_to_step_output, set_and_print_random_seed
+from src.utils.io_utils import (
+    model_dict,
+    path_to_step_output,
+    set_and_print_random_seed,
+    get_path_to_json,
+)
 
 
 class MethodTraining(AbstractStep):
@@ -135,7 +140,7 @@ class MethodTraining(AbstractStep):
             model.train_loop(epoch, base_loader, optimizer, self.n_swaps)  # model are called by reference, no need to return
             model.eval()
 
-            acc = model.test_loop(val_loader, self.n_swaps)
+            acc = model.eval_loop(val_loader, self.n_swaps)
             # TODO: check that it makes sense to train baselines systematically for 400 epochs (and not validate)
             if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
                 print("best model! save...")
@@ -171,16 +176,8 @@ class MethodTraining(AbstractStep):
         Returns:
             tuple: a tuple of 3 elements containing the train/val data loaders and the model
         """
-        # Define path to data depending on dataset
-        if self.dataset == 'cross':
-            base_file = configs.data_dir['miniImageNet'] + 'all.json'
-            val_file = configs.data_dir['CUB'] + 'val.json'
-        elif self.dataset == 'cross_char':
-            base_file = configs.data_dir['omniglot'] + 'noLatin.json'
-            val_file = configs.data_dir['emnist'] + 'val.json'
-        else:
-            base_file = configs.data_dir[self.dataset] + 'base.json'
-            val_file = configs.data_dir[self.dataset] + 'val.json'
+        path_to_base_file = get_path_to_json(self.dataset, 'base')
+        path_to_val_file = get_path_to_json(self.dataset, 'val')
 
         # Define size of input image depending on backbone and dataset
         if 'Conv' in self.backbone:
@@ -213,9 +210,9 @@ class MethodTraining(AbstractStep):
         # Define data loaders and model
         if self.method in ['baseline', 'baseline++']:
             base_datamgr = SimpleDataManager(image_size, batch_size=16)
-            base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug, shallow=self.shallow)
+            base_loader = base_datamgr.get_data_loader(path_to_base_file, aug=self.train_aug, shallow=self.shallow)
             val_datamgr = SimpleDataManager(image_size, batch_size=64)
-            val_loader = val_datamgr.get_data_loader(val_file, aug=False)
+            val_loader = val_datamgr.get_data_loader(path_to_val_file, aug=False)
 
             if self.dataset == 'omniglot':
                 # TODO : change num_classes
@@ -239,11 +236,11 @@ class MethodTraining(AbstractStep):
                 n_episode=self.n_episode,
                 **train_few_shot_params,
             )
-            base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug)
+            base_loader = base_datamgr.get_data_loader(path_to_base_file, aug=self.train_aug)
 
             test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
             val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
-            val_loader = val_datamgr.get_data_loader(val_file, aug=False)
+            val_loader = val_datamgr.get_data_loader(path_to_val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
             if self.method == 'protonet':

@@ -41,6 +41,7 @@ def path_to_step_output(dataset, backbone, method, output_dir=configs.save_dir):
         os.makedirs(checkpoint_dir)
     return checkpoint_dir
 
+
 def set_and_print_random_seed(random_seed, save=False, checkpoint_dir='./'):
     '''
     Set and print numpy random seed, for reproducibility of the training,
@@ -67,6 +68,33 @@ def set_and_print_random_seed(random_seed, save=False, checkpoint_dir='./'):
             f.write(prompt)
 
     return random_seed
+
+
+def get_path_to_json(dataset, split):
+    '''
+
+    Args:
+        dataset (str):  which dataset to load
+        split (str): whether to use base, val or novel dataset
+
+    Returns:
+        str: path to JSON file
+    '''
+    if dataset == 'cross':
+        if split == 'base':
+            path_to_json_file = configs.data_dir['miniImageNet'] + 'all.json'
+        else:
+            path_to_json_file = configs.data_dir['CUB'] + split + '.json'
+    elif dataset == 'cross_char':
+        if split == 'base':
+            path_to_json_file = configs.data_dir['omniglot'] + 'noLatin.json'
+        else:
+            path_to_json_file = configs.data_dir['emnist'] + split + '.json'
+    else:
+        path_to_json_file = configs.data_dir[dataset] + split + '.json'
+
+    return path_to_json_file
+
 
 def get_assigned_file(checkpoint_dir, num):
     # TODO: returns path to .tar file corresponding to epoch num in checkpoint_dir (even if it doesn't exist)
