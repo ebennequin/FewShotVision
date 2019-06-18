@@ -188,24 +188,7 @@ class MethodTraining(AbstractStep):
         else:
             image_size = 224
 
-        # Define number of epochs depending on method, dataset and K-shot (if not specified in script arguments)
-        if self.stop_epoch == -1:
-            if self.method in ['baseline', 'baseline++']:
-                if self.dataset in ['omniglot', 'cross_char']:
-                    self.stop_epoch = 5
-                elif self.dataset in ['CUB']:
-                    self.stop_epoch = 200  # This is different as stated in the open-review paper. However, using 400 epoch in baseline actually lead to over-fitting
-                elif self.dataset in ['miniImageNet', 'cross']:
-                    self.stop_epoch = 400
-                else:
-                    self.stop_epoch = 400  # default
-            else:  # meta-learning methods
-                if self.n_shot == 1:
-                    self.stop_epoch = 600
-                elif self.n_shot == 5:
-                    self.stop_epoch = 400
-                else:
-                    self.stop_epoch = 600  # default
+        self._set_default_epochs()
 
         # Define data loaders and model
         if self.method in ['baseline', 'baseline++']:
@@ -310,3 +293,26 @@ class MethodTraining(AbstractStep):
             val_loader,
             model,
         )
+
+    def _set_default_epochs(self):
+        '''
+        Defines the number of epoch if stop_epoch has been initialized to -1, with arbitrary values depending
+        on the method and dataset
+        '''
+        if self.stop_epoch == -1:
+            if self.method in ['baseline', 'baseline++']:
+                if self.dataset in ['omniglot', 'cross_char']:
+                    self.stop_epoch = 5
+                elif self.dataset in ['CUB']:
+                    self.stop_epoch = 200
+                elif self.dataset in ['miniImageNet', 'cross']:
+                    self.stop_epoch = 400
+                else:
+                    self.stop_epoch = 400
+            else:
+                if self.n_shot == 1:
+                    self.stop_epoch = 600
+                elif self.n_shot == 5:
+                    self.stop_epoch = 400
+                else:
+                    self.stop_epoch = 600
