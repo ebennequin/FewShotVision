@@ -12,6 +12,7 @@ from src.utils.io_utils import (
     model_dict,
     path_to_step_output,
     set_and_print_random_seed,
+    get_path_to_json,
 )
 
 
@@ -147,20 +148,7 @@ class Embedding(AbstractStep):
         else:
             image_size = 224
 
-        # Defines path to data
-        split = self.split
-        if self.dataset == 'cross':
-            if split == 'base':
-                loadfile = configs.data_dir['miniImageNet'] + 'all.json'
-            else:
-                loadfile = configs.data_dir['CUB'] + split + '.json'
-        elif self.dataset == 'cross_char':
-            if split == 'base':
-                loadfile = configs.data_dir['omniglot'] + 'noLatin.json'
-            else:
-                loadfile = configs.data_dir['emnist'] + split + '.json'
-        else:
-            loadfile = configs.data_dir[self.dataset] + split + '.json'
+        loadfile = get_path_to_json(self.dataset, self.split)
 
         # Defines output file for computed features
         #TODO no need for outfile anymore

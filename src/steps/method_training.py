@@ -12,7 +12,12 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, get_resume_file, path_to_step_output, set_and_print_random_seed
+from src.utils.io_utils import (
+    model_dict,
+    path_to_step_output,
+    set_and_print_random_seed,
+    get_path_to_json,
+)
 
 
 class MethodTraining(AbstractStep):
@@ -171,16 +176,8 @@ class MethodTraining(AbstractStep):
         Returns:
             tuple: a tuple of 3 elements containing the train/val data loaders and the model
         """
-        # Define path to data depending on dataset
-        if self.dataset == 'cross':
-            base_file = configs.data_dir['miniImageNet'] + 'all.json'
-            val_file = configs.data_dir['CUB'] + 'val.json'
-        elif self.dataset == 'cross_char':
-            base_file = configs.data_dir['omniglot'] + 'noLatin.json'
-            val_file = configs.data_dir['emnist'] + 'val.json'
-        else:
-            base_file = configs.data_dir[self.dataset] + 'base.json'
-            val_file = configs.data_dir[self.dataset] + 'val.json'
+        base_file = get_path_to_json(self.dataset, 'base')
+        val_file = get_path_to_json(self.dataset, 'val')
 
         # Define size of input image depending on backbone and dataset
         if 'Conv' in self.backbone:

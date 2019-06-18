@@ -14,7 +14,12 @@ from src.methods import MatchingNet
 from src.methods import RelationNet
 from src.methods.maml import MAML
 from src.utils import configs
-from src.utils.io_utils import model_dict, path_to_step_output, set_and_print_random_seed
+from src.utils.io_utils import (
+    model_dict,
+    path_to_step_output,
+    set_and_print_random_seed,
+    get_path_to_json
+)
 from src.utils.utils import random_swap_numpy
 
 
@@ -123,18 +128,7 @@ class MethodEvaluation(AbstractStep):
                 n_support=self.n_shot,
             )
 
-            if self.dataset == 'cross':
-                if split == 'base':
-                    loadfile = configs.data_dir['miniImageNet'] + 'all.json'
-                else:
-                    loadfile = configs.data_dir['CUB'] + split + '.json'
-            elif self.dataset == 'cross_char':
-                if split == 'base':
-                    loadfile = configs.data_dir['omniglot'] + 'noLatin.json'
-                else:
-                    loadfile = configs.data_dir['emnist'] + split + '.json'
-            else:
-                loadfile = configs.data_dir[self.dataset] + split + '.json'
+            loadfile = get_path_to_json(self.dataset, self.split)
 
             novel_loader = set_data_manager.get_data_loader(loadfile, aug=False)
             if self.adaptation:
