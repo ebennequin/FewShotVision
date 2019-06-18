@@ -192,10 +192,10 @@ class MethodTraining(AbstractStep):
 
         # Define data loaders and model
         if self.method in ['baseline', 'baseline++']:
-            base_datamgr = SimpleDataManager(image_size, batch_size=16)
-            base_loader = base_datamgr.get_data_loader(path_to_base_file, aug=self.train_aug, shallow=self.shallow)
-            val_datamgr = SimpleDataManager(image_size, batch_size=64)
-            val_loader = val_datamgr.get_data_loader(path_to_val_file, aug=False)
+            base_data_manager = SimpleDataManager(image_size, batch_size=16)
+            base_loader = base_data_manager.get_data_loader(path_to_base_file, aug=self.train_aug, shallow=self.shallow)
+            val_data_manager = SimpleDataManager(image_size, batch_size=64)
+            val_loader = val_data_manager.get_data_loader(path_to_val_file, aug=False)
 
             if self.dataset == 'omniglot':
                 # TODO : change num_classes
@@ -213,17 +213,17 @@ class MethodTraining(AbstractStep):
                 16 * self.test_n_way / self.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
             train_few_shot_params = dict(n_way=self.train_n_way, n_support=self.n_shot)
-            base_datamgr = SetDataManager(
+            base_data_manager = SetDataManager(
                 image_size,
                 n_query=n_query,
                 n_episode=self.n_episode,
                 **train_few_shot_params,
             )
-            base_loader = base_datamgr.get_data_loader(path_to_base_file, aug=self.train_aug)
+            base_loader = base_data_manager.get_data_loader(path_to_base_file, aug=self.train_aug)
 
             test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
-            val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
-            val_loader = val_datamgr.get_data_loader(path_to_val_file, aug=False)
+            val_data_manager = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
+            val_loader = val_data_manager.get_data_loader(path_to_val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
             if self.method == 'protonet':
