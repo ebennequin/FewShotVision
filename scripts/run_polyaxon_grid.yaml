@@ -18,7 +18,7 @@ hptuning:
     dataset:
       values: [CUB, miniImageNet]
     method:
-      values: [matchingnet, protonet, relationnet]
+      values: [maml_approx]
     n_shot:
       values: [5]
     train_n_way:

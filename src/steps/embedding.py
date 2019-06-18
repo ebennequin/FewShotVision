@@ -6,7 +6,7 @@ from pipeline.steps import AbstractStep
 from torch.autograd import Variable
 
 from src import backbones
-from src.loaders.datamgr import SimpleDataManager
+from src.loaders.data_managers import SimpleDataManager
 from src.utils import configs
 from src.utils.io_utils import (
     model_dict,

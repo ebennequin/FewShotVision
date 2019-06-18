@@ -5,7 +5,7 @@ from pipeline.steps import AbstractStep
 import torch
 
 from src import backbones
-from src.loaders.datamgr import SimpleDataManager, SetDataManager
+from src.loaders.data_managers import SimpleDataManager, SetDataManager
 from src.methods import BaselineTrain
 from src.methods import ProtoNet
 from src.methods import MatchingNet
@@ -188,31 +188,14 @@ class MethodTraining(AbstractStep):
         else:
             image_size = 224
 
-        # Define number of epochs depending on method, dataset and K-shot (if not specified in script arguments)
-        if self.stop_epoch == -1:
-            if self.method in ['baseline', 'baseline++']:
-                if self.dataset in ['omniglot', 'cross_char']:
-                    self.stop_epoch = 5
-                elif self.dataset in ['CUB']:
-                    self.stop_epoch = 200  # This is different as stated in the open-review paper. However, using 400 epoch in baseline actually lead to over-fitting
-                elif self.dataset in ['miniImageNet', 'cross']:
-                    self.stop_epoch = 400
-                else:
-                    self.stop_epoch = 400  # default
-            else:  # meta-learning methods
-                if self.n_shot == 1:
-                    self.stop_epoch = 600
-                elif self.n_shot == 5:
-                    self.stop_epoch = 400
-                else:
-                    self.stop_epoch = 600  # default
+        self._set_default_epochs()
 
         # Define data loaders and model
         if self.method in ['baseline', 'baseline++']:
-            base_datamgr = SimpleDataManager(image_size, batch_size=16)
-            base_loader = base_datamgr.get_data_loader(path_to_base_file, aug=self.train_aug, shallow=self.shallow)
-            val_datamgr = SimpleDataManager(image_size, batch_size=64)
-            val_loader = val_datamgr.get_data_loader(path_to_val_file, aug=False)
+            base_data_manager = SimpleDataManager(image_size, batch_size=16)
+            base_loader = base_data_manager.get_data_loader(path_to_base_file, aug=self.train_aug, shallow=self.shallow)
+            val_data_manager = SimpleDataManager(image_size, batch_size=64)
+            val_loader = val_data_manager.get_data_loader(path_to_val_file, aug=False)
 
             if self.dataset == 'omniglot':
                 # TODO : change num_classes
@@ -230,17 +213,17 @@ class MethodTraining(AbstractStep):
                 16 * self.test_n_way / self.train_n_way))  # if test_n_way is smaller than train_n_way, reduce n_query to keep batch size small
 
             train_few_shot_params = dict(n_way=self.train_n_way, n_support=self.n_shot)
-            base_datamgr = SetDataManager(
+            base_data_manager = SetDataManager(
                 image_size,
                 n_query=n_query,
                 n_episode=self.n_episode,
                 **train_few_shot_params,
             )
-            base_loader = base_datamgr.get_data_loader(path_to_base_file, aug=self.train_aug)
+            base_loader = base_data_manager.get_data_loader(path_to_base_file, aug=self.train_aug)
 
             test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
-            val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
-            val_loader = val_datamgr.get_data_loader(path_to_val_file, aug=False)
+            val_data_manager = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
+            val_loader = val_data_manager.get_data_loader(path_to_val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor
 
             if self.method == 'protonet':
@@ -310,3 +293,26 @@ class MethodTraining(AbstractStep):
             val_loader,
             model,
         )
+
+    def _set_default_epochs(self):
+        '''
+        Defines the number of epoch if stop_epoch has been initialized to -1, with arbitrary values depending
+        on the method and dataset
+        '''
+        if self.stop_epoch == -1:
+            if self.method in ['baseline', 'baseline++']:
+                if self.dataset in ['omniglot', 'cross_char']:
+                    self.stop_epoch = 5
+                elif self.dataset in ['CUB']:
+                    self.stop_epoch = 200
+                elif self.dataset in ['miniImageNet', 'cross']:
+                    self.stop_epoch = 400
+                else:
+                    self.stop_epoch = 400
+            else:
+                if self.n_shot == 1:
+                    self.stop_epoch = 600
+                elif self.n_shot == 5:
+                    self.stop_epoch = 400
+                else:
+                    self.stop_epoch = 600
