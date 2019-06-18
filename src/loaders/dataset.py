@@ -8,26 +8,32 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
-identity = lambda x: x
-
 
 # TODO: why not extend torch.utils.data.Dataset ?
 class SimpleDataset:
-    def __init__(self, data_file, transform, target_transform=identity, shallow=False):
+    '''
+    Defines a regular dataset of images
+    '''
+    def __init__(self, data_file, transform, shallow=False):
+        '''
+
+        Args:
+            data_file (str): path to JSON file defining the data
+            transform (torchvision.transforms.Compose): transformations to be applied to the images
+            shallow (bool): whether to create only a small dataset (for quick code testing)
+        '''
         with open(data_file, 'r') as f:
             self.meta = json.load(f)
         if shallow:  # We return a reduced dataset
             self.meta['image_names'] = self.meta['image_names'][:256]  # TODO: shallow not applied to SetDataset
             self.meta['image_labels'] = self.meta['image_labels'][:256]
         self.transform = transform
-        self.target_transform = target_transform
 
     def __getitem__(self, i):
         image_path = os.path.join(self.meta['image_names'][i])
         img = Image.open(image_path).convert('RGB')
         img = self.transform(img)
-        target = self.target_transform(self.meta['image_labels'][i])
-        return img, target
+        return img, self.meta['image_labels'][i]
 
     def __len__(self):
         return len(self.meta['image_names'])
@@ -39,6 +45,13 @@ class SetDataset:
     Item of index i is a torch.utils.DataLoader object constructed from the SubDataset corresponding to label i.
     '''
     def __init__(self, data_file, batch_size, transform):
+        '''
+
+        Args:
+            data_file (str): path to JSON file defining the data
+            batch_size (int): number of images per class in an episode
+            transform (torchvision.transforms.Compose): transformations to be applied to the images
+        '''
         with open(data_file, 'r') as f:
             self.meta = json.load(f)
 
@@ -68,27 +81,23 @@ class SetDataset:
 
 
 class SubDataset:
-    def __init__(self, images_list, label, transform=transforms.ToTensor(),
-                 target_transform=identity):  # TODO: why this assignment to transform
+    def __init__(self, images_list, label, transform=transforms.ToTensor()):
         '''
         Defines the dataset composed by the images of a label
         Args:
             images_list (list): contains the paths to the images
             label (int): original label of the images
             transform (torchvision.transforms.Compose): transformations to be applied to the images
-            target_transform: transformation to be applied to the label
         '''
         self.images_list = images_list
         self.label = label
         self.transform = transform
-        self.target_transform = target_transform
 
     def __getitem__(self, i):
         image_path = os.path.join(self.images_list[i])
         img = Image.open(image_path).convert('RGB')
         img = self.transform(img)
-        target = self.target_transform(self.label)
-        return img, target
+        return img, self.label
 
     def __len__(self):
         return len(self.images_list)
