@@ -82,18 +82,18 @@ def get_path_to_json(dataset, split):
     '''
     if dataset == 'cross':
         if split == 'base':
-            loadfile = configs.data_dir['miniImageNet'] + 'all.json'
+            path_to_json_file = configs.data_dir['miniImageNet'] + 'all.json'
         else:
-            loadfile = configs.data_dir['CUB'] + split + '.json'
+            path_to_json_file = configs.data_dir['CUB'] + split + '.json'
     elif dataset == 'cross_char':
         if split == 'base':
-            loadfile = configs.data_dir['omniglot'] + 'noLatin.json'
+            path_to_json_file = configs.data_dir['omniglot'] + 'noLatin.json'
         else:
-            loadfile = configs.data_dir['emnist'] + split + '.json'
+            path_to_json_file = configs.data_dir['emnist'] + split + '.json'
     else:
-        loadfile = configs.data_dir[dataset] + split + '.json'
+        path_to_json_file = configs.data_dir[dataset] + split + '.json'
 
-    return loadfile
+    return path_to_json_file
 
 
 def get_assigned_file(checkpoint_dir, num):

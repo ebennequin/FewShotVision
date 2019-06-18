@@ -148,7 +148,7 @@ class Embedding(AbstractStep):
         else:
             image_size = 224
 
-        loadfile = get_path_to_json(self.dataset, self.split)
+        path_to_data_file = get_path_to_json(self.dataset, self.split)
 
         # Defines output file for computed features
         #TODO no need for outfile anymore
@@ -160,7 +160,7 @@ class Embedding(AbstractStep):
 
         # Return data loader TODO: why do we do batches here ?
         datamgr = SimpleDataManager(image_size, batch_size=64)
-        data_loader = datamgr.get_data_loader(loadfile, aug=False, shallow=self.shallow)
+        data_loader = datamgr.get_data_loader(path_to_data_file, aug=False, shallow=self.shallow)
 
         dirname = os.path.dirname(outfile)
         if not os.path.isdir(dirname):

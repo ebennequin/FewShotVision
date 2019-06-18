@@ -128,9 +128,9 @@ class MethodEvaluation(AbstractStep):
                 n_support=self.n_shot,
             )
 
-            loadfile = get_path_to_json(self.dataset, self.split)
+            path_to_data_file = get_path_to_json(self.dataset, self.split)
 
-            novel_loader = set_data_manager.get_data_loader(loadfile, aug=False)
+            novel_loader = set_data_manager.get_data_loader(path_to_data_file, aug=False)
             if self.adaptation:
                 model.task_update_num = 100  # We perform adaptation on MAML simply by updating more times.
             model.eval()
@@ -203,7 +203,7 @@ class MethodEvaluation(AbstractStep):
 
         Returns:
             torch.Tensor: shape(self.test_n_way, self.n_shot+self.n_query, feature_vector_dim) features vectors for
-            support and query, set by class, with self.n_swaps swaps in the label (cf _random_swap)
+            support and query, set by class, with self.n_swaps swaps in the label (cf random_swap_numpy)
 
         '''
         class_list = features_per_label.keys()

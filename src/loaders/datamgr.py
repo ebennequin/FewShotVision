@@ -44,7 +44,7 @@ class TransformLoader:
 
 class DataManager:
     @abstractmethod
-    def get_data_loader(self, data_file, aug):
+    def get_data_loader(self, path_to_data_file, aug):
         pass
 
 
@@ -54,9 +54,9 @@ class SimpleDataManager(DataManager):
         self.batch_size = batch_size
         self.trans_loader = TransformLoader(image_size)
 
-    def get_data_loader(self, data_file, aug, shallow=False):  # parameters that would change on train/val set
+    def get_data_loader(self, path_to_data_file, aug, shallow=False):  # parameters that would change on train/val set
         transform = self.trans_loader.get_composed_transform(aug)
-        dataset = SimpleDataset(data_file, transform, shallow=shallow)
+        dataset = SimpleDataset(path_to_data_file, transform, shallow=shallow)
         data_loader_params = dict(batch_size=self.batch_size, shuffle=True, num_workers=12, pin_memory=True)
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
 
@@ -73,11 +73,11 @@ class SetDataManager(DataManager):
 
         self.trans_loader = TransformLoader(image_size)
 
-    def get_data_loader(self, data_file, aug):  # parameters that would change on train/val set
+    def get_data_loader(self, path_to_data_file, aug):  # parameters that would change on train/val set
         '''
 
         Args:
-            data_file (str): path to JSON file describing the data
+            path_to_data_file (str): path to JSON file describing the data
             aug (bool): whether or not to perform data augmentation on the dataset
 
         Returns:
@@ -86,7 +86,7 @@ class SetDataManager(DataManager):
             and a torch.Tensor with shape (n_way, n_support+n_query) containing the associated labels.
         '''
         transform = self.trans_loader.get_composed_transform(aug)
-        dataset = SetDataset(data_file, self.batch_size, transform)
+        dataset = SetDataset(path_to_data_file, self.batch_size, transform)
         sampler = EpisodicBatchSampler(len(dataset), self.n_way, self.n_episode)
         data_loader_params = dict(batch_sampler=sampler, num_workers=12, pin_memory=True)
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
