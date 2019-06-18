@@ -7,7 +7,7 @@ import torch.optim
 import torch.utils.data.sampler
 
 from src import backbones
-from src.loaders.datamgr import SetDataManager
+from src.loaders.data_managers import SetDataManager
 from src.methods import BaselineFinetune
 from src.methods import ProtoNet
 from src.methods import MatchingNet

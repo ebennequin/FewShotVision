@@ -5,7 +5,7 @@ from pipeline.steps import AbstractStep
 import torch
 
 from src import backbones
-from src.loaders.datamgr import SimpleDataManager, SetDataManager
+from src.loaders.data_managers import SimpleDataManager, SetDataManager
 from src.methods import BaselineTrain
 from src.methods import ProtoNet
 from src.methods import MatchingNet
