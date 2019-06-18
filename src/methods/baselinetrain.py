@@ -44,6 +44,6 @@ class BaselineTrain(nn.Module):
                 #print(optimizer.state_dict()['param_groups'][0]['lr'])
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)  ))
                      
-    def test_loop(self, val_loader, n_swaps):
+    def eval_loop(self, val_loader, n_swaps):
         return -1 #no validation, just save model during iteration
 

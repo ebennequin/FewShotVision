@@ -140,7 +140,7 @@ class MethodTraining(AbstractStep):
             model.train_loop(epoch, base_loader, optimizer, self.n_swaps)  # model are called by reference, no need to return
             model.eval()
 
-            acc = model.test_loop(val_loader, self.n_swaps)
+            acc = model.eval_loop(val_loader, self.n_swaps)
             # TODO: check that it makes sense to train baselines systematically for 400 epochs (and not validate)
             if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
                 print("best model! save...")
