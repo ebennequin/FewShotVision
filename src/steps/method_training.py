@@ -40,6 +40,7 @@ class MethodTraining(AbstractStep):
             n_episode=100,
             random_seed=None,
             output_dir=configs.save_dir,
+            n_swaps=0,
     ):
         '''
         Args:
@@ -61,6 +62,8 @@ class MethodTraining(AbstractStep):
             n_episode (int): number of episodes per epoch during meta-training
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
+            n_swaps (int): number of swaps between labels in the support set of each episode, in order to
+            test the robustness to label noise
         '''
 
         self.dataset = dataset
@@ -80,6 +83,7 @@ class MethodTraining(AbstractStep):
         self.learning_rate = learning_rate
         self.n_episode = n_episode
         self.random_seed = random_seed
+        self.n_swaps = n_swaps
 
         if self.dataset in ['omniglot', 'cross_char']:
             assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
@@ -128,10 +132,10 @@ class MethodTraining(AbstractStep):
 
         for epoch in range(self.start_epoch, self.stop_epoch):
             model.train()
-            model.train_loop(epoch, base_loader, optimizer)  # model are called by reference, no need to return
+            model.train_loop(epoch, base_loader, optimizer, self.n_swaps)  # model are called by reference, no need to return
             model.eval()
 
-            acc = model.test_loop(val_loader)
+            acc = model.test_loop(val_loader, self.n_swaps)
             # TODO: check that it makes sense to train baselines systematically for 400 epochs (and not validate)
             if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
                 print("best model! save...")
@@ -238,7 +242,6 @@ class MethodTraining(AbstractStep):
             base_loader = base_datamgr.get_data_loader(base_file, aug=self.train_aug)
 
             test_few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
-            # TODO: if test_n_way!=train_n_way, then n_query must be different here
             val_datamgr = SetDataManager(image_size, n_query=n_query, **test_few_shot_params)
             val_loader = val_datamgr.get_data_loader(val_file, aug=False)
             # a batch for SetDataManager: a [n_way, n_support + n_query, dim, w, h] tensor

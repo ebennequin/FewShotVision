@@ -1,8 +1,10 @@
+from abc import abstractmethod
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import numpy as np
-from abc import abstractmethod
+
+from src.utils.utils import random_swap_tensor
 
 
 class MetaTemplate(nn.Module):
@@ -14,6 +16,8 @@ class MetaTemplate(nn.Module):
             n_way (int): number of classes in a classification task
             n_support (int): number of labeled examples per class in the support set
             change_way (bool): allow n_way to be different in training and evaluation
+            n_swaps (int): number of swaps at each episode during meta-training
+
         '''
         super(MetaTemplate, self).__init__()
         self.n_way = n_way
@@ -60,13 +64,15 @@ class MetaTemplate(nn.Module):
         return float(top1_correct), len(y_query)
 
     #TODO: is this always the same images in the episodes ?
-    def train_loop(self, epoch, train_loader, optimizer):
+    def train_loop(self, epoch, train_loader, optimizer, n_swaps):
         '''
 
         Args:
             epoch (int): current epoch
             train_loader (DataLoader): loader of a given number of episodes
             optimizer (torch.optim.Optimizer): model optimizer
+            n_swaps (int): number of swaps between labels in the support set of each episode, in order to
+            test the robustness to label noise
 
         '''
         print_freq = 10
@@ -76,6 +82,7 @@ class MetaTemplate(nn.Module):
             self.n_query = episode.size(1) - self.n_support
             if self.change_way:
                 self.n_way = episode.size(0)
+            episode = random_swap_tensor(episode, n_swaps, self.n_support)
             optimizer.zero_grad()
             loss = self.set_forward_loss(episode)
             loss.backward()
@@ -90,11 +97,13 @@ class MetaTemplate(nn.Module):
                     loss=avg_loss/float(episode_index + 1)
                 ))
 
-    def test_loop(self, test_loader, record=None):
+    def test_loop(self, test_loader, n_swaps=0):
         '''
 
         Args:
             test_loader (DataLoader): loader of a given number of episodes
+            n_swaps (int): number of swaps between labels in the support set of each episode, in order to
+            test the robustness to label noise
 
         Returns:
             float: average accuracy on evaluation set
@@ -108,6 +117,7 @@ class MetaTemplate(nn.Module):
             self.n_query = x.size(1) - self.n_support
             if self.change_way:
                 self.n_way = x.size(0)
+            x = random_swap_tensor(x, n_swaps, self.n_support)
             correct_this, count_this = self.correct(x)
             acc_all.append(correct_this / count_this * 100)
 

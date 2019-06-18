@@ -28,7 +28,7 @@ class BaselineTrain(nn.Module):
         y = Variable(y.cuda())
         return self.loss_fn(scores, y )
     
-    def train_loop(self, epoch, train_loader, optimizer):
+    def train_loop(self, epoch, train_loader, optimizer, n_swaps):
         print_freq = 10
         avg_loss=0
 
@@ -44,6 +44,6 @@ class BaselineTrain(nn.Module):
                 #print(optimizer.state_dict()['param_groups'][0]['lr'])
                 print('Epoch {:d} | Batch {:d}/{:d} | Loss {:f}'.format(epoch, i, len(train_loader), avg_loss/float(i+1)  ))
                      
-    def test_loop(self, val_loader):
+    def test_loop(self, val_loader, n_swaps):
         return -1 #no validation, just save model during iteration
 

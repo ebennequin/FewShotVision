@@ -31,7 +31,8 @@ class TestEvaluation:
             backbone=backbone,
             method=method,
             train_aug=True,
-            n_iter=2
+            n_iter=2,
+            n_swaps=2,
         )
 
         path_to_model = os.path.join(self.current_dir, path_to_step_output(dataset, backbone, method, 'tests_data'), '0.tar')
