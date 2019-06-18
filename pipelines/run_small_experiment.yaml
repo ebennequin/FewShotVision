@@ -2,11 +2,11 @@
 variables:
   dataset: &dataset CUB
   backbone: &backbone Conv4
-  method: &method protonet
+  method: &method maml_approx
   train_aug: &train_aug True
   train_n_way: &train_n_way 5
   test_n_way: &test_n_way 5
-  n_shot: &n_shot 1
+  n_shot: &n_shot 5
   split: &split novel
   save_iter: &save_iter -1
   n_swaps: &n_swaps 3

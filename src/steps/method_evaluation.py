@@ -140,7 +140,7 @@ class MethodEvaluation(AbstractStep):
             if self.adaptation:
                 model.task_update_num = 100  # We perform adaptation on MAML simply by updating more times.
             model.eval()
-            acc_mean, acc_std = model.test_loop(novel_loader, return_std=True)
+            acc_mean, acc_std = model.test_loop(novel_loader, n_swaps=self.n_swaps, return_std=True)
 
         else:
             features_per_label = self._process_features(features_and_labels)
