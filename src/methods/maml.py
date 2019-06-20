@@ -22,6 +22,14 @@ class MAML(MetaTemplate):
         self.approx = approx  # first order approx.
 
     def forward(self, x):
+        '''
+        Computes the classification prediction for input data
+        Args:
+            x (torch.Tensor): shape (number_of_images, dim_of_images) input data
+
+        Returns:
+            torch.Tensor: shape (number_of_images, n_way) prediction
+        '''
         out = self.feature.forward(x)
         scores = self.classifier.forward(out)
         return scores
@@ -29,11 +37,9 @@ class MAML(MetaTemplate):
     def set_forward(self, x, is_feature=False):
         assert is_feature == False, 'MAML do not support fixed feature'
         x = x.cuda()
-        x_a_i = x[:, :self.n_support, :, :, :].contiguous().view(self.n_way * self.n_support,
-                                                                     *x.size()[2:])  # support data
-        x_b_i = x[:, self.n_support:, :, :, :].contiguous().view(self.n_way * self.n_query,
-                                                                     *x.size()[2:])  # query data
-        y_a_i = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()  # label for support data
+        support_set = x[:, :self.n_support, :, :, :].contiguous().view(self.n_way * self.n_support, *x.size()[2:])
+        query_set = x[:, self.n_support:, :, :, :].contiguous().view(self.n_way * self.n_query, *x.size()[2:])
+        support_set_labels = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()
 
         fast_parameters = list(self.parameters())  # the first gradient calcuated in line 45 is based on original weight
         for weight in self.parameters():
@@ -41,14 +47,13 @@ class MAML(MetaTemplate):
         self.zero_grad()
 
         for task_step in range(self.task_update_num):
-            scores = self.forward(x_a_i)
-            set_loss = self.loss_fn(scores, y_a_i)
+            scores = self.forward(support_set)
+            set_loss = self.loss_fn(scores, support_set_labels)
             grad = torch.autograd.grad(set_loss, fast_parameters,
                                        create_graph=True)  # build full graph support gradient of gradient
             if self.approx:
                 grad = [g.detach() for g in
                         grad]  # do not calculate gradient of gradient if using first order approximation
-            # TODO: first order approximation should hold only when task_update_num is small
             fast_parameters = []
             for k, weight in enumerate(self.parameters()):
                 # for usage of weight.fast, please see Linear_fw, Conv_fw in backbones.py
@@ -60,7 +65,7 @@ class MAML(MetaTemplate):
                 fast_parameters.append(
                     weight.fast)  # gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
 
-        scores = self.forward(x_b_i)
+        scores = self.forward(query_set)
         return scores
 
     def set_forward_adaptation(self, x, is_feature=False):  # overwrite parrent function
@@ -68,19 +73,28 @@ class MAML(MetaTemplate):
 
     def set_forward_loss(self, x):
         scores = self.set_forward(x, is_feature=False)
-        y_b_i = torch.from_numpy(np.repeat(range(self.n_way), self.n_query)).cuda()
-        loss = self.loss_fn(scores, y_b_i)
+        query_set_labels = torch.from_numpy(np.repeat(range(self.n_way), self.n_query)).cuda()
+        loss = self.loss_fn(scores, query_set_labels)
 
         return loss
 
-    def train_loop(self, epoch, train_loader, optimizer, n_swaps):  # overwrite parrent function
+    def train_loop(self, epoch, train_loader, optimizer, n_swaps):
+        '''
+        Executes one training epoch. This overwrites the parent function in MetaTemplate.
+        Args:
+            epoch (int): current epoch
+            train_loader (DataLoader): loader of a given number of episodes
+            optimizer (torch.optim.Optimizer): model optimizer
+            n_swaps (int): number of swaps between labels in the support set of each episode, in order to
+            test the robustness to label noise
+
+        '''
         print_freq = 10
         avg_loss = 0
         task_count = 0
         loss_all = []
         optimizer.zero_grad()
 
-        # train
         for i, (x, _) in enumerate(train_loader):
             self.n_query = x.size(1) - self.n_support
             assert self.n_way == x.size(0), "MAML do not support way change"

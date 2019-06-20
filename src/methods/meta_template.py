@@ -66,7 +66,7 @@ class MetaTemplate(nn.Module):
     #TODO: is this always the same images in the episodes ?
     def train_loop(self, epoch, train_loader, optimizer, n_swaps):
         '''
-
+        Executes one training epoch
         Args:
             epoch (int): current epoch
             train_loader (DataLoader): loader of a given number of episodes
