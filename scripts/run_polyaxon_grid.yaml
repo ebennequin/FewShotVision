@@ -16,7 +16,7 @@ hptuning:
 
   matrix:
     dataset:
-      values: [CUB, miniImageNet]
+      values: [miniImageNet]
     method:
       values: [maml_approx]
     n_shot:
