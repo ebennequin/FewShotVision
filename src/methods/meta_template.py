@@ -16,7 +16,6 @@ class MetaTemplate(nn.Module):
             n_way (int): number of classes in a classification task
             n_support (int): number of labeled examples per class in the support set
             change_way (bool): allow n_way to be different in training and evaluation
-            n_swaps (int): number of swaps at each episode during meta-training
 
         '''
         super(MetaTemplate, self).__init__()
