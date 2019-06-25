@@ -28,7 +28,7 @@ class YOLOMAML(nn.Module):
             task_update_num (int): number of updates inside each episode
             train_lr (float): learning rate for intra-task updates
         '''
-        super(MAML, self).__init__()
+        super(YOLOMAML, self).__init__()
 
         self.loss_fn = lambda loss, dummy: loss
 
@@ -51,9 +51,7 @@ class YOLOMAML(nn.Module):
         Returns:
             torch.Tensor: shape (number_of_images, n_way) prediction
         '''
-        out = self.feature.forward(x)
-        scores = self.classifier.forward(out)
-        return scores
+        return self.base_model.forward(x)
 
     def set_forward(self, x, is_feature=False):
         assert is_feature == False, 'MAML do not support fixed feature'
@@ -116,12 +114,12 @@ class YOLOMAML(nn.Module):
         loss_all = []
         optimizer.zero_grad()
 
-        for i, (x, _) in enumerate(train_loader):
-            self.n_query = x.size(1) - self.n_support
-            assert self.n_way == x.size(0), "MAML do not support way change"
-            x = random_swap_tensor(x, n_swaps, self.n_support)
+        for i, (episode, _) in enumerate(train_loader):
+            self.n_query = episode.size(1) - self.n_support
+            assert self.n_way == episode.size(0), "MAML do not support way change"
+            episode = random_swap_tensor(episode, n_swaps, self.n_support)
 
-            loss = self.set_forward_loss(x)
+            loss = self.set_forward_loss(episode)
             avg_loss = avg_loss + loss.item()
             loss_all.append(loss)
 
