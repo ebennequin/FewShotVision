@@ -39,6 +39,7 @@ requests-toolbelt==0.8.0
 rhea==0.4.5
 six==1.11.0
 tabulate==0.8.2
+tqdm
 urllib3==1.25.2
 wcwidth==0.1.7
 websocket-client==0.56.0
