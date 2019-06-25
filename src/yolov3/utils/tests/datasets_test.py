@@ -29,4 +29,4 @@ class TestListDataset:
             collate_fn=dataset.collate_fn,
         )
         temp = next(iter(dataloader))
-
+        print(temp)

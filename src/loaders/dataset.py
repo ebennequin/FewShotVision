@@ -127,3 +127,86 @@ class EpisodicBatchSampler(torch.utils.data.Sampler):
     def __iter__(self):
         for i in range(self.n_episodes):
             yield torch.randperm(self.n_classes)[:self.n_way]
+
+
+class DetectionTaskSampler(torch.utils.data.Sampler):
+    '''
+    Samples elements in detection episodes of defined shape.
+    '''
+    def __init__(self, data_source, n_way, n_support, n_query, n_episodes):
+        '''
+
+        Args:
+            data_source (torch.utils.data.Dataset): source dataset
+            n_way (int): number of different classes in a detection class
+            n_support (int): number of images in the support set with an instance of one class,
+            for each of the n_way classes
+            n_query (int): number of images in the query set with an instance of one class,
+            for each of the n_way classes
+            n_episode (int): number of episodes per epoch
+        '''
+        self.data_source = data_source
+        self.n_way = n_way
+        self.n_support = n_support
+        self.n_query = n_query
+        self.n_episodes = n_episodes
+
+        self.images_per_label = self._get_images_per_label()
+        self.label_list = list(self.images_per_label.keys())
+
+    def _get_images_per_label(self):
+        '''
+
+        Returns:
+            dict: each key maps to a list of the images which contain at least one target which label is the key
+        '''
+        images_per_label={}
+
+        for index in range(len(self.data_source)):
+            targets = self.data_source[index][2]
+            for target in targets:
+                label = int(target[1])
+                if label not in images_per_label.keys():
+                    images_per_label[label] = []
+                if len(images_per_label[label]) == 0 or images_per_label[label][-1] != index:
+                    images_per_label[label].append(index)
+            if index % 100 == 0:
+                print('{}/{} images considered'.format(index, len(self.data_source)))
+        return images_per_label
+
+    def _sample_labels(self):
+        '''
+
+        Returns:
+            ndarray: n_way labels sampled at random from all available labels
+        '''
+        labels = np.random.choice(self.label_list, self.n_way, replace=False)
+        return labels
+
+    def _sample_images_from_labels(self, labels):
+        '''
+
+        Args:
+            labels (ndarray): labels from which images will be sampled
+
+        Returns:
+            torch.Tensor: indices of images constituting an episode
+        '''
+        #TODO: images can appear twice, and some labels don't have enough images
+        images_indices = []
+        for label in labels:
+            images_from_label = np.random.choice(
+                self.images_per_label[label],
+                self.n_support+self.n_query,
+                replace=False
+            )
+            images_indices.extend(images_from_label)
+        return torch.IntTensor(images_indices)
+
+    def __len__(self):
+        return self.n_episodes
+
+    def __iter__(self):
+        for i in range(self.n_episodes):
+            labels = self._sample_labels()
+            yield self._sample_images_from_labels(labels)

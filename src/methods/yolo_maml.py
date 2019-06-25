@@ -115,6 +115,8 @@ class YOLOMAML(nn.Module):
         optimizer.zero_grad()
 
         for i, (episode, _) in enumerate(train_loader):
+            #TODO next(iter(train_loader) returns tuple of size 4 : [n_way*n_support, dim], [n_way*n_query, dim]
+            #TODO and same for query set
             self.n_query = episode.size(1) - self.n_support
             assert self.n_way == episode.size(0), "MAML do not support way change"
             episode = random_swap_tensor(episode, n_swaps, self.n_support)

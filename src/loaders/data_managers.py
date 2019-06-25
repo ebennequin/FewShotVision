@@ -3,7 +3,8 @@
 import torch
 import torchvision.transforms as transforms
 from src.loaders import additional_transforms as add_transforms
-from src.loaders.dataset import SimpleDataset, SetDataset, EpisodicBatchSampler
+from src.loaders.dataset import SimpleDataset, SetDataset, EpisodicBatchSampler, DetectionTaskSampler
+from src.yolov3.utils.datasets import ListDataset
 from abc import abstractmethod
 
 
@@ -91,3 +92,34 @@ class SetDataManager(DataManager):
         data_loader_params = dict(batch_sampler=sampler, num_workers=12, pin_memory=True)
         data_loader = torch.utils.data.DataLoader(dataset, **data_loader_params)
         return data_loader
+
+
+class DetectionSetDataManager(DataManager):
+    def __init__(self, n_way, n_support, n_query, n_episode):
+        '''
+
+        Args:
+            n_way (int): number of different classes in a detection class
+            n_support (int): number of images in the support set with an instance of one class,
+            for each of the n_way classes
+            n_query (int): number of images in the query set with an instance of one class,
+            for each of the n_way classes
+            n_episode (int): number of episodes per epoch
+        '''
+        super(DetectionSetDataManager).__init__()
+        self.n_way = n_way
+        self.n_support = n_support
+        self.n_query = n_query
+        self.n_episode = n_episode
+
+    def get_data_loader(self, path_to_data_file):
+        dataset = ListDataset(path_to_data_file)
+        sampler = DetectionTaskSampler(dataset, self.n_way, self.n_support, self.n_query, self.n_episode)
+        data_loader = torch.utils.data.DataLoader(dataset,
+                                                  batch_sampler=sampler,
+                                                  num_workers=12,
+                                                  collate_fn=dataset.collate_fn,
+                                                  )
+        return data_loader
+
+#TODO : dataloader must return tuple of size 4 : [n_way*n_support, dim], [n_way*n_query, dim] and same for query set
