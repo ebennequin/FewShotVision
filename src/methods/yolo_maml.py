@@ -4,31 +4,43 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from src import backbones
-from src.methods.meta_template import MetaTemplate
 from src.utils.utils import random_swap_tensor
 
-class MAML(MetaTemplate):
-    def __init__(self, model_func, n_way, n_support, approx=False):
+
+class YOLOMAML(nn.Module):
+    def __init__(self,
+                 base_model,
+                 n_way,
+                 n_support,
+                 approx=False,
+                 n_task=4,
+                 task_update_num=5,
+                 train_lr=0.01,
+                 ):
         '''
 
         Args:
-            model_func (function in backbones.py): function that returns the backbone of the model
+            base_model (nn.Module): base neural network
             n_way (int): number of different classes
             n_support (int): number of examples per class in the support set
             approx (bool): whether to use an approximation of the meta-backpropagation
+            n_task (int): number of episodes between each meta-backpropagation
+            task_update_num (int): number of updates inside each episode
+            train_lr (float): learning rate for intra-task updates
         '''
-        super(MAML, self).__init__(model_func, n_way, n_support, change_way=False)
+        super(YOLOMAML, self).__init__()
 
-        self.loss_fn = nn.CrossEntropyLoss() #TODO: should be customable
-        #TODO: here it adds a classifier layer at the top of the feature extractor. Needs to change
-        self.classifier = backbones.Linear_fw(self.feat_dim, n_way)
-        self.classifier.bias.data.fill_(0)  # TODO why
+        self.loss_fn = lambda loss, dummy: loss
 
-        self.n_task = 4 #TODO should be customable
-        self.task_update_num = 5 #TODO should be customable
-        self.train_lr = 0.01 #TODO should be customable
-        self.approx = approx  # first order approx.
+        self.n_way = n_way
+        self.n_support = n_support
+        self.n_query = -1  # (change depends on input)
+        self.base_model = base_model
+
+        self.n_task = n_task
+        self.task_update_num = task_update_num
+        self.train_lr = train_lr
+        self.approx = approx
 
     def forward(self, x):
         '''
@@ -39,9 +51,7 @@ class MAML(MetaTemplate):
         Returns:
             torch.Tensor: shape (number_of_images, n_way) prediction
         '''
-        out = self.feature.forward(x)
-        scores = self.classifier.forward(out)
-        return scores
+        return self.base_model.forward(x)
 
     def set_forward(self, x, is_feature=False):
         assert is_feature == False, 'MAML do not support fixed feature'
@@ -104,12 +114,12 @@ class MAML(MetaTemplate):
         loss_all = []
         optimizer.zero_grad()
 
-        for i, (x, _) in enumerate(train_loader):
-            self.n_query = x.size(1) - self.n_support
-            assert self.n_way == x.size(0), "MAML do not support way change"
-            x = random_swap_tensor(x, n_swaps, self.n_support)
+        for i, (episode, _) in enumerate(train_loader):
+            self.n_query = episode.size(1) - self.n_support
+            assert self.n_way == episode.size(0), "MAML do not support way change"
+            episode = random_swap_tensor(episode, n_swaps, self.n_support)
 
-            loss = self.set_forward_loss(x)
+            loss = self.set_forward_loss(episode)
             avg_loss = avg_loss + loss.item()
             loss_all.append(loss)
 
