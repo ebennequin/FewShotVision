@@ -50,7 +50,7 @@ class MAML(MetaTemplate):
         query_set = x[:, self.n_support:, :, :, :].contiguous().view(self.n_way * self.n_query, *x.size()[2:])
         support_set_labels = torch.from_numpy(np.repeat(range(self.n_way), self.n_support)).cuda()
 
-        fast_parameters = list(self.parameters())  # the first gradient calcuated in line 45 is based on original weight
+        fast_parameters = list(self.parameters())  # the first gradient calculated in line 45 is based on original weight
         for weight in self.parameters():
             weight.fast = None
         self.zero_grad()

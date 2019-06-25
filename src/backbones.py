@@ -92,8 +92,8 @@ class Conv2d_fw(nn.Conv2d):  # used in MAML to forward input with fast weight
 
 
 class BatchNorm2d_fw(nn.BatchNorm2d):  # used in MAML to forward input with fast weight
-    def __init__(self, num_features):
-        super(BatchNorm2d_fw, self).__init__(num_features)
+    def __init__(self, num_features, **kwargs):
+        super(BatchNorm2d_fw, self).__init__(num_features, kwargs)
         self.weight.fast = None
         self.bias.fast = None
 

@@ -8,6 +8,10 @@ import numpy as np
 from src.yolov3.utils.parse_config import *
 from src.yolov3.utils.utils import build_targets, to_cpu
 
+from src.backbones import Conv2d_fw, BatchNorm2d_fw
+
+LAYER_END_DARKNET = 156
+
 
 
 def create_modules(module_defs):
@@ -27,7 +31,7 @@ def create_modules(module_defs):
             pad = (kernel_size - 1) // 2
             modules.add_module(
                 f"conv_{module_i}",
-                nn.Conv2d(
+                Conv2d_fw(
                     in_channels=output_filters[-1],
                     out_channels=filters,
                     kernel_size=kernel_size,
@@ -37,7 +41,7 @@ def create_modules(module_defs):
                 ),
             )
             if bn:
-                modules.add_module(f"batch_norm_{module_i}", nn.BatchNorm2d(filters, momentum=0.9, eps=1e-5))
+                modules.add_module(f"batch_norm_{module_i}", BatchNorm2d_fw(filters, momentum=0.9, eps=1e-5))
             if module_def["activation"] == "leaky":
                 modules.add_module(f"leaky_{module_i}", nn.LeakyReLU(0.1))
 
@@ -239,6 +243,13 @@ class Darknet(nn.Module):
         self.img_size = img_size
         self.seen = 0
         self.header_info = np.array([0, 0, 0, self.seen, 0], dtype=np.int32)
+        self.freeze_last_layers()
+
+    def freeze_last_layers(self):
+        for index_param, param in enumerate(self.parameters()):
+            if index_param >= LAYER_END_DARKNET:
+                param.requires_grad = False
+
 
     def forward(self, x, targets=None):
         img_dim = x.shape[2]
