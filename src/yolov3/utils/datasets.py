@@ -88,6 +88,9 @@ class ListDataset(Dataset):
         #  Image
         # ---------
 
+        if index < 0:
+            return str(-(int(index)+1)), torch.zeros((3,4,4)), torch.zeros((1, 6))
+
         img_path = self.img_files[index % len(self.img_files)].rstrip()
 
         # Extract image as PyTorch tensor

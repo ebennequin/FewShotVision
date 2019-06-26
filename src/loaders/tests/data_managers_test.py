@@ -17,7 +17,7 @@ class TestDetectionSetDataManager:
         )
         item = next(iter(data_loader))
 
-        assert len(item[0]) == n_way*(n_support+n_query)
+        assert len(item[0]) == n_way*(1+n_support+n_query)
 
         labels = np.unique(item[2][:, 1].numpy())
         # TODO assert len(labels) == n_way

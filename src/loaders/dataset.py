@@ -208,15 +208,17 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
 
     def _sample_images_from_labels(self, labels):
         '''
-
+        For each label in labels, samples n_support+n_query images containing at least one box associated with label
+        The first n_way elements of the returned tensor will be used to determine the sampled labels
         Args:
             labels (numpy.ndarray): labels from which images will be sampled
 
         Returns:
-            torch.Tensor: indices of images constituting an episode
+            torch.Tensor: length = n_way*(1+n_support+n_query) information about the labels,
+            and indices of images constituting an episode
         '''
         #TODO: images can appear twice, and some labels don't have enough images
-        images_indices = []
+        images_indices = list(-labels-1)
         for label in labels:
             images_from_label = np.random.choice(
                 self.images_per_label[label],
