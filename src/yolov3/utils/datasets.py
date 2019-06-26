@@ -74,6 +74,15 @@ class ListDataset(Dataset):
         self.batch_count = 0
 
     def __getitem__(self, index):
+        '''
+
+        Args:
+            index (int): selects one element of the dataset
+
+        Returns:
+            Tuple[str, torch.Tensor, torch.Tensor]: path to the image, image data, and target
+            of shape (number_of_boxes_in_image, 6)
+        '''
 
         # ---------
         #  Image
