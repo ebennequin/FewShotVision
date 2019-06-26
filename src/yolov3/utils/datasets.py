@@ -75,7 +75,9 @@ class ListDataset(Dataset):
 
     def __getitem__(self, index):
         '''
-
+        Returns an element of the dataset if index>=0. If index<0, the caller expects information about the labels
+        considered in a sampled episode. In this case, this returns the expected label in the first element of the
+        tuple, and shallow tensors in the two other elements.
         Args:
             index (int): selects one element of the dataset
 
@@ -87,6 +89,9 @@ class ListDataset(Dataset):
         # ---------
         #  Image
         # ---------
+
+        if index < 0:
+            return str(-(int(index)+1)), torch.zeros((3,4,4)), torch.zeros((1, 6))
 
         img_path = self.img_files[index % len(self.img_files)].rstrip()
 
@@ -140,9 +145,30 @@ class ListDataset(Dataset):
         return img_path, img, targets
 
     def collate_fn(self, batch):
-        paths, imgs, targets = list(zip(*batch))
+        '''
+        Merges a list of samples to form a mini-batch
+        Args:
+            batch (list): contains the elements sampled from the datasets
+
+        Returns:
+            Tuple[Tuple, torch.Tensor, torch.Tensor, torch.Tensor]: respectively contains 0. the paths to sampled
+            images ; 1. the sampled images ; 2. targets of the sampled images and 3. the sampled labels
+        '''
+        # Remove lines containing data about the labels
+        labels = []
+        for index in range(len(batch)):
+            if batch[index][0].isdigit():
+                labels.append(int(batch[index][0]))
+            else:
+                begin_index = index
+                break
+        paths, imgs, all_targets = list(zip(*batch[begin_index:]))
         # Remove empty placeholder targets
-        targets = [boxes for boxes in targets if boxes is not None]
+        all_targets = [boxes for boxes in all_targets if boxes is not None]
+        # Remove boxes that don't match labels
+        targets = []
+        for boxes in all_targets:
+            targets.append(torch.cat([box.view((1, 6)) for box in boxes if int(box[1]) in labels]))
         # Add sample index to targets
         for i, boxes in enumerate(targets):
             boxes[:, 0] = i
@@ -153,7 +179,7 @@ class ListDataset(Dataset):
         # Resize images to input shape
         imgs = torch.stack([resize(img, self.img_size) for img in imgs])
         self.batch_count += 1
-        return paths, imgs, targets
+        return paths, imgs, targets, torch.IntTensor(labels)
 
     def __len__(self):
         return len(self.img_files)
