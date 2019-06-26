@@ -154,7 +154,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
         self.n_episodes = n_episodes
 
         self.images_per_label = self._get_images_per_label(path_to_images_per_label)
-        self.label_list = list(self.images_per_label.keys())
+        self.label_list = self._get_label_list()
 
     def _get_images_per_label(self, path):
         '''
@@ -183,8 +183,19 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
                         index=index,
                         length_data_source=len(self.data_source))
                     )
-
         return images_per_label
+
+    def _get_label_list(self):
+        '''
+
+        Returns:
+            list: list of appropriate labels, i.e. labels that are present in at least n_support+n_query images
+        '''
+        label_list = []
+        for label in self.images_per_label:
+            if len(self.images_per_label[label]) >= self.n_support + self.n_query:
+                label_list.append(label)
+        return label_list
 
     def _sample_labels(self):
         '''
