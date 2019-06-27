@@ -217,7 +217,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
             torch.Tensor: length = n_way*(1+n_support+n_query) information about the labels,
             and indices of images constituting an episode
         '''
-        #TODO: images can appear twice, and some labels don't have enough images
+        #TODO: images can appear twice
         images_indices = list(-labels-1)
         for label in labels:
             images_from_label = np.random.choice(
@@ -226,7 +226,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
                 replace=False
             )
             images_indices.extend(images_from_label)
-        return torch.IntTensor(images_indices)
+        return torch.tensor(images_indices, dtype=torch.int32)
 
     def __len__(self):
         return self.n_episodes
