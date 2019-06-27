@@ -1,0 +1,33 @@
+---
+variables:
+  dataset: 'yolov3/config/coco.data'
+  model_config: 'yolov3/config/yolov3.cfg'
+  n_way: 5
+  n_shot: 5
+  n_query: 16
+  optimizer: 'Adam'
+  learning_rate: 0.001
+  n_epoch: 100
+  n_episode: 100
+
+init:
+
+  flows:
+
+    training_flow:
+      steps:
+      - name: YOLOMAMLTraining
+        init:
+          dataset: 'yolov3/config/coco.data'
+          model_config: 'yolov3/config/yolov3.cfg'
+          n_way: 2
+          n_shot: 1
+          n_query: 2
+          optimizer: 'Adam'
+          learning_rate: 0.001
+          n_epoch: 1
+          n_episode: 1
+
+run:
+  output_folder: output
+  output_folder_permissions: 02775
