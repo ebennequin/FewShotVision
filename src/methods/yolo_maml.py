@@ -11,7 +11,7 @@ class YOLOMAML(nn.Module):
                  n_way,
                  n_support,
                  n_query,
-                 approx=False,
+                 approx=True,
                  n_task=4,
                  task_update_num=5,
                  train_lr=0.01,
@@ -141,6 +141,7 @@ class YOLOMAML(nn.Module):
         optimizer.zero_grad()
 
         for episode_index, (paths, images, targets, labels) in enumerate(train_loader):
+            targets = self.rename_labels(targets)
             support_set, support_set_targets, query_set, query_set_targets = self.split_support_and_query_set(
                 images,
                 targets
@@ -172,6 +173,24 @@ class YOLOMAML(nn.Module):
 
     def eval_loop(self): #TODO
         pass
+
+    def rename_labels(self, targets):
+        '''
+
+        Args:
+            targets (torch.Tensor): targets given by the data loader
+
+        Returns:
+            torch.Tensor: same targets but the labels all lie in range(n_way)
+        '''
+        old_labels = np.unique(targets[:, 1])
+        labels_mapping = {}
+        for new_label, old_label in enumerate(old_labels):
+            labels_mapping[old_label] = new_label
+        for box in targets:
+            box[1] = labels_mapping[float(box[1])]
+
+        return targets
 
     def split_support_and_query_set(self, images, targets):
         '''
