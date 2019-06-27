@@ -15,7 +15,7 @@ class YOLOMAML(nn.Module):
                  n_task=4,
                  task_update_num=5,
                  train_lr=0.01,
-                 device='cuda',
+                 device='cpu',
                  ):
         '''
 
