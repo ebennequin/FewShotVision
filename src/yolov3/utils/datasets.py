@@ -179,7 +179,7 @@ class ListDataset(Dataset):
         # Resize images to input shape
         imgs = torch.stack([resize(img, self.img_size) for img in imgs])
         self.batch_count += 1
-        return paths, imgs, targets, torch.IntTensor(labels)
+        return paths, imgs, targets, torch.tensor(labels, dtype=torch.int32)
 
     def __len__(self):
         return len(self.img_files)

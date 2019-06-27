@@ -250,8 +250,18 @@ class Darknet(nn.Module):
             if index_param >= LAYER_END_DARKNET:
                 param.requires_grad = False
 
-
     def forward(self, x, targets=None):
+        '''
+        Computes the classification prediction for input data. If targets is None, the loss will not be part of
+        the output.
+        Args:
+            x (torch.Tensor): shape (number_of_images, dim_of_images) input data
+            targets (torch.Tensor): shape (number_of_boxes_in_all_images, 6) target boxes
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (number_of_images,
+            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0
+        '''
         img_dim = x.shape[2]
         loss = 0
         layer_outputs, yolo_outputs = [], []
