@@ -57,6 +57,7 @@ class YOLOMAMLTraining(AbstractStep):
         self.random_seed = random_seed
         self.checkpoint_dir = output_dir
 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def apply(self):
         '''
@@ -87,7 +88,7 @@ class YOLOMAMLTraining(AbstractStep):
         Args:
             base_loader (torch.utils.data.DataLoader): data loader for base set
             val_loader (torch.utils.data.DataLoader): data loader for validation set
-            model (torch.nn.Module): neural network model to train
+            model (YOLOMAML): neural network model to train
 
         Returns:
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
@@ -152,6 +153,7 @@ class YOLOMAMLTraining(AbstractStep):
             n_task=4,
             task_update_num=5,
             train_lr=self.learning_rate,
+            device=self.device
         )
 
         return model

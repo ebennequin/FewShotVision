@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+
 class YOLOMAML(nn.Module):
     def __init__(self,
                  base_model,
@@ -14,6 +15,7 @@ class YOLOMAML(nn.Module):
                  n_task=4,
                  task_update_num=5,
                  train_lr=0.01,
+                 device='cuda',
                  ):
         '''
 
@@ -26,6 +28,7 @@ class YOLOMAML(nn.Module):
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
             train_lr (float): learning rate for intra-task updates
+            device (str): cuda or cpu
         '''
         super(YOLOMAML, self).__init__()
 
@@ -40,6 +43,10 @@ class YOLOMAML(nn.Module):
         self.task_update_num = task_update_num
         self.train_lr = train_lr
         self.approx = approx
+
+        self.device = device
+
+        self.to(self.device)
 
     def forward(self, x, targets):
         '''
@@ -177,6 +184,9 @@ class YOLOMAML(nn.Module):
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: both images and targets, split between
             support set and query set
         '''
+        # Pass to device
+        images.to(self.device)
+        targets.to(self.device)
 
         # Split images between support set and query set
         support_set_list = []
