@@ -78,9 +78,8 @@ class YOLOMAML(nn.Module):
             Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (n_way*n_query,
             number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0
         '''
+        fast_parameters = [param for param in self.parameters() if param.requires_grad]
 
-        #TODO : does self.parameters() mean something
-        fast_parameters = list(self.parameters())  # the first gradient calcuated in line 45 is based on original weight
         for weight in self.parameters():
             weight.fast = None
         self.zero_grad()
@@ -93,15 +92,18 @@ class YOLOMAML(nn.Module):
                 grad = [g.detach() for g in
                         grad]  # do not calculate gradient of gradient if using first order approximation
             fast_parameters = []
-            for k, weight in enumerate(self.parameters()):
-                # for usage of weight.fast, please see Linear_fw, Conv_fw in backbones.py
-                if weight.fast is None:
-                    weight.fast = weight - self.train_lr * grad[k]  # create weight.fast
-                else:
-                    weight.fast = weight.fast - self.train_lr * grad[
-                        k]  # create an updated weight.fast, note the '-' is not merely minus value, but to create a new weight.fast
-                fast_parameters.append(
-                    weight.fast)  # gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
+            count = 0
+            for weight in self.parameters():
+                if weight.requires_grad:
+                    # for usage of weight.fast, please see Linear_fw, Conv_fw in backbones.py
+                    if weight.fast is None:
+                        weight.fast = weight - self.train_lr * grad[count]  # create weight.fast
+                    else:
+                        weight.fast = weight.fast - self.train_lr * grad[
+                            count]  # create an updated weight.fast, note the '-' is not merely minus value, but to create a new weight.fast
+                    fast_parameters.append(
+                        weight.fast)  # gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
+                    count += 1
 
         query_set_loss, query_set_output = self.forward(query_set, query_set_targets)
         return query_set_loss, query_set_output
