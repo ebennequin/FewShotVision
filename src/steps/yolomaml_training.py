@@ -5,7 +5,7 @@ from pipeline.steps import AbstractStep
 import torch
 
 from src import backbones
-from src.loaders.data_managers import SimpleDataManager, SetDataManager
+from src.loaders.data_managers import DetectionSetDataManager
 from src.methods import BaselineTrain
 from src.methods import ProtoNet
 from src.methods import MatchingNet
@@ -18,6 +18,7 @@ from src.utils.io_utils import (
     set_and_print_random_seed,
     get_path_to_json,
 )
+from src.yolov3.utils.parse_config import parse_data_config
 
 
 class YOLOMAMLTraining(AbstractStep):
@@ -72,8 +73,12 @@ class YOLOMAMLTraining(AbstractStep):
         '''
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
-        base_loader = self._get_data_loader()
-        val_loader = None
+        data_config = parse_data_config()
+        train_path = data_config["train"]
+        valid_path = data_config["valid"]
+
+        base_loader = self._get_data_loader(train_path)
+        val_loader = self._get_data_loader(valid_path)
 
         model = self._get_model()
 
@@ -122,8 +127,18 @@ class YOLOMAMLTraining(AbstractStep):
 
         return optimizer
 
-    def _get_data_loader(self):
-        pass
+    def _get_data_loader(self, path_to_data_file):
+        '''
+
+        Args:
+            path_to_data_file (str): path to file containing paths to images
+
+        Returns:
+            torch.utils.data.DataLoader: samples data in the shape of a detection task
+        '''
+        data_manager = DetectionSetDataManager(self.n_way, self.n_shot, self.n_query, self.n_episode)
+
+        return data_manager.get_data_loader(path_to_data_file)
 
     def _get_model(self):
         pass
