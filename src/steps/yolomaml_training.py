@@ -1,17 +1,12 @@
 import os
 
-import numpy as np
 from pipeline.steps import AbstractStep
 import torch
 
 from src.loaders.data_managers import DetectionSetDataManager
 from src.methods import YOLOMAML
 from src.utils import configs
-from src.utils.io_utils import (
-    model_dict,
-    path_to_step_output,
-    set_and_print_random_seed,
-)
+from src.utils.io_utils import set_and_print_random_seed
 from src.yolov3.model import Darknet
 from src.yolov3.utils.parse_config import parse_data_config
 

@@ -4,9 +4,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from src.utils.utils import random_swap_tensor
-
-
 class YOLOMAML(nn.Module):
     def __init__(self,
                  base_model,
