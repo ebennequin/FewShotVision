@@ -184,10 +184,6 @@ class YOLOMAML(nn.Module):
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: both images and targets, split between
             support set and query set
         '''
-        # Pass to device
-        images.to(self.device)
-        targets.to(self.device)
-
         # Split images between support set and query set
         support_set_list = []
         query_set_list = []
@@ -226,4 +222,4 @@ class YOLOMAML(nn.Module):
             for box in x_targets:
                 box[0] = indices_mapping[float(box[0])]
 
-        return support_set, support_targets, query_set, query_targets
+        return support_set.to(self.device), support_targets.to(self.device), query_set.to(self.device), query_targets.to(self.device)
