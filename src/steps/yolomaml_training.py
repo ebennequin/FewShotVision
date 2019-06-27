@@ -32,7 +32,7 @@ class YOLOMAMLTraining(AbstractStep):
     ):
         '''
         Args:
-            dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
+            dataset (str): path to data config file
             model_config (str): path to model definition file
             n_way (int): number of labels in a detection task
             n_shot (int): number of support data in each class in an episode
