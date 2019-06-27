@@ -140,5 +140,3 @@ class DetectionSetDataManager(DataManager):
                                                   collate_fn=dataset.collate_fn,
                                                   )
         return data_loader
-
-#TODO : dataloader must return tuple of size 4 : [n_way*n_support, dim], [n_way*n_query, dim] and same for query set
