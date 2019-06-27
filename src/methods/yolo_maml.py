@@ -12,6 +12,7 @@ class YOLOMAML(nn.Module):
                  base_model,
                  n_way,
                  n_support,
+                 n_query,
                  approx=False,
                  n_task=4,
                  task_update_num=5,
@@ -23,6 +24,7 @@ class YOLOMAML(nn.Module):
             base_model (nn.Module): base neural network
             n_way (int): number of different classes
             n_support (int): number of examples per class in the support set
+            n_query (int): number of examples per class in the query set
             approx (bool): whether to use an approximation of the meta-backpropagation
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
@@ -34,7 +36,7 @@ class YOLOMAML(nn.Module):
 
         self.n_way = n_way
         self.n_support = n_support
-        self.n_query = -1  # (change depends on input)
+        self.n_query = n_query
         self.base_model = base_model
 
         self.n_task = n_task
@@ -97,15 +99,13 @@ class YOLOMAML(nn.Module):
 
         return loss
 
-    def train_loop(self, epoch, train_loader, optimizer, n_swaps):
+    def train_loop(self, epoch, train_loader, optimizer):
         '''
-        Executes one training epoch. This overwrites the parent function in MetaTemplate.
+        Executes one meta-training epoch.
         Args:
             epoch (int): current epoch
             train_loader (DataLoader): loader of a given number of episodes
             optimizer (torch.optim.Optimizer): model optimizer
-            n_swaps (int): number of swaps between labels in the support set of each episode, in order to
-            test the robustness to label noise
 
         '''
         print_freq = 10
@@ -114,14 +114,13 @@ class YOLOMAML(nn.Module):
         loss_all = []
         optimizer.zero_grad()
 
-        for i, (episode, _) in enumerate(train_loader):
-            #TODO next(iter(train_loader) returns tuple of size 4 : [n_way*n_support, dim], [n_way*n_query, dim]
-            #TODO and same for query set
-            self.n_query = episode.size(1) - self.n_support
-            assert self.n_way == episode.size(0), "MAML do not support way change"
-            episode = random_swap_tensor(episode, n_swaps, self.n_support)
+        for i, (paths, images, targets, labels) in enumerate(train_loader):
+            support_set, support_set_targets, query_set, query_set_targets = self.split_support_and_query_set(
+                images,
+                targets
+            )
 
-            loss = self.set_forward_loss(episode)
+            loss = self.set_forward_loss()
             avg_loss = avg_loss + loss.item()
             loss_all.append(loss)
 
@@ -155,8 +154,60 @@ class YOLOMAML(nn.Module):
         acc_all = np.asarray(acc_all)
         acc_mean = np.mean(acc_all)
         acc_std = np.std(acc_all)
-        print('%d Test Acc = %4.2f%% +- %4.2f%%' % (iter_num, acc_mean, 1.96 * acc_std / np.sqrt(iter_num))) #TODO: already set elsewhere
+        print('%d Test Acc = %4.2f%% +- %4.2f%%' % (iter_num, acc_mean, 1.96 * acc_std / np.sqrt(iter_num)))
         if return_std:
             return acc_mean, acc_std
         else:
             return acc_mean
+
+    def split_support_and_query_set(self, images, targets):
+        '''
+        Split images and targets between support set and query set
+        Args:
+            images (torch.Tensor): shape (n_way*(n_support+n_query), dim_of_img)
+            targets (torch.Tensor): shape (L, 6) where L is the sum of the number of boxes in every images
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: both images and targets, split between
+            support set and query set
+        '''
+
+        # Split images between support set and query set
+        support_set_list = []
+        query_set_list = []
+        support_indices = []
+        query_indices = []
+        for index, image in enumerate(images):
+            if index % (self.n_support+self.n_query) < self.n_support:
+                support_set_list.append(image.unsqueeze(0))
+                support_indices.append(index)
+            else:
+                query_set_list.append(image.unsqueeze(0))
+                query_indices.append(index)
+
+        support_set = torch.cat(support_set_list)
+        query_set = torch.cat(query_set_list)
+
+        # Split targets between support set and query set
+        support_targets_list = []
+        query_targets_list = []
+        for box in targets:
+            if int(box[0]) in support_indices:
+                support_targets_list.append(box.unsqueeze(0))
+            else:
+                query_targets_list.append(box.unsqueeze(0))
+
+        support_targets = torch.cat(support_targets_list)
+        query_targets = torch.cat(query_targets_list)
+
+        # The first element of each line of targets refers to the image associated with the box.
+        # This ensures this first element lies between 0 and the size of each splitted set of images
+        for x_targets in [support_targets, query_targets]:
+            old_indices = np.unique(x_targets[:,0])
+            indices_mapping = {}
+            for new_index, old_index in enumerate(old_indices):
+                indices_mapping[old_index] = new_index
+            for box in x_targets:
+                box[0] = indices_mapping[float(box[0])]
+
+        return support_set, support_targets, query_set, query_targets
