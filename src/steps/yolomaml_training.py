@@ -4,20 +4,15 @@ import numpy as np
 from pipeline.steps import AbstractStep
 import torch
 
-from src import backbones
 from src.loaders.data_managers import DetectionSetDataManager
-from src.methods import BaselineTrain
-from src.methods import ProtoNet
-from src.methods import MatchingNet
-from src.methods import RelationNet
-from src.methods.maml import MAML
+from src.methods import YOLOMAML
 from src.utils import configs
 from src.utils.io_utils import (
     model_dict,
     path_to_step_output,
     set_and_print_random_seed,
-    get_path_to_json,
 )
+from src.yolov3.model import Darknet
 from src.yolov3.utils.parse_config import parse_data_config
 
 
@@ -32,6 +27,7 @@ class YOLOMAMLTraining(AbstractStep):
             model_config='yolov3/config/yolov3.cfg',
             n_way=5,
             n_shot=5,
+            n_query=16,
             optimizer='Adam',
             learning_rate=0.001,
             n_epoch=100,
@@ -44,7 +40,8 @@ class YOLOMAMLTraining(AbstractStep):
             dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
             model_config (str): path to model definition file
             n_way (int): number of labels in a detection task
-            n_shot (int): number of labeled data in each class
+            n_shot (int): number of support data in each class in an episode
+            n_query (int): number of query data in each class in an episode
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
             learning_rate (float): learning rate fed to the optimizer
             n_epoch (int): number of meta-training epochs
@@ -54,8 +51,10 @@ class YOLOMAMLTraining(AbstractStep):
         '''
 
         self.dataset = dataset
+        self.model_config = model_config
         self.n_way = n_way
         self.n_shot = n_shot
+        self.n_query = n_query
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.n_epoch = n_epoch
@@ -141,4 +140,23 @@ class YOLOMAMLTraining(AbstractStep):
         return data_manager.get_data_loader(path_to_data_file)
 
     def _get_model(self):
-        pass
+        '''
+
+        Returns:
+            YOLOMAML: meta-model
+        '''
+
+        base_model = Darknet(self.model_config)
+
+        model = YOLOMAML(
+            base_model,
+            self.n_way,
+            self.n_shot,
+            self.n_query,
+            approx=False,
+            n_task=4,
+            task_update_num=5,
+            train_lr=self.learning_rate,
+        )
+
+        return model
