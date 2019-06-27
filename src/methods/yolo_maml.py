@@ -11,7 +11,7 @@ class YOLOMAML(nn.Module):
                  n_way,
                  n_support,
                  n_query,
-                 approx=False,
+                 approx=True,
                  n_task=4,
                  task_update_num=5,
                  train_lr=0.01,
@@ -141,6 +141,7 @@ class YOLOMAML(nn.Module):
         optimizer.zero_grad()
 
         for episode_index, (paths, images, targets, labels) in enumerate(train_loader):
+            targets = self.rename_labels(targets)
             support_set, support_set_targets, query_set, query_set_targets = self.split_support_and_query_set(
                 images,
                 targets
@@ -173,6 +174,24 @@ class YOLOMAML(nn.Module):
     def eval_loop(self): #TODO
         pass
 
+    def rename_labels(self, targets):
+        '''
+
+        Args:
+            targets (torch.Tensor): targets given by the data loader
+
+        Returns:
+            torch.Tensor: same targets but the labels all lie in range(n_way)
+        '''
+        old_labels = np.unique(targets[:, 1])
+        labels_mapping = {}
+        for new_label, old_label in enumerate(old_labels):
+            labels_mapping[old_label] = new_label
+        for box in targets:
+            box[1] = labels_mapping[float(box[1])]
+
+        return targets
+
     def split_support_and_query_set(self, images, targets):
         '''
         Split images and targets between support set and query set
@@ -184,10 +203,6 @@ class YOLOMAML(nn.Module):
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: both images and targets, split between
             support set and query set
         '''
-        # Pass to device
-        images.to(self.device)
-        targets.to(self.device)
-
         # Split images between support set and query set
         support_set_list = []
         query_set_list = []
@@ -226,4 +241,4 @@ class YOLOMAML(nn.Module):
             for box in x_targets:
                 box[0] = indices_mapping[float(box[0])]
 
-        return support_set, support_targets, query_set, query_targets
+        return support_set.to(self.device), support_targets.to(self.device), query_set.to(self.device), query_targets.to(self.device)

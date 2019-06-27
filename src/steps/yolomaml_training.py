@@ -68,7 +68,7 @@ class YOLOMAMLTraining(AbstractStep):
         '''
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
-        data_config = parse_data_config()
+        data_config = parse_data_config(self.dataset)
         train_path = data_config["train"]
         valid_path = data_config["valid"]
 
