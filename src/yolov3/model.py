@@ -10,9 +10,9 @@ from src.yolov3.utils.utils import build_targets, to_cpu
 
 from src.backbones import Conv2d_fw, BatchNorm2d_fw
 
-LAYER_END_DARKNET = 156
-
-
+LAYER_END_DARKNET_YOLO = 156
+LAYER_END_DARKNET_TINY_YOLO = 20
+LAYER_END_DARKNET = LAYER_END_DARKNET_TINY_YOLO
 
 def create_modules(module_defs):
     """
@@ -243,11 +243,11 @@ class Darknet(nn.Module):
         self.img_size = img_size
         self.seen = 0
         self.header_info = np.array([0, 0, 0, self.seen, 0], dtype=np.int32)
-        self.freeze_last_layers()
+        self.freeze_first_layers()
 
-    def freeze_last_layers(self):
+    def freeze_first_layers(self):
         for index_param, param in enumerate(self.parameters()):
-            if index_param >= LAYER_END_DARKNET:
+            if index_param <= LAYER_END_DARKNET:
                 param.requires_grad = False
 
     def forward(self, x, targets=None):
