@@ -73,7 +73,7 @@ class YOLOMAMLTraining(AbstractStep):
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         base_loader = self._get_data_loader()
-        val_loader = self._get_data_loader()
+        val_loader = None
 
         model = self._get_model()
 
@@ -95,30 +95,18 @@ class YOLOMAMLTraining(AbstractStep):
 
         '''
         optimizer = self._get_optimizer(model)
-        max_acc = 0
-        best_model_epoch = -1
-        best_model_state = model.state_dict()
 
-        for epoch in range(self.n_epoch, self.stop_epoch):
+        for epoch in range(self.n_epoch):
             model.train()
             model.train_loop(epoch, base_loader, optimizer)
-            model.eval()
 
-            acc = model.eval_loop(val_loader, self.n_swaps)
-            # TODO: check that it makes sense to train baselines systematically for 400 epochs (and not validate)
-            if acc > max_acc:  # for baseline and baseline++, we don't use validation here so we let acc = -1
-                print("best model! save...")
-                max_acc = acc
-                outfile = os.path.join(self.checkpoint_dir, 'best_model.tar')
-                torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-                best_model_epoch = epoch
-                best_model_state = model.state_dict()
+            #TODO : add validation
 
-            if epoch == self.stop_epoch - 1:
+            if epoch == self.n_epoch - 1:
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
 
-        return {'epoch': best_model_epoch, 'state': best_model_state}
+        return {'epoch': self.n_epoch, 'state': model.state_dict()}
 
     def _get_optimizer(self, model):
         """
