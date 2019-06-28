@@ -1,0 +1,22 @@
+---
+init:
+
+  flows:
+
+    training_flow:
+      steps:
+      - name: YOLOMAMLTraining
+        init:
+          dataset: pipelines/detection/experiments_config/coco.data
+          model_config: pipelines/detection/experiments_config/yolov3-tiny-5-way.cfg
+          n_way: 5
+          n_shot: 10
+          n_query: 16
+          optimizer: Adam
+          learning_rate: 0.01
+          n_epoch: 2
+          n_episode: 10
+
+run:
+  output_folder: output
+  output_folder_permissions: 02775

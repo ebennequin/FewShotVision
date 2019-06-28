@@ -18,7 +18,7 @@ class YOLOMAMLTraining(AbstractStep):
 
     def __init__(
             self,
-            dataset='yolov3/config/coco.data',
+            dataset='yolov3/config/black.data',
             model_config='yolov3/config/yolov3.cfg',
             n_way=5,
             n_shot=5,

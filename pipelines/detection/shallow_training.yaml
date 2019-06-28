@@ -7,8 +7,8 @@ init:
       steps:
       - name: YOLOMAMLTraining
         init:
-          dataset: src/loaders/tests/coco.data
-          model_config: src/loaders/tests/yolov3-tiny.cfg
+          dataset: pipelines/detection/experiments_config/black.data
+          model_config: pipelines/detection/experiments_config/yolov3-tiny-2-way.cfg
           n_way: 2
           n_shot: 1
           n_query: 2
