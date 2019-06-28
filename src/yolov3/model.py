@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from src.yolov3.utils.parse_config import *
-from src.yolov3.utils.utils import build_targets, to_cpu
+from src.yolov3.utils.utils import build_targets, to_cpu, binary_cross_entropy
 
 from src.backbones import Conv2d_fw, BatchNorm2d_fw
 
@@ -114,7 +114,7 @@ class YOLOLayer(nn.Module):
         self.num_classes = num_classes
         self.ignore_thres = 0.5
         self.mse_loss = nn.MSELoss()
-        self.bce_loss = nn.BCELoss()
+        self.bce_loss = binary_cross_entropy
         self.obj_scale = 1
         self.noobj_scale = 100
         self.metrics = {}
