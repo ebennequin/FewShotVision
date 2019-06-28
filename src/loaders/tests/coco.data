@@ -1,6 +1,2 @@
-classes= 80
 train=src/loaders/tests/small_image_list.txt
 valid=src/loaders/tests/small_image_list.txt
-names=data/coco.names
-backup=backup/
-eval=coco

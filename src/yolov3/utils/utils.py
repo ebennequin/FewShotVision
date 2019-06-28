@@ -312,3 +312,18 @@ def build_targets(pred_boxes, pred_cls, target, anchors, ignore_thres):
 
     tconf = obj_mask.float()
     return iou_scores, class_mask, obj_mask, noobj_mask, tx, ty, tw, th, tcls, tconf
+
+
+def binary_cross_entropy(input, target):
+    '''
+    Implements binary cross-entropy loss, as an alternative for the torch.nn.BCELoss() which does not support
+    second derivatives
+    Args:
+        input (torch.Tensor): arbitrary shape
+        target (torch.Tensor): arbitrary shape
+
+    Returns:
+        torch.Tensor : binary cross-entropy loss
+    '''
+    loss = -(input.log() * target + (1 - input).log() * (1 - target))
+    return loss.mean()
