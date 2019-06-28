@@ -5,13 +5,16 @@ certifi==2019.3.9
 chardet==3.0.4
 click==6.7
 clint==0.5.1
+cycler==0.10.0
 decorator==4.4.0
 h5py==2.9.0
 hestia==0.3.0
 idna==2.8
 Jinja2==2.10
+kiwisolver==1.1.0
 MarkupSafe==1.1.1
 marshmallow==3.0.0rc4
+matplotlib==3.1.0
 more-itertools==7.0.0
 networkx==2.3
 numpy==1.16.3
@@ -39,7 +42,7 @@ requests-toolbelt==0.8.0
 rhea==0.4.5
 six==1.11.0
 tabulate==0.8.2
-tqdm
+tqdm==4.32.2
 urllib3==1.25.2
 wcwidth==0.1.7
 websocket-client==0.56.0

@@ -25,4 +25,4 @@ run:
     # Allow to access the mounted output_folder as if it was in ./output
     - ln -s $POLYAXON_RUN_OUTPUTS_PATH ./output
     # Run the pipeline defined in the pipelines folder
-    - run-pipeline pipelines/run_experiment_without_training.yaml
+    - run-pipeline pipelines/detection/coco_training.yaml

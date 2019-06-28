@@ -1,0 +1,2 @@
+train=data/coco/trainvalno5k.txt
+valid=data/coco/5k.txt
