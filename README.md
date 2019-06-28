@@ -81,3 +81,5 @@ https://github.com/floodsung/LearningToCompare_FSL
 https://github.com/cbfinn/maml  
 https://github.com/dragen1860/MAML-Pytorch  
 https://github.com/katerakelly/pytorch-maml
+
+#TODO: when adding doc about detection, think about explaining the construction of yolo .cfg
