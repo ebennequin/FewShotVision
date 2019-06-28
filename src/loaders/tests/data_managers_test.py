@@ -10,7 +10,7 @@ class TestDetectionSetDataManager:
         n_query = 1
         n_episode = 4
 
-        data_manager = DetectionSetDataManager(n_way, n_support, n_query, n_episode)
+        data_manager = DetectionSetDataManager(n_way, n_support, n_query, n_episode, 416)
         data_loader = data_manager.get_data_loader(
             './src/loaders/tests/small_image_list.txt',
             './src/loaders/tests/images_per_label.pkl'

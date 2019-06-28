@@ -11,7 +11,7 @@ class TestYOLOMAML:
             n_support = 1
             n_query = 2
 
-            model = YOLOMAML('dummy', n_way, n_support, n_query)
+            model = YOLOMAML('dummy', n_way, n_support, n_query, 416)
 
             images = torch.randn((n_way*(n_support+n_query), 3, 2, 2))
             targets = torch.tensor(
@@ -62,7 +62,7 @@ class TestYOLOMAML:
             n_support = 1
             n_query = 2
 
-            model = YOLOMAML('dummy', n_way, n_support, n_query)
+            model = YOLOMAML('dummy', n_way, n_support, n_query, 416)
 
             targets = torch.tensor(
                 [
