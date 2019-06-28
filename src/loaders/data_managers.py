@@ -98,7 +98,7 @@ class DetectionSetDataManager(DataManager):
     '''
     Data Manager used for YOLOMAML
     '''
-    def __init__(self, n_way, n_support, n_query, n_episode):
+    def __init__(self, n_way, n_support, n_query, n_episode, image_size):
         '''
 
         Args:
@@ -108,12 +108,14 @@ class DetectionSetDataManager(DataManager):
             n_query (int): number of images in the query set with an instance of one class,
             for each of the n_way classes
             n_episode (int): number of episodes per epoch
+            image_size (int): size of images
         '''
         super(DetectionSetDataManager).__init__()
         self.n_way = n_way
         self.n_support = n_support
         self.n_query = n_query
         self.n_episode = n_episode
+        self.image_size = image_size
 
     def get_data_loader(self, path_to_data_file, path_to_images_per_label=None):
         '''
@@ -125,7 +127,7 @@ class DetectionSetDataManager(DataManager):
         Returns:
             DataLoader: samples data in the shape of a detection task
         '''
-        dataset = ListDataset(path_to_data_file)
+        dataset = ListDataset(path_to_data_file, img_size=self.image_size)
         sampler = DetectionTaskSampler(
             dataset,
             self.n_way,
