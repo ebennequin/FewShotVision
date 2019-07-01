@@ -144,17 +144,18 @@ def create_dict_images_per_label(data_source):
     for index in range(len(data_source)):
         try:
             targets = data_source[index][2]
-            for target in targets:
-                label = int(target[1])
-                if label not in images_per_label:
-                    images_per_label[label] = []
-                if len(images_per_label[label]) == 0 or images_per_label[label][-1] != index:
-                    images_per_label[label].append(index)
-            if index % 100 == 0:
-                print('{index}/{length_data_source} images considered'.format(
-                    index=index,
-                    length_data_source=len(data_source))
-                )
+            if targets is not None:
+                for target in targets:
+                    label = int(target[1])
+                    if label not in images_per_label:
+                        images_per_label[label] = []
+                    if len(images_per_label[label]) == 0 or images_per_label[label][-1] != index:
+                        images_per_label[label].append(index)
+                if index % 100 == 0:
+                    print('{index}/{length_data_source} images considered'.format(
+                        index=index,
+                        length_data_source=len(data_source))
+                    )
         except OSError:
             print('Corrupted image : {image_index}'.format(image_index=index))
     return images_per_label
