@@ -62,6 +62,13 @@ class YOLOMAMLTraining(AbstractStep):
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+        self.validation_metrics = {
+            'Precision': [],
+            'Recall': [],
+            'AP': [],
+            'F1': [],
+        }
+
     def apply(self):
         '''
         Execute the YOLOMAMLTraining step
@@ -100,10 +107,14 @@ class YOLOMAMLTraining(AbstractStep):
         optimizer = self._get_optimizer(model)
 
         for epoch in range(self.n_epoch):
-            model.train()
             model.train_loop(epoch, base_loader, optimizer)
 
-            #TODO : add validation
+            precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
+
+            self.validation_metrics['Precision'].append(precision.mean())
+            self.validation_metrics['Recall'].append(recall.mean())
+            self.validation_metrics['AP'].append(average_precision.mean())
+            self.validation_metrics['F1'].append(f1.mean())
 
             if epoch == self.n_epoch - 1:
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))

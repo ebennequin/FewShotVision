@@ -134,7 +134,19 @@ class YOLOLayer(nn.Module):
         self.anchor_h = self.scaled_anchors[:, 1:2].view((1, self.num_anchors, 1, 1))
 
     def forward(self, x, targets=None, img_dim=None):
+        '''
+        Computes the classification prediction for input data. If targets is None, the loss will not be part of
+        the output.
+        Args:
+            x (torch.Tensor): shape (number_of_images, dim_of_images) input data
+            targets (torch.Tensor): shape (number_of_boxes_in_all_images, 6) target boxes
 
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (number_of_images,
+            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0. One line
+            (of size 5+n_way) of the YOLO output contains 4 items about the box prediction, one about the objectness
+            and n_way about the classification, in that order.
+        '''
         # Tensors for cuda support
         FloatTensor = torch.cuda.FloatTensor if x.is_cuda else torch.FloatTensor
         LongTensor = torch.cuda.LongTensor if x.is_cuda else torch.LongTensor
@@ -260,7 +272,9 @@ class Darknet(nn.Module):
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (number_of_images,
-            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0
+            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0. One line
+            (of size 5+n_way) of the YOLO output contains 4 items about the box prediction, one about the objectness
+            and n_way about the classification, in that order.
         '''
         img_dim = x.shape[2]
         loss = 0

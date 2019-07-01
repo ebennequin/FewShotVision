@@ -141,6 +141,7 @@ def get_batch_statistics(outputs, targets, iou_threshold):
     for sample_i in range(len(outputs)):
 
         if outputs[sample_i] is None:
+            batch_metrics.append([np.array([0]), np.array([0]), None])
             continue
 
         output = outputs[sample_i]
