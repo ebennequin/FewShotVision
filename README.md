@@ -48,6 +48,10 @@ run-pipeline pipelines/run_experiment.yaml
 ```
 All the parameters of the experiment (dataset, backbone, method, number of examples per class ...) can be customized in the pipeline.
 
+Before running the step YOLOMAMLTraining in a experiment, you can create a dictionaries of images per label using the step
+YOLOMAMLCreateDic for your train and val datasets. Then you can provide the path where the dictionaries have been saved to the step
+YOLOMAMLTraining.
+
 ## Outputs \& results
 You can find the outputs of your experiment in `./output/{dataset}/{method}_{backbone}/`
 - The `.tar` files contain the state of the trained model after different number of epochs. `best_model.tar` contains the model with the best validation accuracy, which is used for evaluation.
