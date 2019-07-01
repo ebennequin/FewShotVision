@@ -63,7 +63,9 @@ class YOLOMAML(nn.Module):
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (number_of_images,
-            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0
+            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0. One line
+            (of size 5+n_way) of the YOLO output contains 4 items about the box prediction, one about the objectness
+            and n_way about the classification, in that order.
         '''
 
         return self.base_model.forward(x, targets)
@@ -142,6 +144,8 @@ class YOLOMAML(nn.Module):
             optimizer (torch.optim.Optimizer): model optimizer
 
         '''
+        self.train()
+
         print_freq = 10
         avg_loss = 0
         task_count = 0
@@ -202,18 +206,19 @@ class YOLOMAML(nn.Module):
                 targets
             )
 
-            outputs_on_query = self.set_forward(support_set, support_set_targets, query_set)
-            outputs_on_query = non_max_suppression(outputs_on_query)
+            outputs_on_query = self.set_forward(support_set, support_set_targets, query_set).cpu()
+            outputs_on_query = non_max_suppression(outputs_on_query, conf_thres=0.1)
 
             query_set_targets[:, 2:] = xywh2xyxy(query_set_targets[:, 2:]) * self.image_size
+            query_set_targets = query_set_targets.cpu()
 
             batch_statistics += get_batch_statistics(outputs_on_query, query_set_targets, 0.8)
 
         # Concatenate sample statistics
         true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
-        precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
+        precision, recall, average_precision, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
 
-        return precision, recall, AP, f1, ap_class
+        return precision, recall, average_precision, f1, ap_class
 
     def rename_labels(self, targets):
         '''
