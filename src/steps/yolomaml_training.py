@@ -18,7 +18,7 @@ class YOLOMAMLTraining(AbstractStep):
 
     def __init__(
             self,
-            dataset='yolov3/config/black.data',
+            dataset_config='yolov3/config/black.data',
             model_config='yolov3/config/yolov3.cfg',
             n_way=5,
             n_shot=5,
@@ -33,7 +33,7 @@ class YOLOMAMLTraining(AbstractStep):
     ):
         '''
         Args:
-            dataset (str): path to data config file
+            dataset_config (str): path to data config file
             model_config (str): path to model definition file
             n_way (int): number of labels in a detection task
             n_shot (int): number of support data in each class in an episode
@@ -47,7 +47,7 @@ class YOLOMAMLTraining(AbstractStep):
             output_dir (str): path to experiments output directory
         '''
 
-        self.dataset = dataset
+        self.dataset_config = dataset_config
         self.model_config = model_config
         self.n_way = n_way
         self.n_shot = n_shot
@@ -78,12 +78,14 @@ class YOLOMAMLTraining(AbstractStep):
         '''
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
-        data_config = parse_data_config(self.dataset)
+        data_config = parse_data_config(self.dataset_config)
         train_path = data_config["train"]
-        valid_path = data_config["valid"]
+        train_dict_path = data_config.get("train_dict_path", None)
+        valid_path = data_config.get("valid", None)
+        valid_dict_path = data_config.get("valid_dict_path", None)
 
-        base_loader = self._get_data_loader(train_path)
-        val_loader = self._get_data_loader(valid_path)
+        base_loader = self._get_data_loader(train_path, train_dict_path)
+        val_loader = self._get_data_loader(valid_path, valid_dict_path)
 
         model = self._get_model()
 
@@ -136,7 +138,7 @@ class YOLOMAMLTraining(AbstractStep):
 
         return optimizer
 
-    def _get_data_loader(self, path_to_data_file):
+    def _get_data_loader(self, path_to_data_file, path_to_images_per_label):
         '''
 
         Args:
@@ -147,7 +149,7 @@ class YOLOMAMLTraining(AbstractStep):
         '''
         data_manager = DetectionSetDataManager(self.n_way, self.n_shot, self.n_query, self.n_episode, self.image_size)
 
-        return data_manager.get_data_loader(path_to_data_file)
+        return data_manager.get_data_loader(path_to_data_file, path_to_images_per_label)
 
     def _get_model(self):
         '''
