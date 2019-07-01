@@ -130,6 +130,36 @@ class EpisodicBatchSampler(torch.utils.data.Sampler):
             yield torch.randperm(self.n_classes)[:self.n_way]
 
 
+
+def create_dict_images_per_label(data_source):
+    '''
+            Compute and returns dictionary of images per label
+            Args:
+                data_source (ListDataset) : The data set containing the images
+            Returns:
+                dict: each key maps to a list of the images which contain at least one target which label is the key
+            '''
+    images_per_label={}
+
+    for index in range(len(data_source)):
+        try:
+            targets = data_source[index][2]
+            for target in targets:
+                label = int(target[1])
+                if label not in images_per_label:
+                    images_per_label[label] = []
+                if len(images_per_label[label]) == 0 or images_per_label[label][-1] != index:
+                    images_per_label[label].append(index)
+            if index % 100 == 0:
+                print('{index}/{length_data_source} images considered'.format(
+                    index=index,
+                    length_data_source=len(data_source))
+                )
+        except OSError:
+            print('Corrupted image : {image_index}'.format(image_index=index))
+    return images_per_label
+
+
 class DetectionTaskSampler(torch.utils.data.Sampler):
     '''
     Samples elements in detection episodes of defined shape.
@@ -158,7 +188,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
 
     def _get_images_per_label(self, path):
         '''
-        Returns dictionary of images per label from a file if specified, and computes it if no file is given.
+        Returns dictionary of images per label from a file if specified or compute it from scratch
         Args:
             path (str) : path to a pickle file containing a dictionary of images per label
         Returns:
@@ -168,24 +198,8 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
             with open(path, 'rb') as dictionary_file:
                 images_per_label = pickle.load(dictionary_file)
         else:
-            images_per_label={}
+            images_per_label = create_dict_images_per_label(self.data_source)
 
-            for index in range(len(self.data_source)):
-                try:
-                    targets = self.data_source[index][2]
-                    for target in targets:
-                        label = int(target[1])
-                        if label not in images_per_label:
-                            images_per_label[label] = []
-                        if len(images_per_label[label]) == 0 or images_per_label[label][-1] != index:
-                            images_per_label[label].append(index)
-                    if index % 100 == 0:
-                        print('{index}/{length_data_source} images considered'.format(
-                            index=index,
-                            length_data_source=len(self.data_source))
-                        )
-                except OSError:
-                    print('Corrupted image : {image_index}'.format(image_index=index))
         return images_per_label
 
     def _get_label_list(self):
