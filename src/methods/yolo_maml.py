@@ -4,6 +4,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from src.yolov3.utils.utils import xywh2xyxy, non_max_suppression, get_batch_statistics, ap_per_class
+
 
 class YOLOMAML(nn.Module):
     def __init__(self,
@@ -11,6 +13,7 @@ class YOLOMAML(nn.Module):
                  n_way,
                  n_support,
                  n_query,
+                 image_size,
                  approx=True,
                  n_task=4,
                  task_update_num=5,
@@ -24,6 +27,7 @@ class YOLOMAML(nn.Module):
             n_way (int): number of different classes
             n_support (int): number of examples per class in the support set
             n_query (int): number of examples per class in the query set
+            image_size (int): size of images (square)
             approx (bool): whether to use an approximation of the meta-backpropagation
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
@@ -38,6 +42,7 @@ class YOLOMAML(nn.Module):
         self.n_support = n_support
         self.n_query = n_query
         self.base_model = base_model
+        self.image_size = image_size
 
         self.n_task = n_task
         self.task_update_num = task_update_num
@@ -63,9 +68,10 @@ class YOLOMAML(nn.Module):
 
         return self.base_model.forward(x, targets)
 
-    def set_forward(self, support_set, support_set_targets, query_set, query_set_targets):
+    def set_forward(self, support_set, support_set_targets, query_set, query_set_targets=None):
         '''
-        Fine-tunes parameters on support set and apply updated parameters on query set
+        Fine-tunes parameters on support set and apply updated parameters on query set. If query_set_targets is None,
+        the loss will not be part of the output.
         Args:
             support_set (torch.Tensor): shape (n_way*n_support, dim_of_img) support set images
             support_set_targets (torch.Tensor): shape (L, 6) where L is the sum of the number of boxes in support
@@ -105,8 +111,7 @@ class YOLOMAML(nn.Module):
                         weight.fast)  # gradients calculated in line 45 are based on newest fast weight, but the graph will retain the link to old weight.fasts
                     count += 1
 
-        query_set_loss, query_set_output = self.forward(query_set, query_set_targets)
-        return query_set_loss, query_set_output
+        return self.forward(query_set, query_set_targets)
 
     def set_forward_loss(self, support_set, support_set_targets, query_set, query_set_targets):
         '''
@@ -132,7 +137,8 @@ class YOLOMAML(nn.Module):
         Executes one meta-training epoch.
         Args:
             epoch (int): current epoch
-            train_loader (DataLoader): loader of a given number of episodes
+            train_loader (DataLoader): loader of a given number of episodes.  It returns a tuple of size 4 respectively
+            containing the paths, the images, the targets and the labels
             optimizer (torch.optim.Optimizer): model optimizer
 
         '''
@@ -173,8 +179,41 @@ class YOLOMAML(nn.Module):
                     )
                 )
 
-    def eval_loop(self): #TODO
-        pass
+    def eval_loop(self, data_loader):
+        '''
+        Evaluates the model on detection tasks sampled by data_loader
+        Args:
+            data_loader (torch.utils.data.DataLoader): episodic detection data loader.  It returns a tuple of size 4
+            respectively containing the paths, the images, the targets and the labels
+
+        Returns:
+            Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray]: respectively
+            precision, recall, average precision, F1 score and per-class average precision of the model
+        '''
+        self.eval()
+
+        batch_statistics = []
+        labels = []
+
+        for batch_index, (paths, images, targets, labels) in enumerate(data_loader):
+            targets = self.rename_labels(targets)
+            support_set, support_set_targets, query_set, query_set_targets = self.split_support_and_query_set(
+                images,
+                targets
+            )
+
+            outputs_on_query = self.set_forward(support_set, support_set_targets, query_set)
+            outputs_on_query = non_max_suppression(outputs_on_query)
+
+            query_set_targets[:, 2:] = xywh2xyxy(query_set_targets[:, 2:]) * self.image_size
+
+            batch_statistics += get_batch_statistics(outputs_on_query, query_set_targets, 0.8)
+
+        # Concatenate sample statistics
+        true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
+        precision, recall, AP, f1, ap_class = ap_per_class(true_positives, pred_scores, pred_labels, labels)
+
+        return precision, recall, AP, f1, ap_class
 
     def rename_labels(self, targets):
         '''

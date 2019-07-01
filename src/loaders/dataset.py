@@ -179,7 +179,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
                             images_per_label[label] = []
                         if len(images_per_label[label]) == 0 or images_per_label[label][-1] != index:
                             images_per_label[label].append(index)
-                    if index % 100 == 0 or index>23500:
+                    if index % 100 == 0:
                         print('{index}/{length_data_source} images considered'.format(
                             index=index,
                             length_data_source=len(self.data_source))

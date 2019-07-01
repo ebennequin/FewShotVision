@@ -27,6 +27,7 @@ class YOLOMAMLTraining(AbstractStep):
             learning_rate=0.001,
             n_epoch=100,
             n_episode=100,
+            image_size=416,
             random_seed=None,
             output_dir=configs.save_dir,
     ):
@@ -41,6 +42,7 @@ class YOLOMAMLTraining(AbstractStep):
             learning_rate (float): learning rate fed to the optimizer
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
+            image_size (int): size of images (square)
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
         '''
@@ -54,6 +56,7 @@ class YOLOMAMLTraining(AbstractStep):
         self.learning_rate = learning_rate
         self.n_epoch = n_epoch
         self.n_episode = n_episode
+        self.image_size = image_size
         self.random_seed = random_seed
         self.checkpoint_dir = output_dir
 
@@ -131,7 +134,7 @@ class YOLOMAMLTraining(AbstractStep):
         Returns:
             torch.utils.data.DataLoader: samples data in the shape of a detection task
         '''
-        data_manager = DetectionSetDataManager(self.n_way, self.n_shot, self.n_query, self.n_episode)
+        data_manager = DetectionSetDataManager(self.n_way, self.n_shot, self.n_query, self.n_episode, self.image_size)
 
         return data_manager.get_data_loader(path_to_data_file)
 
@@ -149,6 +152,7 @@ class YOLOMAMLTraining(AbstractStep):
             self.n_way,
             self.n_shot,
             self.n_query,
+            self.image_size,
             approx=False,
             n_task=4,
             task_update_num=5,
