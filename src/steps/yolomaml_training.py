@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot as plt
 from pipeline.steps import AbstractStep
 import torch
 
@@ -69,6 +70,8 @@ class YOLOMAMLTraining(AbstractStep):
             'F1': [],
         }
 
+        self.track_loss = []
+
     def apply(self):
         '''
         Execute the YOLOMAMLTraining step
@@ -109,7 +112,8 @@ class YOLOMAMLTraining(AbstractStep):
         optimizer = self._get_optimizer(model)
 
         for epoch in range(self.n_epoch):
-            model.train_loop(epoch, base_loader, optimizer)
+            loss = model.train_loop(epoch, base_loader, optimizer)
+            self.track_loss.append(loss)
 
             precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
 
@@ -121,6 +125,8 @@ class YOLOMAMLTraining(AbstractStep):
             if epoch == self.n_epoch - 1:
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+
+        self.plot_metrics()
 
         return {'epoch': self.n_epoch, 'state': model.state_dict()}
 
@@ -174,3 +180,12 @@ class YOLOMAMLTraining(AbstractStep):
         )
 
         return model
+
+    def plot_metrics(self):
+        '''
+        Plots the evolution of the training metrics and saves them in a PNG file
+
+        '''
+
+        plt.plot(self.track_loss)
+        plt.savefig(os.path.join(self.checkpoint_dir, 'losses.png'))

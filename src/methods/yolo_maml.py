@@ -143,6 +143,9 @@ class YOLOMAML(nn.Module):
             containing the paths, the images, the targets and the labels
             optimizer (torch.optim.Optimizer): model optimizer
 
+        Returns:
+            float: average loss of the model on the query set of the episodes
+
         '''
         self.train()
 
@@ -182,6 +185,8 @@ class YOLOMAML(nn.Module):
                         loss=avg_loss/float(episode_index + 1)
                     )
                 )
+
+        return avg_loss / len(train_loader)
 
     def eval_loop(self, data_loader):
         '''
