@@ -74,75 +74,90 @@ class ListDataset(Dataset):
         self.batch_count = 0
 
     def __getitem__(self, index):
-        '''
-        Returns an element of the dataset if index>=0. If index<0, the caller expects information about the labels
-        considered in a sampled episode. In this case, this returns the expected label in the first element of the
-        tuple, and shallow tensors in the two other elements.
-        Args:
-            index (int): selects one element of the dataset
-
-        Returns:
-            Tuple[str, torch.Tensor, torch.Tensor]: path to the image, image data, and target
-            of shape (number_of_boxes_in_image, 6)
-        '''
-
-        # ---------
-        #  Image
-        # ---------
 
         if index < 0:
             return str(-(int(index)+1)), torch.zeros((3,4,4)), torch.zeros((1, 6))
-
-        img_path = self.img_files[index % len(self.img_files)].rstrip()
-
-        # Extract image as PyTorch tensor
-        img = transforms.ToTensor()(Image.open(img_path).convert('RGB'))
-
-        # Handle images with less than three channels
-        if len(img.shape) != 3:
-            img = img.unsqueeze(0)
-            img = img.expand((3, img.shape[1:]))
-
-        _, h, w = img.shape
-        h_factor, w_factor = (h, w) if self.normalized_labels else (1, 1)
-        # Pad to square resolution
-        img, pad = pad_to_square(img, 0)
-        _, padded_h, padded_w = img.shape
-
-        # ---------
-        #  Label
-        # ---------
 
         label_path = self.label_files[index % len(self.img_files)].rstrip()
 
         targets = None
         if os.path.exists(label_path):
             boxes = torch.from_numpy(np.loadtxt(label_path).reshape(-1, 5))
-            # Extract coordinates for unpadded + unscaled image
-            x1 = w_factor * (boxes[:, 1] - boxes[:, 3] / 2)
-            y1 = h_factor * (boxes[:, 2] - boxes[:, 4] / 2)
-            x2 = w_factor * (boxes[:, 1] + boxes[:, 3] / 2)
-            y2 = h_factor * (boxes[:, 2] + boxes[:, 4] / 2)
-            # Adjust for added padding
-            x1 += pad[0]
-            y1 += pad[2]
-            x2 += pad[1]
-            y2 += pad[3]
-            # Returns (x, y, w, h)
-            boxes[:, 1] = ((x1 + x2) / 2) / padded_w
-            boxes[:, 2] = ((y1 + y2) / 2) / padded_h
-            boxes[:, 3] *= w_factor / padded_w
-            boxes[:, 4] *= h_factor / padded_h
-
             targets = torch.zeros((len(boxes), 6))
             targets[:, 1:] = boxes
 
-        # Apply augmentations
-        if self.augment:
-            if np.random.random() < 0.5:
-                img, targets = horisontal_flip(img, targets)
+        return None, None, targets
 
-        return img_path, img, targets
+    # def __getitem__(self, index):
+    #     '''
+    #     Returns an element of the dataset if index>=0. If index<0, the caller expects information about the labels
+    #     considered in a sampled episode. In this case, this returns the expected label in the first element of the
+    #     tuple, and shallow tensors in the two other elements.
+    #     Args:
+    #         index (int): selects one element of the dataset
+    #
+    #     Returns:
+    #         Tuple[str, torch.Tensor, torch.Tensor]: path to the image, image data, and target
+    #         of shape (number_of_boxes_in_image, 6)
+    #     '''
+    #
+    #     # ---------
+    #     #  Image
+    #     # ---------
+    #
+    #     if index < 0:
+    #         return str(-(int(index)+1)), torch.zeros((3,4,4)), torch.zeros((1, 6))
+    #
+    #     img_path = self.img_files[index % len(self.img_files)].rstrip()
+    #
+    #     # Extract image as PyTorch tensor
+    #     img = transforms.ToTensor()(Image.open(img_path).convert('RGB'))
+    #
+    #     # Handle images with less than three channels
+    #     if len(img.shape) != 3:
+    #         img = img.unsqueeze(0)
+    #         img = img.expand((3, img.shape[1:]))
+    #
+    #     _, h, w = img.shape
+    #     h_factor, w_factor = (h, w) if self.normalized_labels else (1, 1)
+    #     # Pad to square resolution
+    #     img, pad = pad_to_square(img, 0)
+    #     _, padded_h, padded_w = img.shape
+    #
+    #     # ---------
+    #     #  Label
+    #     # ---------
+    #
+    #     label_path = self.label_files[index % len(self.img_files)].rstrip()
+    #
+    #     targets = None
+    #     if os.path.exists(label_path):
+    #         boxes = torch.from_numpy(np.loadtxt(label_path).reshape(-1, 5))
+    #         # Extract coordinates for unpadded + unscaled image
+    #         x1 = w_factor * (boxes[:, 1] - boxes[:, 3] / 2)
+    #         y1 = h_factor * (boxes[:, 2] - boxes[:, 4] / 2)
+    #         x2 = w_factor * (boxes[:, 1] + boxes[:, 3] / 2)
+    #         y2 = h_factor * (boxes[:, 2] + boxes[:, 4] / 2)
+    #         # Adjust for added padding
+    #         x1 += pad[0]
+    #         y1 += pad[2]
+    #         x2 += pad[1]
+    #         y2 += pad[3]
+    #         # Returns (x, y, w, h)
+    #         boxes[:, 1] = ((x1 + x2) / 2) / padded_w
+    #         boxes[:, 2] = ((y1 + y2) / 2) / padded_h
+    #         boxes[:, 3] *= w_factor / padded_w
+    #         boxes[:, 4] *= h_factor / padded_h
+    #
+    #         targets = torch.zeros((len(boxes), 6))
+    #         targets[:, 1:] = boxes
+    #
+    #     # Apply augmentations
+    #     if self.augment:
+    #         if np.random.random() < 0.5:
+    #             img, targets = horisontal_flip(img, targets)
+    #
+    #     return img_path, img, targets
 
     def collate_fn(self, batch):
         '''
