@@ -27,7 +27,7 @@ class YOLOMAML(nn.Module):
             n_way (int): number of different classes
             n_support (int): number of examples per class in the support set
             n_query (int): number of examples per class in the query set
-            image_size (int): size of images
+            image_size (int): size of images (square)
             approx (bool): whether to use an approximation of the meta-backpropagation
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
@@ -137,7 +137,8 @@ class YOLOMAML(nn.Module):
         Executes one meta-training epoch.
         Args:
             epoch (int): current epoch
-            train_loader (DataLoader): loader of a given number of episodes
+            train_loader (DataLoader): loader of a given number of episodes.  It returns a tuple of size 4 respectively
+            containing the paths, the images, the targets and the labels
             optimizer (torch.optim.Optimizer): model optimizer
 
         '''
@@ -182,7 +183,8 @@ class YOLOMAML(nn.Module):
         '''
         Evaluates the model on detection tasks sampled by data_loader
         Args:
-            data_loader (torch.utils.data.DataLoader): episodic detection data loader
+            data_loader (torch.utils.data.DataLoader): episodic detection data loader.  It returns a tuple of size 4
+            respectively containing the paths, the images, the targets and the labels
 
         Returns:
             Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray]: respectively
@@ -203,8 +205,7 @@ class YOLOMAML(nn.Module):
             outputs_on_query = self.set_forward(support_set, support_set_targets, query_set)
             outputs_on_query = non_max_suppression(outputs_on_query)
 
-            query_set_targets[:, 2:] = xywh2xyxy(query_set_targets[:, 2:])
-            query_set_targets[:, 2:] *= self.image_size
+            query_set_targets[:, 2:] = xywh2xyxy(query_set_targets[:, 2:]) * self.image_size
 
             batch_statistics += get_batch_statistics(outputs_on_query, query_set_targets, 0.8)
 

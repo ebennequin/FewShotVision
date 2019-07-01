@@ -42,7 +42,7 @@ class YOLOMAMLTraining(AbstractStep):
             learning_rate (float): learning rate fed to the optimizer
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
-            image_size (int): size of images
+            image_size (int): size of images (square)
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
         '''

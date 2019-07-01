@@ -108,7 +108,7 @@ class DetectionSetDataManager(DataManager):
             n_query (int): number of images in the query set with an instance of one class,
             for each of the n_way classes
             n_episode (int): number of episodes per epoch
-            image_size (int): size of images
+            image_size (int): size of images (square)
         '''
         super(DetectionSetDataManager).__init__()
         self.n_way = n_way
