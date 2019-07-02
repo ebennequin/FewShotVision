@@ -48,7 +48,7 @@ class YOLOMAMLTraining(AbstractStep):
             approx (bool): whether to use an approximation of the meta-backpropagation
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
-            print_freq (int): inside an epoch, print status update every print_fre episodes
+            print_freq (int): inside an epoch, print status update every print_freq episodes
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
             image_size (int): size of images (square)
