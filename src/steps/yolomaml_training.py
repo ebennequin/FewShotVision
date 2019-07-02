@@ -1,6 +1,5 @@
 import os
 
-import matplotlib.pyplot as plt
 from pipeline.steps import AbstractStep
 import torch
 from torch.utils.tensorboard.writer import SummaryWriter

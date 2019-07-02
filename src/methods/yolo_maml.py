@@ -150,7 +150,7 @@ class YOLOMAML(nn.Module):
         self.train()
 
         print_freq = 10
-        avg_loss = 0
+        cumulative_loss = 0
         task_count = 0
         loss_all = []
         optimizer.zero_grad()
@@ -163,7 +163,7 @@ class YOLOMAML(nn.Module):
             )
 
             loss = self.set_forward_loss(support_set, support_set_targets, query_set, query_set_targets)
-            avg_loss = avg_loss + loss.item()
+            cumulative_loss = cumulative_loss + loss.item()
             loss_all.append(loss)
 
             task_count += 1
@@ -182,11 +182,11 @@ class YOLOMAML(nn.Module):
                         epoch=epoch,
                         episode=episode_index,
                         total_episodes=len(train_loader),
-                        loss=avg_loss/float(episode_index + 1)
+                        loss=cumulative_loss/float(episode_index + 1)
                     )
                 )
 
-        return avg_loss / len(train_loader)
+        return cumulative_loss / len(train_loader)
 
     def eval_loop(self, data_loader):
         '''
