@@ -7,15 +7,19 @@ init:
       steps:
       - name: YOLOMAMLTraining
         init:
-          dataset: pipelines/detection/experiments_config/black.data
+          dataset_config: pipelines/detection/experiments_config/black.data
           model_config: pipelines/detection/experiments_config/yolov3-tiny-2-way.cfg
           n_way: 2
           n_shot: 1
           n_query: 2
           optimizer: Adam
-          learning_rate: 0.001
+          learning_rate: 0.01
+          approx: True
+          n_task: 1
+          task_update_num: 1
+          print_freq: 1
           n_epoch: 2
-          n_episode: 5
+          n_episode: 3
 
 run:
   output_folder: output

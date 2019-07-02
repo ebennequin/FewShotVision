@@ -136,12 +136,26 @@ def compute_ap(recall, precision):
 
 
 def get_batch_statistics(outputs, targets, iou_threshold):
-    """ Compute true positives, predicted scores and predicted labels per sample """
+    """
+    Computes true positives, predicted scores and predicted labels per sample
+    Args:
+        outputs (list): length n_way*n_query. Each element is a torch.Tensor of shape (number_of_detected_boxes, 7).
+        Each detection contains (x1, y1, x2, y2, objectness_confidence, class_score, class_predicted)
+        targets (torch.Tensor): shape (number_of_targets_in_all_images, 6) ground truth with which to compare outputs
+        iou_threshold (float): threshold for intersection over union
+
+    Returns:
+        list: length n_way*n_query. Each element correspond to one image and is a list of length 3 containing (0) a
+        numpy.ndarray of size number_of_detected_boxes where each element is 1 if the corresponding detection is a true
+        positive and 0 otherwise, (1) a torch.Tensor of size number_of_detected_boxes containing the objectness
+        confidences of the detections, and (2) a torch.Tensor of size number_of_detected_boxes containing the detected
+        labels
+    """
     batch_metrics = []
     for sample_i in range(len(outputs)):
 
         if outputs[sample_i] is None:
-            batch_metrics.append([np.array([0]), np.array([0]), None])
+            batch_metrics.append([np.array([0]), torch.tensor([0]), torch.tensor([-1])])
             continue
 
         output = outputs[sample_i]
@@ -219,12 +233,17 @@ def bbox_iou(box1, box2, x1y1x2y2=True):
 
 def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.4):
     """
-    Removes detections with lower object confidence score than 'conf_thres' and performs
-    Non-Maximum Suppression to further filter detections.
-    Returns detections with shape:
-        (x1, y1, x2, y2, object_conf, class_score, class_pred)
-    """
+    Removes detections with lower object confidence score than conf_thres and performs Non-Maximum Suppression to
+    further filter detections.
+    Args:
+        prediction (torch.Tensor): shape(n_way*n_query, number_of_output_boxes_per_image, 5+n_way) output of the network
+        conf_thres (float): threshold for objectness confidence
+        nms_thres (float): threshold for non-maximum suppression
 
+    Returns:
+        list: length n_way*n_query. Each element is a torch.Tensor of shape (number_of_kept_detections, 7). Each
+        detection contains (x1, y1, x2, y2, objectness_confidence, class_score, class_predicted)
+    """
     # From (center x, center y, width, height) to (x1, y1, x2, y2)
     prediction[..., :4] = xywh2xyxy(prediction[..., :4])
     output = [None for _ in range(len(prediction))]
