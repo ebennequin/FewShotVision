@@ -124,6 +124,7 @@ class YOLOMAML(nn.Module):
                     fast_parameters.append(weight.fast)
                     count += 1
 
+        torch.cuda.empty_cache()
         return self.forward(query_set, query_set_targets)
 
     def set_forward_loss(self, support_set, support_set_targets, query_set, query_set_targets):
@@ -200,6 +201,7 @@ class YOLOMAML(nn.Module):
                         loss=cumulative_loss / float(episode_index + 1)
                     )
                 )
+            torch.cuda.empty_cache()
 
         return cumulative_loss / len(train_loader)
 
