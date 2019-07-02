@@ -241,7 +241,7 @@ class YOLOMAML(nn.Module):
                 query_set_targets,
                 iou_threshold=self.iou_threshold
             )
-            all_labels += labels
+            all_labels += labels.tolist()
 
         # Concatenate sample statistics
         true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
