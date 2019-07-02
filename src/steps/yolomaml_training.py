@@ -26,6 +26,10 @@ class YOLOMAMLTraining(AbstractStep):
             n_query=16,
             optimizer='Adam',
             learning_rate=0.001,
+            approx=True,
+            n_task=4,
+            task_update_num=3,
+            print_freq=10,
             n_epoch=100,
             n_episode=100,
             image_size=416,
@@ -41,6 +45,10 @@ class YOLOMAMLTraining(AbstractStep):
             n_query (int): number of query data in each class in an episode
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
             learning_rate (float): learning rate fed to the optimizer
+            approx (bool): whether to use an approximation of the meta-backpropagation
+            n_task (int): number of episodes between each meta-backpropagation
+            task_update_num (int): number of updates inside each episode
+            print_freq (int): inside an epoch, print status update every {} episodes
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
             image_size (int): size of images (square)
@@ -55,6 +63,10 @@ class YOLOMAMLTraining(AbstractStep):
         self.n_query = n_query
         self.optimizer = optimizer
         self.learning_rate = learning_rate
+        self.approx = approx
+        self.n_task = n_task
+        self.task_update_num = task_update_num
+        self.print_freq = print_freq
         self.n_epoch = n_epoch
         self.n_episode = n_episode
         self.image_size = image_size
@@ -165,9 +177,10 @@ class YOLOMAMLTraining(AbstractStep):
             self.n_shot,
             self.n_query,
             self.image_size,
-            approx=False,
-            n_task=4,
-            task_update_num=5,
+            approx=self.approx,
+            n_task=self.n_task,
+            task_update_num=self.task_update_num,
+            print_freq=self.print_freq,
             train_lr=self.learning_rate,
             device=self.device
         )

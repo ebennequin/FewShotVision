@@ -18,6 +18,7 @@ class YOLOMAML(nn.Module):
                  n_task=4,
                  task_update_num=5,
                  train_lr=0.01,
+                 print_freq = 10,
                  device='cpu',
                  ):
         '''
@@ -32,6 +33,7 @@ class YOLOMAML(nn.Module):
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
             train_lr (float): learning rate for intra-task updates
+            print_freq (int): inside an epoch, print status update every {} episodes
             device (str): cuda or cpu
         '''
         super(YOLOMAML, self).__init__()
@@ -48,6 +50,7 @@ class YOLOMAML(nn.Module):
         self.task_update_num = task_update_num
         self.train_lr = train_lr
         self.approx = approx
+        self.print_freq = print_freq
 
         self.device = device
 
@@ -149,7 +152,6 @@ class YOLOMAML(nn.Module):
         '''
         self.train()
 
-        print_freq = 10
         cumulative_loss = 0
         task_count = 0
         loss_all = []
@@ -176,7 +178,7 @@ class YOLOMAML(nn.Module):
                 task_count = 0
                 loss_all = []
             optimizer.zero_grad()
-            if episode_index % print_freq == 0:
+            if episode_index % self.print_freq == 0:
                 print(
                     'Epoch {epoch} | Episode {episode}/{total_episodes} | Loss {loss}'.format(
                         epoch=epoch,

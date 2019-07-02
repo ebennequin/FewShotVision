@@ -14,6 +14,10 @@ init:
           n_query: 16
           optimizer: Adam
           learning_rate: 0.01
+          approx: True
+          n_task: 1
+          task_update_num: 1
+          print_freq: 1
           n_epoch: 2
           n_episode: 10
 
