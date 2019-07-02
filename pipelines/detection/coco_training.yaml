@@ -10,16 +10,16 @@ init:
           dataset_config: pipelines/detection/experiments_config/coco.data
           model_config: pipelines/detection/experiments_config/yolov3-tiny-5-way.cfg
           n_way: 5
-          n_shot: 10
-          n_query: 16
+          n_shot: 5
+          n_query: 10
           optimizer: Adam
           learning_rate: 0.01
           approx: True
           n_task: 1
           task_update_num: 1
           print_freq: 1
-          n_epoch: 2
-          n_episode: 10
+          n_epoch: 100
+          n_episode: 100
           objectness_threshold: 0.3
           nms_threshold: 0.4
           iou_threshold: 0.2
