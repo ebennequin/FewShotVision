@@ -32,6 +32,9 @@ class YOLOMAMLTraining(AbstractStep):
             print_freq=10,
             n_epoch=100,
             n_episode=100,
+            objectness_threshold=0.8,
+            nms_threshold=0.4,
+            iou_threshold=0.2,
             image_size=416,
             random_seed=None,
             output_dir=configs.save_dir,
@@ -51,6 +54,9 @@ class YOLOMAMLTraining(AbstractStep):
             print_freq (int): inside an epoch, print status update every print_freq episodes
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
+            objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
+            nms_threshold (float): threshold for non maximum suppression, at evaluation time
+            iou_threshold (float): threshold for intersection over union
             image_size (int): size of images (square)
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
@@ -69,6 +75,9 @@ class YOLOMAMLTraining(AbstractStep):
         self.print_freq = print_freq
         self.n_epoch = n_epoch
         self.n_episode = n_episode
+        self.objectness_threshold = objectness_threshold
+        self.nms_threshold = nms_threshold
+        self.iou_threshold = iou_threshold
         self.image_size = image_size
         self.random_seed = random_seed
         self.checkpoint_dir = output_dir
@@ -182,7 +191,10 @@ class YOLOMAMLTraining(AbstractStep):
             task_update_num=self.task_update_num,
             print_freq=self.print_freq,
             train_lr=self.learning_rate,
-            device=self.device
+            objectness_threshold=self.objectness_threshold,
+            nms_threshold=self.nms_threshold,
+            iou_threshold=self.iou_threshold,
+            device=self.device,
         )
 
         return model
