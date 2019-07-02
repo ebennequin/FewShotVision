@@ -20,6 +20,9 @@ init:
           print_freq: 1
           n_epoch: 2
           n_episode: 10
+          objectness_threshold: 0.3
+          nms_threshold: 0.4
+          iou_threshold: 0.2
 
 run:
   output_folder: output

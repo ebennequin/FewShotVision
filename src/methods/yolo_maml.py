@@ -19,6 +19,9 @@ class YOLOMAML(nn.Module):
                  task_update_num=5,
                  train_lr=0.01,
                  print_freq=10,
+                 objectness_threshold=0.8,
+                 nms_threshold=0.4,
+                 iou_threshold=0.2,
                  device='cpu',
                  ):
         """
@@ -33,6 +36,9 @@ class YOLOMAML(nn.Module):
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
             train_lr (float): learning rate for intra-task updates
+            objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
+            nms_threshold (float): threshold for non maximum suppression, at evaluation time
+            iou_threshold (float): threshold for intersection over union
             print_freq (int): inside an epoch, print status update every print_freq episodes
             device (str): cuda or cpu
         """
@@ -51,6 +57,10 @@ class YOLOMAML(nn.Module):
         self.train_lr = train_lr
         self.approx = approx
         self.print_freq = print_freq
+
+        self.objectness_threshold = objectness_threshold
+        self.nms_threshold = nms_threshold
+        self.iou_threshold = iou_threshold
 
         self.device = device
 
@@ -207,7 +217,7 @@ class YOLOMAML(nn.Module):
         self.eval()
 
         batch_statistics = []
-        labels = []
+        all_labels = []
 
         for batch_index, (paths, images, targets, labels) in enumerate(data_loader):
             targets = self.rename_labels(targets)
@@ -217,12 +227,21 @@ class YOLOMAML(nn.Module):
             )
 
             outputs_on_query = self.set_forward(support_set, support_set_targets, query_set).cpu()
-            outputs_on_query = non_max_suppression(outputs_on_query, conf_thres=0.1)
+            outputs_on_query = non_max_suppression(
+                outputs_on_query,
+                conf_thres=self.objectness_threshold,
+                nms_thres=self.nms_threshold
+            )
 
             query_set_targets[:, 2:] = xywh2xyxy(query_set_targets[:, 2:]) * self.image_size
             query_set_targets = query_set_targets.cpu()
 
-            batch_statistics += get_batch_statistics(outputs_on_query, query_set_targets, 0.8)
+            batch_statistics += get_batch_statistics(
+                outputs_on_query,
+                query_set_targets,
+                iou_threshold=self.iou_threshold
+            )
+            all_labels += labels
 
         # Concatenate sample statistics
         true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
@@ -230,7 +249,7 @@ class YOLOMAML(nn.Module):
             true_positives,
             pred_scores,
             pred_labels,
-            labels
+            all_labels
         )
 
         return precision, recall, average_precision, f1, ap_class
