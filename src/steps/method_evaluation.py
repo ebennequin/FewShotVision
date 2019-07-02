@@ -24,9 +24,9 @@ from src.utils.utils import random_swap_numpy
 
 
 class MethodEvaluation(AbstractStep):
-    '''
+    """
     This step handles the evaluation of the trained model on the novel dataset
-    '''
+    """
     def __init__(
             self,
             dataset,
@@ -44,7 +44,7 @@ class MethodEvaluation(AbstractStep):
             random_seed=None,
             n_swaps=0,
     ):
-        '''
+        """
         Args:
             dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
             model (str): Conv{4|6} / ResNet{10|18|34|50|101}
@@ -62,7 +62,7 @@ class MethodEvaluation(AbstractStep):
             n_swaps (int): number of swaps between labels in the support set of each classification task, in order to
             test the robustness to label noise
 
-        '''
+        """
 
         self.dataset = dataset
         self.backbone = backbone
@@ -90,7 +90,7 @@ class MethodEvaluation(AbstractStep):
         )
 
     def apply(self, model_state, features_and_labels=None):
-        '''
+        """
         Executes MethodEvaluation step
         Args:
             model_state (dict): contains the state of the trained model and the number of training epochs
@@ -98,7 +98,7 @@ class MethodEvaluation(AbstractStep):
 
         Returns:
             float: average accuracy on few shot classification tasks sampled from the evaluation dataset
-        '''
+        """
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         acc_all = []
@@ -173,7 +173,7 @@ class MethodEvaluation(AbstractStep):
         pass
 
     def _feature_evaluation(self, features_per_label, model):
-        '''
+        """
         Evaluates the model on one classification task
         Args:
             features_per_label (dict): a dict containing the feature vectors for each label
@@ -182,7 +182,7 @@ class MethodEvaluation(AbstractStep):
         Returns:
             float: accuracy on the classification of query data, in percents
 
-        '''
+        """
         z_all = self._set_classification_task(features_per_label)
 
         model.n_query = self.n_query
@@ -196,7 +196,7 @@ class MethodEvaluation(AbstractStep):
         return acc
 
     def _set_classification_task(self, features_per_label):
-        '''
+        """
         Defines one classification task, which is composed of a support set and a query set.
         Args:
             features_per_label (dict): a dict containing the feature vectors for each label
@@ -205,7 +205,7 @@ class MethodEvaluation(AbstractStep):
             torch.Tensor: shape(self.test_n_way, self.n_shot+self.n_query, feature_vector_dim) features vectors for
             support and query, set by class, with self.n_swaps swaps in the label (cf random_swap_numpy)
 
-        '''
+        """
         class_list = features_per_label.keys()
 
         select_class = np.random.choice(list(class_list), size=self.test_n_way, replace=False)
@@ -222,14 +222,14 @@ class MethodEvaluation(AbstractStep):
         return z_all
 
     def _load_model(self, model_state):
-        '''
+        """
         Load model from training
         Args:
             model_state: dict containing the state of the trained model
 
         Returns:
             torch.nn.Module: model with loaded parameters, ready for evaluation
-        '''
+        """
         few_shot_params = dict(n_way=self.test_n_way, n_support=self.n_shot)
 
         # Define model
@@ -276,14 +276,14 @@ class MethodEvaluation(AbstractStep):
         return model
 
     def _process_features(self, features_and_labels):
-        '''
+        """
         Process features from numpy arrays to a dictionary
         Args:
             features_and_labels (tuple): a tuple (features, labels)
 
         Returns:
             dict: a dict where keys are the labels and values are the corresponding feature vectors
-        '''
+        """
         features, labels = features_and_labels
 
         while not features[-1].any():
@@ -301,12 +301,12 @@ class MethodEvaluation(AbstractStep):
         return features_per_label
 
     def _confidence_interval(self, std):
-        '''
+        """
         Computes statistical confidence interval of the results from standard deviation and number of iterations
         Args:
             std (float): standard deviation
 
         Returns:
             float: confidence interval
-        '''
+        """
         return 1.96 * std / np.sqrt(self.n_iter)

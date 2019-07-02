@@ -23,7 +23,7 @@ class SimpleHDF5Dataset:
         return self.total
 
 def load_features_and_labels_from_file(filename):
-    '''
+    """
 
     Args:
         filename (str): path to .h5py file containing the features and labels
@@ -31,7 +31,7 @@ def load_features_and_labels_from_file(filename):
     Returns:
         array: extracted features
         array: extracted labels
-    '''
+    """
     with h5py.File(filename, 'r') as f:
         fileset = SimpleHDF5Dataset(f)
     features = fileset.all_features_dset

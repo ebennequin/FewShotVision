@@ -9,7 +9,7 @@ from src.utils.utils import random_swap_tensor
 
 class MetaTemplate(nn.Module):
     def __init__(self, model_func, n_way, n_support, change_way=True):
-        '''
+        """
 
         Args:
             model_func (src.backbones object): backbone function
@@ -17,7 +17,7 @@ class MetaTemplate(nn.Module):
             n_support (int): number of labeled examples per class in the support set
             change_way (bool): allow n_way to be different in training and evaluation
 
-        '''
+        """
         super(MetaTemplate, self).__init__()
         self.n_way = n_way
         self.n_support = n_support
@@ -64,7 +64,7 @@ class MetaTemplate(nn.Module):
 
     #TODO: is this always the same images in the episodes ?
     def train_loop(self, epoch, train_loader, optimizer, n_swaps):
-        '''
+        """
         Executes one training epoch
         Args:
             epoch (int): current epoch
@@ -73,7 +73,7 @@ class MetaTemplate(nn.Module):
             n_swaps (int): number of swaps between labels in the support set of each episode, in order to
             test the robustness to label noise
 
-        '''
+        """
         print_freq = 10
 
         avg_loss = 0
@@ -97,7 +97,7 @@ class MetaTemplate(nn.Module):
                 ))
 
     def eval_loop(self, test_loader, n_swaps=0):
-        '''
+        """
 
         Args:
             test_loader (DataLoader): loader of a given number of episodes
@@ -106,7 +106,7 @@ class MetaTemplate(nn.Module):
 
         Returns:
             float: average accuracy on evaluation set
-        '''
+        """
         correct = 0
         count = 0
         acc_all = []

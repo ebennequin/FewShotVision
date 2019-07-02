@@ -316,7 +316,7 @@ def build_targets(pred_boxes, pred_cls, target, anchors, ignore_thres):
 
 
 def binary_cross_entropy(input, target):
-    '''
+    """
     Implements binary cross-entropy loss, as an alternative for the torch.nn.BCELoss() which does not support
     second derivatives
     Args:
@@ -325,6 +325,6 @@ def binary_cross_entropy(input, target):
 
     Returns:
         torch.Tensor : binary cross-entropy loss
-    '''
+    """
     loss = -(input.log() * target + (1 - input).log() * (1 - target))
     return loss.mean()

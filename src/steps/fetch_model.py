@@ -6,23 +6,23 @@ import torch
 from src.utils import configs
 
 class FetchModel(AbstractStep):
-    '''
+    """
     This step returns the state of a trained model in a dictionary, from the path to a .tar file
-    '''
+    """
     def __init__(self, path_to_model):
-        '''
+        """
 
         Args:
             path_to_model (str): path to the file containing the model parameters, must end in .tar
-        '''
+        """
         self.path_to_model = path_to_model
 
     def apply(self):
-        '''
+        """
         Execute the steps
         Returns:
             dict: contains the model state
-        '''
+        """
         assert self.path_to_model.endswith(".tar"), "Input path to file must end in .tar"
         model_state = torch.load(self.path_to_model)
 

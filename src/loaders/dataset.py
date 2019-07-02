@@ -12,17 +12,17 @@ import torchvision.transforms as transforms
 
 # TODO: why not extend torch.utils.data.Dataset ?
 class SimpleDataset:
-    '''
+    """
     Defines a regular dataset of images
-    '''
+    """
     def __init__(self, data_file, transform, shallow=False):
-        '''
+        """
 
         Args:
             data_file (str): path to JSON file defining the data
             transform (torchvision.transforms.Compose): transformations to be applied to the images
             shallow (bool): whether to create only a small dataset (for quick code testing)
-        '''
+        """
         with open(data_file, 'r') as f:
             self.meta = json.load(f)
         if shallow:  # We return a reduced dataset
@@ -41,18 +41,18 @@ class SimpleDataset:
 
 
 class SetDataset:
-    '''
+    """
     Defines a dataset splitted in subsets.
     Item of index i is a torch.utils.DataLoader object constructed from the SubDataset corresponding to label i.
-    '''
+    """
     def __init__(self, data_file, batch_size, transform):
-        '''
+        """
 
         Args:
             data_file (str): path to JSON file defining the data
             batch_size (int): number of images per class in an episode
             transform (torchvision.transforms.Compose): transformations to be applied to the images
-        '''
+        """
         with open(data_file, 'r') as f:
             self.meta = json.load(f)
 
@@ -83,13 +83,13 @@ class SetDataset:
 
 class SubDataset:
     def __init__(self, images_list, label, transform=transforms.ToTensor()):
-        '''
+        """
         Defines the dataset composed by the images of a label
         Args:
             images_list (list): contains the paths to the images
             label (int): original label of the images
             transform (torchvision.transforms.Compose): transformations to be applied to the images
-        '''
+        """
         self.images_list = images_list
         self.label = label
         self.transform = transform
@@ -105,19 +105,19 @@ class SubDataset:
 
 
 class EpisodicBatchSampler(torch.utils.data.Sampler):
-    '''
+    """
     Samples elements randomly in episodes of defined shape.
     Each yielded sample is a torch.Tensor of shape (n_way)
-    '''
+    """
 
     def __init__(self, n_classes, n_way, n_episodes):
-        '''
+        """
 
         Args:
             n_classes (int): number of classes in the dataset
             n_way (int): number of classes in an episode
             n_episodes (int): number of episodes
-        '''
+        """
         self.n_classes = n_classes
         self.n_way = n_way
         self.n_episodes = n_episodes
@@ -132,13 +132,13 @@ class EpisodicBatchSampler(torch.utils.data.Sampler):
 
 
 def create_dict_images_per_label(data_source):
-    '''
+    """
             Compute and returns dictionary of images per label
             Args:
                 data_source (ListDataset) : The data set containing the images
             Returns:
                 dict: each key maps to a list of the images which contain at least one target which label is the key
-            '''
+            """
     images_per_label={}
 
     for index in range(len(data_source)):
@@ -162,11 +162,11 @@ def create_dict_images_per_label(data_source):
 
 
 class DetectionTaskSampler(torch.utils.data.Sampler):
-    '''
+    """
     Samples elements in detection episodes of defined shape.
-    '''
+    """
     def __init__(self, data_source, n_way, n_support, n_query, n_episodes, path_to_images_per_label=None):
-        '''
+        """
 
         Args:
             data_source (ListDataset): source dataset
@@ -177,7 +177,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
             for each of the n_way classes
             n_episodes (int): number of episodes per epoch
             path_to_images_per_label (str): path to a pickle file containing a dictionary of images per label
-        '''
+        """
         self.data_source = data_source
         self.n_way = n_way
         self.n_support = n_support
@@ -188,13 +188,13 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
         self.label_list = self._get_label_list()
 
     def _get_images_per_label(self, path):
-        '''
+        """
         Returns dictionary of images per label from a file if specified or compute it from scratch
         Args:
             path (str) : path to a pickle file containing a dictionary of images per label
         Returns:
             dict: each key maps to a list of the images which contain at least one target which label is the key
-        '''
+        """
         if path:
             with open(path, 'rb') as dictionary_file:
                 images_per_label = pickle.load(dictionary_file)
@@ -204,11 +204,11 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
         return images_per_label
 
     def _get_label_list(self):
-        '''
+        """
 
         Returns:
             list: list of appropriate labels, i.e. labels that are present in at least n_support+n_query images
-        '''
+        """
         label_list = []
         for label in self.images_per_label:
             if len(self.images_per_label[label]) >= self.n_support + self.n_query:
@@ -216,16 +216,16 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
         return label_list
 
     def _sample_labels(self):
-        '''
+        """
 
         Returns:
             numpy.ndarray: n_way labels sampled at random from all available labels
-        '''
+        """
         labels = np.random.choice(self.label_list, self.n_way, replace=False)
         return labels
 
     def _sample_images_from_labels(self, labels):
-        '''
+        """
         For each label in labels, samples n_support+n_query images containing at least one box associated with label
         The first n_way elements of the returned tensor will be used to determine the sampled labels
         Args:
@@ -234,7 +234,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
         Returns:
             torch.Tensor: length = n_way*(1+n_support+n_query) information about the labels,
             and indices of images constituting an episode
-        '''
+        """
         #TODO: images can appear twice
         images_indices = list(-labels-1)
         for label in labels:

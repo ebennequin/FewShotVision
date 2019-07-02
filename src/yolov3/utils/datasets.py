@@ -74,7 +74,7 @@ class ListDataset(Dataset):
         self.batch_count = 0
 
     def __getitem__(self, index):
-        '''
+        """
         Returns an element of the dataset if index>=0. If index<0, the caller expects information about the labels
         considered in a sampled episode. In this case, this returns the expected label in the first element of the
         tuple, and shallow tensors in the two other elements.
@@ -84,7 +84,7 @@ class ListDataset(Dataset):
         Returns:
             Tuple[str, torch.Tensor, torch.Tensor]: path to the image, image data, and target
             of shape (number_of_boxes_in_image, 6)
-        '''
+        """
 
         # ---------
         #  Image
@@ -145,7 +145,7 @@ class ListDataset(Dataset):
         return img_path, img, targets
 
     def collate_fn(self, batch):
-        '''
+        """
         Merges a list of samples to form a mini-batch
         Args:
             batch (list): contains the elements sampled from the datasets
@@ -153,7 +153,7 @@ class ListDataset(Dataset):
         Returns:
             Tuple[Tuple, torch.Tensor, torch.Tensor, torch.Tensor]: respectively contains 0. the paths to sampled
             images ; 1. the sampled images ; 2. targets of the sampled images and 3. the sampled labels
-        '''
+        """
         # Remove lines containing data about the labels
         labels = []
         for index in range(len(batch)):
