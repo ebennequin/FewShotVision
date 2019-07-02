@@ -2,6 +2,7 @@ import os
 
 from pipeline.steps import AbstractStep
 import torch
+from torch.utils.tensorboard.writer import SummaryWriter
 
 from src.loaders.data_managers import DetectionSetDataManager
 from src.methods import YOLOMAML
@@ -62,12 +63,7 @@ class YOLOMAMLTraining(AbstractStep):
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        self.validation_metrics = {
-            'Precision': [],
-            'Recall': [],
-            'AP': [],
-            'F1': [],
-        }
+        self.writer = SummaryWriter(log_dir=output_dir)
 
     def apply(self):
         '''
@@ -109,18 +105,21 @@ class YOLOMAMLTraining(AbstractStep):
         optimizer = self._get_optimizer(model)
 
         for epoch in range(self.n_epoch):
-            model.train_loop(epoch, base_loader, optimizer)
-
+            loss = model.train_loop(epoch, base_loader, optimizer)
             precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
 
-            self.validation_metrics['Precision'].append(precision.mean())
-            self.validation_metrics['Recall'].append(recall.mean())
-            self.validation_metrics['AP'].append(average_precision.mean())
-            self.validation_metrics['F1'].append(f1.mean())
+            # Add metrics to tensorboard
+            self.writer.add_scalar('loss', loss, epoch)
+            self.writer.add_scalar('precision', precision.mean(), epoch)
+            self.writer.add_scalar('recall', recall.mean(), epoch)
+            self.writer.add_scalar('mAP', average_precision.mean(), epoch)
+            self.writer.add_scalar('F1', f1.mean(), epoch)
 
             if epoch == self.n_epoch - 1:
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
                 torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+
+        self.writer.close()
 
         return {'epoch': self.n_epoch, 'state': model.state_dict()}
 

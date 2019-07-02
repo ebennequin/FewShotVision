@@ -14,8 +14,8 @@ init:
           n_query: 2
           optimizer: Adam
           learning_rate: 0.001
-          n_epoch: 1
-          n_episode: 8
+          n_epoch: 2
+          n_episode: 5
 
 run:
   output_folder: output

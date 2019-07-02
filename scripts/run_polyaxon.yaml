@@ -13,6 +13,9 @@ environment:
 build:
   image: sicara/leto-stack:tf1.13.0rc0-gpu-pipeline0.7.1-chani0.0.8
   build_steps:
+  #TODO : rebuild image docker
+    - pip uninstall -y tensorflow-gpu
+    - pip uninstall -y tensorboard
     - pip install --no-cache-dir -r requirements.txt
   env_vars:
     - ['LC_ALL', 'C.UTF-8']

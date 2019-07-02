@@ -1,3 +1,4 @@
+absl-py==0.7.1
 args==0.1.0
 atomicwrites==1.3.0
 attrs==19.1.0
@@ -7,11 +8,14 @@ click==6.7
 clint==0.5.1
 cycler==0.10.0
 decorator==4.4.0
+future==0.17.1
+grpcio==1.21.1
 h5py==2.9.0
 hestia==0.3.0
 idna==2.8
 Jinja2==2.10
 kiwisolver==1.1.0
+Markdown==3.1.1
 MarkupSafe==1.1.1
 marshmallow==3.0.0rc4
 matplotlib==3.1.0
@@ -28,6 +32,7 @@ polyaxon-client==0.4.4
 polyaxon-deploy==0.4.4
 polyaxon-schemas==0.4.4
 polystores==0.1.7
+protobuf==3.8.0
 psutil==5.4.7
 py==1.8.0
 pydot==1.4.1
@@ -42,6 +47,7 @@ requests-toolbelt==0.8.0
 rhea==0.4.5
 six==1.11.0
 tabulate==0.8.2
+tb-nightly==1.15.0a20190624
 tqdm==4.32.2
 urllib3==1.25.2
 wcwidth==0.1.7
