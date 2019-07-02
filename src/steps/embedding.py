@@ -17,10 +17,10 @@ from src.utils.io_utils import (
 
 
 class Embedding(AbstractStep):
-    '''
+    """
     This step handles the computing of the embeddings of the evaluation dataset prior to evaluation,
     for computation efficiency. It does not support methods using meta-models, like MAML.
-    '''
+    """
 
     def __init__(
             self,
@@ -37,7 +37,7 @@ class Embedding(AbstractStep):
             output_dir=configs.save_dir,
             random_seed=None,
     ):
-        '''
+        """
         Args:
             dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
             model (str): Conv{4|6} / ResNet{10|18|34|50|101}
@@ -49,7 +49,7 @@ class Embedding(AbstractStep):
             shallow (bool): reduces the dataset to 256 images (typically for quick code testing)
             split (str): which dataset is considered (base, val or novel)
             save_iter (int): save feature from the model trained in x epoch, use the best model if x is -1
-        '''
+        """
         self.dataset = dataset
         self.backbone = backbone
         self.method = method
@@ -90,7 +90,7 @@ class Embedding(AbstractStep):
         pass
 
     def _save_features(self, model, data_loader, outfile):
-        '''
+        """
         Computes and save the embeddings of all images with the given feature extractor
         Args:
             model: trained feature extractor
@@ -99,7 +99,7 @@ class Embedding(AbstractStep):
 
         Returns:
             tuple: numpy arrays containing respectively all the features and the corresponding labels
-        '''
+        """
         f = h5py.File(outfile, 'w')
         max_count = len(data_loader) * data_loader.batch_size
         print(data_loader.batch_size, max_count)
@@ -131,11 +131,11 @@ class Embedding(AbstractStep):
         return (all_feats_array, all_labels_array)
 
     def _get_data_loader_and_outfile(self):
-        '''
+        """
         Returns data loaders and path to outfile
         Returns:
             tuple : data_loader and outfile
-        '''
+        """
         # TODO: unify with train.py
         assert self.method != 'maml' and self.method != 'maml_approx', 'maml do not support save_feature and run'
 
@@ -169,14 +169,14 @@ class Embedding(AbstractStep):
         return (data_loader, outfile)
 
     def _load_model(self, model_state):
-        '''
+        """
         Loads model from training and returns its feature layers
         Args:
             model_state (dict): contains the state of the trained model. If None, loads from .tar file
 
         Returns:
             model: torch module
-        '''
+        """
         state = model_state['state'].copy()
 
         state_keys = list(state.keys())

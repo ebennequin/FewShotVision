@@ -13,9 +13,9 @@ from src.yolov3.utils.parse_config import parse_data_config
 
 
 class YOLOMAMLTraining(AbstractStep):
-    '''
+    """
     This step handles the training of the algorithm on the base dataset
-    '''
+    """
 
     def __init__(
             self,
@@ -36,7 +36,7 @@ class YOLOMAMLTraining(AbstractStep):
             random_seed=None,
             output_dir=configs.save_dir,
     ):
-        '''
+        """
         Args:
             dataset_config (str): path to data config file
             model_config (str): path to model definition file
@@ -48,13 +48,13 @@ class YOLOMAMLTraining(AbstractStep):
             approx (bool): whether to use an approximation of the meta-backpropagation
             n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
-            print_freq (int): inside an epoch, print status update every {} episodes
+            print_freq (int): inside an epoch, print status update every print_fre episodes
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
             image_size (int): size of images (square)
             random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): path to experiments output directory
-        '''
+        """
 
         self.dataset_config = dataset_config
         self.model_config = model_config
@@ -78,12 +78,12 @@ class YOLOMAMLTraining(AbstractStep):
         self.writer = SummaryWriter(log_dir=output_dir)
 
     def apply(self):
-        '''
+        """
         Execute the YOLOMAMLTraining step
         Returns:
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
-        '''
+        """
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         data_config = parse_data_config(self.dataset_config)
@@ -103,7 +103,7 @@ class YOLOMAMLTraining(AbstractStep):
         pass
 
     def _train(self, base_loader, val_loader, model):
-        '''
+        """
         Trains the model on the base set
         Args:
             base_loader (torch.utils.data.DataLoader): data loader for base set
@@ -113,7 +113,7 @@ class YOLOMAMLTraining(AbstractStep):
         Returns:
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
-        '''
+        """
         optimizer = self._get_optimizer(model)
 
         for epoch in range(self.n_epoch):
@@ -150,24 +150,24 @@ class YOLOMAMLTraining(AbstractStep):
         return optimizer
 
     def _get_data_loader(self, path_to_data_file, path_to_images_per_label):
-        '''
+        """
 
         Args:
             path_to_data_file (str): path to file containing paths to images
 
         Returns:
             torch.utils.data.DataLoader: samples data in the shape of a detection task
-        '''
+        """
         data_manager = DetectionSetDataManager(self.n_way, self.n_shot, self.n_query, self.n_episode, self.image_size)
 
         return data_manager.get_data_loader(path_to_data_file, path_to_images_per_label)
 
     def _get_model(self):
-        '''
+        """
 
         Returns:
             YOLOMAML: meta-model
-        '''
+        """
 
         base_model = Darknet(self.model_config)
 

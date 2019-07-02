@@ -75,7 +75,7 @@ class SetDataManager(DataManager):
         self.trans_loader = TransformLoader(image_size)
 
     def get_data_loader(self, path_to_data_file, aug):  # parameters that would change on train/val set
-        '''
+        """
 
         Args:
             path_to_data_file (str): path to JSON file describing the data
@@ -85,7 +85,7 @@ class SetDataManager(DataManager):
             DataLoader: data loader containing episodes sampled from the dataset.
             Each episode is a tuple composed of a torch.Tensor with shape (n_way, n_support+n_query, (image_dim))
             and a torch.Tensor with shape (n_way, n_support+n_query) containing the associated labels.
-        '''
+        """
         transform = self.trans_loader.get_composed_transform(aug)
         dataset = SetDataset(path_to_data_file, self.batch_size, transform)
         sampler = EpisodicBatchSampler(len(dataset), self.n_way, self.n_episode)
@@ -95,11 +95,11 @@ class SetDataManager(DataManager):
 
 
 class DetectionSetDataManager(DataManager):
-    '''
+    """
     Data Manager used for YOLOMAML
-    '''
+    """
     def __init__(self, n_way, n_support, n_query, n_episode, image_size):
-        '''
+        """
 
         Args:
             n_way (int): number of different classes in a detection class
@@ -109,7 +109,7 @@ class DetectionSetDataManager(DataManager):
             for each of the n_way classes
             n_episode (int): number of episodes per epoch
             image_size (int): size of images (square)
-        '''
+        """
         super(DetectionSetDataManager).__init__()
         self.n_way = n_way
         self.n_support = n_support
@@ -118,7 +118,7 @@ class DetectionSetDataManager(DataManager):
         self.image_size = image_size
 
     def get_data_loader(self, path_to_data_file, path_to_images_per_label=None):
-        '''
+        """
 
         Args:
             path_to_data_file (str): path to file containing paths to images
@@ -126,7 +126,7 @@ class DetectionSetDataManager(DataManager):
 
         Returns:
             DataLoader: samples data in the shape of a detection task
-        '''
+        """
         dataset = ListDataset(path_to_data_file, img_size=self.image_size)
         sampler = DetectionTaskSampler(
             dataset,

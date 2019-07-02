@@ -21,9 +21,9 @@ from src.utils.io_utils import (
 
 
 class MethodTraining(AbstractStep):
-    '''
+    """
     This step handles the training of the algorithm on the base dataset
-    '''
+    """
 
     def __init__(
             self,
@@ -47,7 +47,7 @@ class MethodTraining(AbstractStep):
             output_dir=configs.save_dir,
             n_swaps=0,
     ):
-        '''
+        """
         Args:
             dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
             backbone (str): Conv{4|6} / ResNet{10|18|34|50|101}
@@ -69,7 +69,7 @@ class MethodTraining(AbstractStep):
             output_dir (str): path to experiments output directory
             n_swaps (int): number of swaps between labels in the support set of each episode, in order to
             test the robustness to label noise
-        '''
+        """
 
         self.dataset = dataset
         self.backbone = backbone
@@ -103,12 +103,12 @@ class MethodTraining(AbstractStep):
 
 
     def apply(self):
-        '''
+        """
         Execute the MethodTraining step
         Returns:
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
-        '''
+        """
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         base_loader, val_loader, model = self._get_data_loaders_and_model()
@@ -119,7 +119,7 @@ class MethodTraining(AbstractStep):
         pass
 
     def _train(self, base_loader, val_loader, model):
-        '''
+        """
         Trains the model on the base set
         Args:
             base_loader (torch.utils.data.DataLoader): data loader for base set
@@ -129,7 +129,7 @@ class MethodTraining(AbstractStep):
         Returns:
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
-        '''
+        """
         optimizer = self._get_optimizer(model)
         max_acc = 0
         best_model_epoch = -1
@@ -295,10 +295,10 @@ class MethodTraining(AbstractStep):
         )
 
     def _set_default_epochs(self):
-        '''
+        """
         Defines the number of epoch if stop_epoch has been initialized to -1, with arbitrary values depending
         on the method and dataset
-        '''
+        """
         if self.stop_epoch == -1:
             if self.method in ['baseline', 'baseline++']:
                 if self.dataset in ['omniglot', 'cross_char']:

@@ -20,7 +20,7 @@ model_dict = dict(
 
 
 def path_to_step_output(dataset, backbone, method, output_dir=configs.save_dir):
-    '''
+    """
     Defines the path where the outputs will be saved on the disk
     Args:
         dataset (str): name of the dataset
@@ -30,7 +30,7 @@ def path_to_step_output(dataset, backbone, method, output_dir=configs.save_dir):
 
     Returns:
         str: path to the output of the step
-    '''
+    """
     checkpoint_dir = os.path.join(
         output_dir,
         dataset,
@@ -43,7 +43,7 @@ def path_to_step_output(dataset, backbone, method, output_dir=configs.save_dir):
 
 
 def set_and_print_random_seed(random_seed, save=False, checkpoint_dir='./'):
-    '''
+    """
     Set and print numpy random seed, for reproducibility of the training,
     and set torch seed based on numpy random seed
     Args:
@@ -53,7 +53,7 @@ def set_and_print_random_seed(random_seed, save=False, checkpoint_dir='./'):
     Returns:
         int: numpy random seed
 
-    '''
+    """
     if random_seed is None:
         random_seed = np.random.randint(0, 2 ** 32 - 1)
     np.random.seed(random_seed)
@@ -71,7 +71,7 @@ def set_and_print_random_seed(random_seed, save=False, checkpoint_dir='./'):
 
 
 def get_path_to_json(dataset, split):
-    '''
+    """
 
     Args:
         dataset (str):  which dataset to load
@@ -79,7 +79,7 @@ def get_path_to_json(dataset, split):
 
     Returns:
         str: path to JSON file
-    '''
+    """
     if dataset == 'cross':
         if split == 'base':
             path_to_json_file = configs.data_dir['miniImageNet'] + 'all.json'

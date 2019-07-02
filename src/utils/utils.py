@@ -3,7 +3,7 @@ import numpy as np
 
 
 def random_swap_numpy(classification_task, n_swaps, n_shot):
-    '''
+    """
     Apply self.n_swaps swaps randomly to the support set
     Args:
         classification_task (ndarray): shape=(n_way, n_shot + n_query, dim_of_data) one classification
@@ -14,7 +14,7 @@ def random_swap_numpy(classification_task, n_swaps, n_shot):
     Returns:
         ndarray: shape=(n_way, n_shot + n_query, dim_of_data) same classification task, with swaped
         elements.
-    '''
+    """
     n_way = len(classification_task)
     result = classification_task.copy()
     support_set = result[:, :n_shot]
@@ -39,7 +39,7 @@ def random_swap_numpy(classification_task, n_swaps, n_shot):
     return result
 
 def random_swap_tensor(classification_task, n_swaps, n_shot):
-    '''
+    """
     Apply self.n_swaps swaps randomly to the support set
     Args:
         classification_task (torch.Tensor): shape=(n_way, n_shot + n_query, dim_of_data) one classification
@@ -50,7 +50,7 @@ def random_swap_tensor(classification_task, n_swaps, n_shot):
     Returns:
         torch.Tensor: shape=(n_way, n_shot + n_query, dim_of_data) same classification task, with swaped
         elements.
-    '''
+    """
     n_way = len(classification_task)
     result = classification_task.clone()
     support_set = result[:, :n_shot]

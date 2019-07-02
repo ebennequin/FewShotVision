@@ -10,14 +10,14 @@ from src.utils.utils import random_swap_tensor
 
 class MAML(MetaTemplate):
     def __init__(self, model_func, n_way, n_support, approx=False):
-        '''
+        """
 
         Args:
             model_func (function in backbones.py): function that returns the backbone of the model
             n_way (int): number of different classes
             n_support (int): number of examples per class in the support set
             approx (bool): whether to use an approximation of the meta-backpropagation
-        '''
+        """
         super(MAML, self).__init__(model_func, n_way, n_support, change_way=False)
 
         self.loss_fn = nn.CrossEntropyLoss() #TODO: should be customable
@@ -31,14 +31,14 @@ class MAML(MetaTemplate):
         self.approx = approx  # first order approx.
 
     def forward(self, x):
-        '''
+        """
         Computes the classification prediction for input data
         Args:
             x (torch.Tensor): shape (number_of_images, dim_of_images) input data
 
         Returns:
             torch.Tensor: shape (number_of_images, n_way) prediction
-        '''
+        """
         out = self.feature.forward(x)
         scores = self.classifier.forward(out)
         return scores
@@ -88,7 +88,7 @@ class MAML(MetaTemplate):
         return loss
 
     def train_loop(self, epoch, train_loader, optimizer, n_swaps):
-        '''
+        """
         Executes one training epoch. This overwrites the parent function in MetaTemplate.
         Args:
             epoch (int): current epoch
@@ -97,7 +97,7 @@ class MAML(MetaTemplate):
             n_swaps (int): number of swaps between labels in the support set of each episode, in order to
             test the robustness to label noise
 
-        '''
+        """
         print_freq = 10
         avg_loss = 0
         task_count = 0
