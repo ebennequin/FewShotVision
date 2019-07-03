@@ -27,6 +27,7 @@ __pycache__/
 output/*
 fake_outputs/*
 functional_tests/tests_data/*
+/weights/*
 
 
 .polyaxon/
