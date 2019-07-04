@@ -181,7 +181,7 @@ class YOLOMAMLTraining(AbstractStep):
             YOLOMAML: meta-model
         """
 
-        base_model = Darknet(self.model_config)
+        base_model = Darknet(self.model_config, self.image_size)
 
         model = YOLOMAML(
             base_model,
