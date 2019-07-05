@@ -248,7 +248,14 @@ class YOLOLayer(nn.Module):
 class Darknet(nn.Module):
     """YOLOv3 object detection model"""
 
-    def __init__(self, config_path, img_size):
+    def __init__(self, config_path, img_size, pretrained_weights=None):
+        """
+
+        Args:
+            config_path (str): path to a config file defining the architecture of the model
+            img_size (int): intput images of the model will be of size img_size x img_size
+            pretrained_weights (str): path to a file containing pretrained weights for part or all of the model
+        """
         super(Darknet, self).__init__()
         self.module_defs = parse_model_config(config_path)
         self.hyperparams, self.module_list = create_modules(self.module_defs)
@@ -257,6 +264,9 @@ class Darknet(nn.Module):
         self.seen = 0
         self.header_info = np.array([0, 0, 0, self.seen, 0], dtype=np.int32)
         self.freeze_first_layers()
+
+        if pretrained_weights is not None:
+            self.load_darknet_weights(pretrained_weights)
 
     def freeze_first_layers(self):
         for index_param, param in enumerate(self.parameters()):
