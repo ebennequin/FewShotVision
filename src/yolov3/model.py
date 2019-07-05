@@ -11,8 +11,9 @@ from src.yolov3.utils.utils import build_targets, to_cpu, binary_cross_entropy
 from src.backbones import Conv2d_fw, BatchNorm2d_fw
 
 LAYER_END_DARKNET_YOLO = 156
-LAYER_END_DARKNET_TINY_YOLO = 20
-LAYER_END_DARKNET = LAYER_END_DARKNET_TINY_YOLO
+LAYER_END_BACKBONE_TINY_YOLO = 20
+LAYER_END_TINY_DARKNET_YOLO = 46
+LAYER_END_DARKNET = LAYER_END_TINY_DARKNET_YOLO
 
 def create_modules(module_defs):
     """
@@ -107,7 +108,7 @@ class EmptyLayer(nn.Module):
 class YOLOLayer(nn.Module):
     """Detection layer"""
 
-    def __init__(self, anchors, num_classes, img_dim=416):
+    def __init__(self, anchors, num_classes, img_dim):
         super(YOLOLayer, self).__init__()
         self.anchors = anchors
         self.num_anchors = len(anchors)
@@ -247,7 +248,14 @@ class YOLOLayer(nn.Module):
 class Darknet(nn.Module):
     """YOLOv3 object detection model"""
 
-    def __init__(self, config_path, img_size=416):
+    def __init__(self, config_path, img_size, pretrained_weights=None):
+        """
+
+        Args:
+            config_path (str): path to a config file defining the architecture of the model
+            img_size (int): intput images of the model will be of size img_size x img_size
+            pretrained_weights (str): path to a file containing pretrained weights for part or all of the model
+        """
         super(Darknet, self).__init__()
         self.module_defs = parse_model_config(config_path)
         self.hyperparams, self.module_list = create_modules(self.module_defs)
@@ -256,6 +264,9 @@ class Darknet(nn.Module):
         self.seen = 0
         self.header_info = np.array([0, 0, 0, self.seen, 0], dtype=np.int32)
         self.freeze_first_layers()
+
+        if pretrained_weights is not None:
+            self.load_darknet_weights(pretrained_weights)
 
     def freeze_first_layers(self):
         for index_param, param in enumerate(self.parameters()):
@@ -300,15 +311,28 @@ class Darknet(nn.Module):
 
         # Open the weights file
         with open(weights_path, "rb") as f:
-            header = np.fromfile(f, dtype=np.int32, count=5)  # First five are header values
-            self.header_info = header  # Needed to write header when saving weights
-            self.seen = header[3]  # number of images seen during training
+            """
+            We first depile meta-data about the weights. The number of depiled values (4 or 5) depends on the first 3
+            depiled values. The motivation of it is unclear and is an inheritance from Joseph Redmon's code in
+            https://github.com/pjreddie/darknet
+            """
+            primary_header = np.fromfile(f, dtype=np.int32, count=3)
+
+            if primary_header[0]*10 + primary_header[1] >= 2 and primary_header[0] < 1000 and primary_header[1] < 1000:
+                secondary_header = np.fromfile(f, dtype=np.int32, count=2)
+            else:
+                secondary_header = np.fromfile(f, dtype=np.int32, count=1)
+
+            self.header_info = np.concatenate((primary_header, secondary_header))
+            self.seen = self.header_info[3]  # number of images seen during training
             weights = np.fromfile(f, dtype=np.float32)  # The rest are weights
 
         # Establish cutoff for loading backbone weights
         cutoff = None
         if "darknet53.conv.74" in weights_path:
             cutoff = 75
+        elif 'tiny.weights' in weights_path:
+            cutoff = 20
 
         ptr = 0
         for i, (module_def, module) in enumerate(zip(self.module_defs, self.module_list)):

@@ -8,7 +8,8 @@ init:
       - name: YOLOMAMLTraining
         init:
           dataset_config: pipelines/detection/experiments_config/coco.data
-          model_config: pipelines/detection/experiments_config/yolov3-tiny-5-way.cfg
+          model_config: pipelines/detection/experiments_config/deep-tiny-yolo-5-way.cfg
+          pretrained_weights: ./data/weights/tiny.weights
           n_way: 5
           n_shot: 5
           n_query: 10
@@ -19,10 +20,11 @@ init:
           task_update_num: 1
           print_freq: 1
           n_epoch: 100
-          n_episode: 100
-          objectness_threshold: 0.3
-          nms_threshold: 0.4
-          iou_threshold: 0.2
+          n_episode: 200
+          objectness_threshold: 0.5
+          nms_threshold: 0.3
+          iou_threshold: 0.5
+          image_size: 208
 
 run:
   output_folder: output

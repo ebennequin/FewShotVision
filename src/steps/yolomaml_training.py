@@ -21,6 +21,7 @@ class YOLOMAMLTraining(AbstractStep):
             self,
             dataset_config='yolov3/config/black.data',
             model_config='yolov3/config/yolov3.cfg',
+            pretrained_weights=None,
             n_way=5,
             n_shot=5,
             n_query=16,
@@ -43,6 +44,7 @@ class YOLOMAMLTraining(AbstractStep):
         Args:
             dataset_config (str): path to data config file
             model_config (str): path to model definition file
+            pretrained_weights (str): path to a file containing pretrained weights for the model
             n_way (int): number of labels in a detection task
             n_shot (int): number of support data in each class in an episode
             n_query (int): number of query data in each class in an episode
@@ -64,6 +66,7 @@ class YOLOMAMLTraining(AbstractStep):
 
         self.dataset_config = dataset_config
         self.model_config = model_config
+        self.pretrained_weights = pretrained_weights
         self.n_way = n_way
         self.n_shot = n_shot
         self.n_query = n_query
@@ -178,7 +181,7 @@ class YOLOMAMLTraining(AbstractStep):
             YOLOMAML: meta-model
         """
 
-        base_model = Darknet(self.model_config)
+        base_model = Darknet(self.model_config, self.image_size, self.pretrained_weights)
 
         model = YOLOMAML(
             base_model,

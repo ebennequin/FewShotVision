@@ -11,7 +11,7 @@ environment:
       limits: 1
 
 build:
-  image: sicara/leto-stack:tf1.13.0rc0-gpu-pipeline0.7.1-chani0.0.8
+  image: sicara/leto-stack:pytorch1.1.0-pipeline0.10.0
   build_steps:
   #TODO : rebuild image docker
     - pip uninstall -y tensorflow-gpu
