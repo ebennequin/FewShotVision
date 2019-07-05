@@ -21,7 +21,7 @@ class YOLOMAMLTraining(AbstractStep):
             self,
             dataset_config='yolov3/config/black.data',
             model_config='yolov3/config/yolov3.cfg',
-            pretrained_weights='weights/darknet53.conv.74',
+            pretrained_weights='./data/weights/darknet53.conv.74',
             n_way=5,
             n_shot=5,
             n_query=16,
