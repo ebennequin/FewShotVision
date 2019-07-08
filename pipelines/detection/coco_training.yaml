@@ -19,8 +19,8 @@ init:
           n_task: 1
           task_update_num: 1
           print_freq: 1
-          n_epoch: 100
-          n_episode: 100
+          n_epoch: 50
+          n_episode: 200
           objectness_threshold: 0.5
           nms_threshold: 0.3
           iou_threshold: 0.5
