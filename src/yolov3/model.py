@@ -134,12 +134,12 @@ class YOLOLayer(nn.Module):
         self.anchor_w = self.scaled_anchors[:, 0:1].view((1, self.num_anchors, 1, 1))
         self.anchor_h = self.scaled_anchors[:, 1:2].view((1, self.num_anchors, 1, 1))
 
-    def forward(self, x, targets=None, img_dim=None):
+    def forward(self, input, targets=None, img_dim=None):
         """
         Computes the classification prediction for input data. If targets is None, the loss will not be part of
         the output.
         Args:
-            x (torch.Tensor): shape (number_of_images, dim_of_images) input data
+            input (torch.Tensor): shape (number_of_images, dim_of_images) input data
             targets (torch.Tensor): shape (number_of_boxes_in_all_images, 6) target boxes
 
         Returns:
@@ -149,16 +149,16 @@ class YOLOLayer(nn.Module):
             and n_way about the classification, in that order.
         """
         # Tensors for cuda support
-        FloatTensor = torch.cuda.FloatTensor if x.is_cuda else torch.FloatTensor
-        LongTensor = torch.cuda.LongTensor if x.is_cuda else torch.LongTensor
-        ByteTensor = torch.cuda.ByteTensor if x.is_cuda else torch.ByteTensor
+        FloatTensor = torch.cuda.FloatTensor if input.is_cuda else torch.FloatTensor
+        LongTensor = torch.cuda.LongTensor if input.is_cuda else torch.LongTensor
+        ByteTensor = torch.cuda.ByteTensor if input.is_cuda else torch.ByteTensor
 
         self.img_dim = img_dim
-        num_samples = x.size(0)
-        grid_size = x.size(2)
+        num_samples = input.size(0)
+        grid_size = input.size(2)
 
         prediction = (
-            x.view(num_samples, self.num_anchors, self.num_classes + 5, grid_size, grid_size)
+            input.view(num_samples, self.num_anchors, self.num_classes + 5, grid_size, grid_size)
             .permute(0, 1, 3, 4, 2)
             .contiguous()
         )
