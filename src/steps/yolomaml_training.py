@@ -145,6 +145,8 @@ class YOLOMAMLTraining(AbstractStep):
 
         self.writer.close()
 
+        model.base_model.save_darknet_weights(os.path.join(self.checkpoint_dir, 'final.weights'))
+
         return {'epoch': self.n_epoch, 'state': model.state_dict()}
 
     def _get_optimizer(self, model):
