@@ -186,7 +186,6 @@ class YOLOMAML(nn.Module):
         self.train()
 
         cumulative_loss = 0
-        task_count = 0
         loss_all = []
         optimizer.zero_grad()
 
@@ -202,26 +201,17 @@ class YOLOMAML(nn.Module):
             cumulative_loss = cumulative_loss + loss.item()
             loss_all.append(loss)
 
-            task_count += 1
+        loss_q = torch.stack(loss_all).sum(0)
+        loss_q.backward()
+        optimizer.step()
 
-            if task_count == self.n_task:  # MAML update several tasks at one time
-                loss_q = torch.stack(loss_all).sum(0)
-                loss_q.backward()
-
-                optimizer.step()
-                task_count = 0
-                loss_all = []
-            optimizer.zero_grad()
-            if episode_index % self.print_freq == 0:
-                print(
-                    'Epoch {epoch} | Episode {episode}/{total_episodes} | Loss {loss}'.format(
-                        epoch=epoch,
-                        episode=episode_index,
-                        total_episodes=len(train_loader),
-                        loss=cumulative_loss / float(episode_index + 1)
-                    )
-                )
-            torch.cuda.empty_cache()
+        print(
+            'Epoch {epoch} | Loss {loss}'.format(
+                epoch=epoch,
+                loss=cumulative_loss / float(len(train_loader))
+            )
+        )
+        torch.cuda.empty_cache()
 
         return cumulative_loss / len(train_loader)
 
