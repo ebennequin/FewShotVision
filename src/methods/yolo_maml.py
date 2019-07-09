@@ -188,6 +188,7 @@ class YOLOMAML(nn.Module):
         cumulative_loss = 0
         loss_all = []
         optimizer.zero_grad()
+        loss_dict = {}
 
         for episode_index, (paths, images, targets, labels) in enumerate(train_loader):
             targets = self.rename_labels(targets)
@@ -196,8 +197,10 @@ class YOLOMAML(nn.Module):
                 targets
             )
 
-            loss_dict = self.set_forward_loss(support_set, support_set_targets, query_set, query_set_targets)
-            loss = loss_dict['query_total_loss']
+            episode_loss_dict = self.set_forward_loss(support_set, support_set_targets, query_set, query_set_targets)
+            loss = episode_loss_dict['query_total_loss']
+
+            loss_dict = self.include_episode_loss_dict(loss_dict, episode_loss_dict, len(train_loader))
             cumulative_loss = cumulative_loss + loss.item()
             loss_all.append(loss)
 
@@ -360,3 +363,23 @@ class YOLOMAML(nn.Module):
             complete_loss_dict['query_' + str(key)] = value
 
         return complete_loss_dict
+
+    def include_episode_loss_dict(self, loss_dict, episode_loss_dict, number_of_dicts):
+        """
+        Include the items of episode_loss_dict in loss_dict by creating a new item when the key is not in loss_dict, and
+        by additioning the weighted values when the key is already in loss_dict
+        Args:
+            loss_dict (dict): losses of precedent layers
+            episode_loss_dict (dict): losses of current layer
+            number_of_dicts (int): how many dicts will be added to loss_dict in one epoch
+
+        Returns:
+            dict: updated losses
+        """
+        for key, value in episode_loss_dict.items():
+            if key not in loss_dict:
+                loss_dict[key] = episode_loss_dict[key] / float(number_of_dicts)
+            else:
+                loss_dict[key] += episode_loss_dict[key] / float(number_of_dicts)
+
+        return loss_dict
