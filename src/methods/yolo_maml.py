@@ -15,7 +15,6 @@ class YOLOMAML(nn.Module):
                  n_query,
                  image_size,
                  approx=True,
-                 n_task=4,
                  task_update_num=5,
                  train_lr=0.01,
                  print_freq=10,
@@ -33,7 +32,6 @@ class YOLOMAML(nn.Module):
             n_query (int): number of examples per class in the query set
             image_size (int): size of images (square)
             approx (bool): whether to use an approximation of the meta-backpropagation
-            n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
             train_lr (float): learning rate for intra-task updates
             objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
@@ -52,7 +50,6 @@ class YOLOMAML(nn.Module):
         self.base_model = base_model
         self.image_size = image_size
 
-        self.n_task = n_task
         self.task_update_num = task_update_num
         self.train_lr = train_lr
         self.approx = approx
@@ -172,7 +169,7 @@ class YOLOMAML(nn.Module):
 
     def train_loop(self, epoch, train_loader, optimizer):
         """
-        Executes one meta-training epoch.
+        Executes one meta-training epoch. Executes several episodes then one meta-backpropagation.
         Args:
             epoch (int): current epoch
             train_loader (DataLoader): loader of a given number of episodes.  It returns a tuple of size 4 respectively

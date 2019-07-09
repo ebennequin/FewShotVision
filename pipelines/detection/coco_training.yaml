@@ -16,7 +16,6 @@ init:
           optimizer: Adam
           learning_rate: 0.001
           approx: True
-          n_task: 4
           task_update_num: 3
           print_freq: 1
           n_epoch: 1
