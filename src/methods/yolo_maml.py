@@ -177,7 +177,10 @@ class YOLOMAML(nn.Module):
             optimizer (torch.optim.Optimizer): model optimizer
 
         Returns:
-            float: average loss of the model on the query set of the episodes
+            dict: contains the different parts of the average loss on this epoch. Each key describes
+            a part of the loss (ex: query_classification_loss) and each value is a 0-dim tensor. This dictionary is
+            required to contain the keys 'support_total_loss' and 'query_total_loss' which contains respectively the
+            total loss on the support set, and the total meta-loss on the query set
 
         """
         self.train()
@@ -195,25 +198,18 @@ class YOLOMAML(nn.Module):
             )
 
             episode_loss_dict = self.set_forward_loss(support_set, support_set_targets, query_set, query_set_targets)
-            loss = episode_loss_dict['query_total_loss']
+
+            loss_all.append(episode_loss_dict['query_total_loss'])
 
             loss_dict = self.include_episode_loss_dict(loss_dict, episode_loss_dict, len(train_loader))
-            cumulative_loss = cumulative_loss + loss.item()
-            loss_all.append(loss)
 
         loss_q = torch.stack(loss_all).sum(0)
         loss_q.backward()
         optimizer.step()
 
-        print(
-            'Epoch {epoch} | Loss {loss}'.format(
-                epoch=epoch,
-                loss=cumulative_loss / float(len(train_loader))
-            )
-        )
         torch.cuda.empty_cache()
 
-        return cumulative_loss / len(train_loader)
+        return loss_dict
 
     def eval_loop(self, data_loader):
         """

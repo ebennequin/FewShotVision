@@ -126,11 +126,22 @@ class YOLOMAMLTraining(AbstractStep):
         optimizer = self._get_optimizer(model)
 
         for epoch in range(self.n_epoch):
-            loss = model.train_loop(epoch, base_loader, optimizer)
-            precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
+            loss_dict = model.train_loop(epoch, base_loader, optimizer)
+
+            print(
+                'Epoch {epoch}/{n_epochs} | Loss {loss}'.format(
+                    epoch=epoch,
+                    n_epochs=self.n_epoch,
+                    loss=loss_dict['query_total_loss'],
+                )
+            )
 
             # Add metrics to tensorboard
-            self.writer.add_scalar('loss', loss, epoch)
+            self.plot_tensorboard(loss_dict, epoch)
+
+            #Validation
+            precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
+
             self.writer.add_scalar('precision', precision.mean(), epoch)
             self.writer.add_scalar('recall', recall.mean(), epoch)
             self.writer.add_scalar('mAP', average_precision.mean(), epoch)
@@ -199,3 +210,21 @@ class YOLOMAMLTraining(AbstractStep):
         )
 
         return model
+
+    def plot_tensorboard(self, loss_dict, epoch):
+        """
+        Writes into summary the values present in loss_dict
+        Args:
+            loss_dict (dict): contains the different parts of the average loss on one epoch. Each key describes
+            a part of the loss (ex: query_classification_loss) and each value is a 0-dim tensor. This dictionary is
+            required to contain the keys 'support_total_loss' and 'query_total_loss' which contains respectively the
+            total loss on the support set, and the total meta-loss on the query set
+            epoch (int): global step value in the summary
+
+        Returns:
+
+        """
+        for key, value in loss_dict.items():
+            self.writer.add_scalar(key, value, epoch)
+
+        return
