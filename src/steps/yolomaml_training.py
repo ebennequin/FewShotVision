@@ -150,10 +150,6 @@ class YOLOMAMLTraining(AbstractStep):
                 self.writer.add_scalar('mAP', average_precision.mean(), epoch)
                 self.writer.add_scalar('F1', f1.mean(), epoch)
 
-            if epoch == self.n_epoch - 1:
-                outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
-                torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
-
         self.writer.close()
 
         model.base_model.save_darknet_weights(os.path.join(self.checkpoint_dir, 'final.weights'))
