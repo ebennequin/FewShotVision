@@ -29,7 +29,8 @@ class YOLOMAMLTraining(AbstractStep):
             learning_rate=0.001,
             approx=True,
             task_update_num=3,
-            print_freq=10,
+            print_freq=100,
+            validation_freq=1000,
             n_epoch=100,
             n_episode=100,
             objectness_threshold=0.8,
@@ -52,6 +53,7 @@ class YOLOMAMLTraining(AbstractStep):
             approx (bool): whether to use an approximation of the meta-backpropagation
             task_update_num (int): number of updates inside each episode
             print_freq (int): inside an epoch, print status update every print_freq episodes
+            validation_freq (int): inside an epoch, frequency with which we evaluate the model on the validation set
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
             objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
@@ -73,6 +75,7 @@ class YOLOMAMLTraining(AbstractStep):
         self.approx = approx
         self.task_update_num = task_update_num
         self.print_freq = print_freq
+        self.validation_freq = validation_freq
         self.n_epoch = n_epoch
         self.n_episode = n_episode
         self.objectness_threshold = objectness_threshold
@@ -128,24 +131,24 @@ class YOLOMAMLTraining(AbstractStep):
         for epoch in range(self.n_epoch):
             loss_dict = model.train_loop(epoch, base_loader, optimizer)
 
-            print(
-                'Epoch {epoch}/{n_epochs} | Loss {loss}'.format(
-                    epoch=epoch,
-                    n_epochs=self.n_epoch,
-                    loss=loss_dict['query_total_loss'],
-                )
-            )
-
-            # Add metrics to tensorboard
             self.plot_tensorboard(loss_dict, epoch)
 
-            #Validation
-            precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
+            if epoch % self.print_freq == 0:
+                print(
+                    'Epoch {epoch}/{n_epochs} | Loss {loss}'.format(
+                        epoch=epoch,
+                        n_epochs=self.n_epoch,
+                        loss=loss_dict['query_total_loss'],
+                    )
+                )
 
-            self.writer.add_scalar('precision', precision.mean(), epoch)
-            self.writer.add_scalar('recall', recall.mean(), epoch)
-            self.writer.add_scalar('mAP', average_precision.mean(), epoch)
-            self.writer.add_scalar('F1', f1.mean(), epoch)
+            if epoch % self.validation_freq == 1:
+                precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
+
+                self.writer.add_scalar('precision', precision.mean(), epoch)
+                self.writer.add_scalar('recall', recall.mean(), epoch)
+                self.writer.add_scalar('mAP', average_precision.mean(), epoch)
+                self.writer.add_scalar('F1', f1.mean(), epoch)
 
             if epoch == self.n_epoch - 1:
                 outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
