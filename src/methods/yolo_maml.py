@@ -15,7 +15,6 @@ class YOLOMAML(nn.Module):
                  n_query,
                  image_size,
                  approx=True,
-                 n_task=4,
                  task_update_num=5,
                  train_lr=0.01,
                  print_freq=10,
@@ -33,7 +32,6 @@ class YOLOMAML(nn.Module):
             n_query (int): number of examples per class in the query set
             image_size (int): size of images (square)
             approx (bool): whether to use an approximation of the meta-backpropagation
-            n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
             train_lr (float): learning rate for intra-task updates
             objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
@@ -52,7 +50,6 @@ class YOLOMAML(nn.Module):
         self.base_model = base_model
         self.image_size = image_size
 
-        self.n_task = n_task
         self.task_update_num = task_update_num
         self.train_lr = train_lr
         self.approx = approx
@@ -68,15 +65,18 @@ class YOLOMAML(nn.Module):
 
     def forward(self, x, targets):
         """
-        Computes the classification prediction for input data. If targets is None, the loss will not be part of
-        the output.
+        Computes the classification prediction for input data.
         Args:
             x (torch.Tensor): shape (number_of_images, dim_of_images) input data
             targets (torch.Tensor): shape (number_of_boxes_in_all_images, 6) target boxes
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (number_of_images,
-            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0. One line
+            Tuple[dict, torch.Tensor]: respectively :
+             - a dictionary containing the different parts of the loss resulting from the output. Each key describes
+             a part of the loss (ex: classification_loss) and each value is a 0-dim tensor. This dictionary is
+             required to contain the key 'total_loss' which contains the total loss resulting from the output.
+             If targets is None, the dictionary will be empty.
+             - the YOLO output of shape (number_of_images, number_of_yolo_output_boxes, 5+n_way). One line
             (of size 5+n_way) of the YOLO output contains 4 items about the box prediction, one about the objectness
             and n_way about the classification, in that order.
         """
@@ -85,8 +85,7 @@ class YOLOMAML(nn.Module):
 
     def set_forward(self, support_set, support_set_targets, query_set, query_set_targets=None):
         """
-        Fine-tunes parameters on support set and apply updated parameters on query set. If query_set_targets is None,
-        the loss will not be part of the output.
+        Fine-tunes parameters on support set and apply updated parameters on query set.
         Args:
             support_set (torch.Tensor): shape (n_way*n_support, dim_of_img) support set images
             support_set_targets (torch.Tensor): shape (L, 6) where L is the sum of the number of boxes in support
@@ -96,8 +95,14 @@ class YOLOMAML(nn.Module):
             set images
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (n_way*n_query,
-            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0
+            Tuple[dict, torch.Tensor]: respectively :
+             - a dictionary containing the different parts of the loss resulting from this output. Each key describes
+             a part of the loss (ex: query_classification_loss) and each value is a 0-dim tensor. This dictionary is
+             required to contain the keys 'support_total_loss' and 'query_total_loss' which contains respectively the
+             total loss on the support set, and the total meta-loss on the query set
+             - the YOLO output of shape (number_of_images, number_of_yolo_output_boxes, 5+n_way). One line
+            (of size 5+n_way) of the YOLO output contains 4 items about the box prediction, one about the objectness
+            and n_way about the classification, in that order.
         """
         fast_parameters = [param for param in self.parameters() if param.requires_grad]
 
@@ -105,8 +110,14 @@ class YOLOMAML(nn.Module):
             weight.fast = None
         self.zero_grad()
 
+        list_of_support_loss_dicts = []
+
         for task_step in range(self.task_update_num):
-            support_set_loss, support_set_output = self.forward(support_set, support_set_targets)
+            support_loss_dict, support_set_output = self.forward(support_set, support_set_targets)
+            support_set_loss = support_loss_dict['total_loss']
+
+            list_of_support_loss_dicts.append(support_loss_dict)
+
             grad = torch.autograd.grad(support_set_loss, fast_parameters,
                                        create_graph=True)  # build full graph support gradient of gradient
             if self.approx:
@@ -125,7 +136,12 @@ class YOLOMAML(nn.Module):
                     count += 1
 
         torch.cuda.empty_cache()
-        return self.forward(query_set, query_set_targets)
+
+        query_loss_dict, query_output = self.forward(query_set, query_set_targets)
+
+        complete_loss_dict = self.get_complete_loss_dict(list_of_support_loss_dicts, query_loss_dict)
+
+        return complete_loss_dict, query_output
 
     def set_forward_loss(self, support_set, support_set_targets, query_set, query_set_targets):
         """
@@ -139,21 +155,23 @@ class YOLOMAML(nn.Module):
             set images
 
         Returns:
-            torch.Tensor: shape 0, the loss of the model on this episode
+            dict: contains the different parts of the loss resulting from this output. Each key describes
+            a part of the loss (ex: query_classification_loss) and each value is a 0-dim tensor. This dictionary is
+            required to contain the keys 'support_total_loss' and 'query_total_loss' which contains respectively the
+            total loss on the support set, and the total meta-loss on the query set
         """
-        query_set_loss, query_set_output = self.set_forward(
+        loss_dict, query_output = self.set_forward(
             support_set,
             support_set_targets,
             query_set,
             query_set_targets
         )
-        loss = self.loss_fn(query_set_loss, query_set_output)
 
-        return loss
+        return loss_dict
 
     def train_loop(self, epoch, train_loader, optimizer):
         """
-        Executes one meta-training epoch.
+        Executes one meta-training epoch. Executes several episodes then one meta-backpropagation.
         Args:
             epoch (int): current epoch
             train_loader (DataLoader): loader of a given number of episodes.  It returns a tuple of size 4 respectively
@@ -161,15 +179,18 @@ class YOLOMAML(nn.Module):
             optimizer (torch.optim.Optimizer): model optimizer
 
         Returns:
-            float: average loss of the model on the query set of the episodes
+            dict: contains the different parts of the average loss on this epoch. Each key describes
+            a part of the loss (ex: query_classification_loss) and each value is a 0-dim tensor. This dictionary is
+            required to contain the keys 'support_total_loss_0' and 'query_total_loss' which contains respectively the
+            total loss on the support set, and the total meta-loss on the query set
 
         """
         self.train()
 
         cumulative_loss = 0
-        task_count = 0
         loss_all = []
         optimizer.zero_grad()
+        loss_dict = {}
 
         for episode_index, (paths, images, targets, labels) in enumerate(train_loader):
             targets = self.rename_labels(targets)
@@ -178,32 +199,19 @@ class YOLOMAML(nn.Module):
                 targets
             )
 
-            loss = self.set_forward_loss(support_set, support_set_targets, query_set, query_set_targets)
-            cumulative_loss = cumulative_loss + loss.item()
-            loss_all.append(loss)
+            episode_loss_dict = self.set_forward_loss(support_set, support_set_targets, query_set, query_set_targets)
 
-            task_count += 1
+            loss_all.append(episode_loss_dict['query_total_loss'])
 
-            if task_count == self.n_task:  # MAML update several tasks at one time
-                loss_q = torch.stack(loss_all).sum(0)
-                loss_q.backward()
+            loss_dict = self.include_episode_loss_dict(loss_dict, episode_loss_dict, len(train_loader))
 
-                optimizer.step()
-                task_count = 0
-                loss_all = []
-            optimizer.zero_grad()
-            if episode_index % self.print_freq == 0:
-                print(
-                    'Epoch {epoch} | Episode {episode}/{total_episodes} | Loss {loss}'.format(
-                        epoch=epoch,
-                        episode=episode_index,
-                        total_episodes=len(train_loader),
-                        loss=cumulative_loss / float(episode_index + 1)
-                    )
-                )
-            torch.cuda.empty_cache()
+        loss_q = torch.stack(loss_all).sum(0)
+        loss_q.backward()
+        optimizer.step()
 
-        return cumulative_loss / len(train_loader)
+        torch.cuda.empty_cache()
+
+        return loss_dict
 
     def eval_loop(self, data_loader):
         """
@@ -228,7 +236,8 @@ class YOLOMAML(nn.Module):
                 targets
             )
 
-            outputs_on_query = self.set_forward(support_set, support_set_targets, query_set).cpu()
+            _, outputs_on_query = self.set_forward(support_set, support_set_targets, query_set)
+            outputs_on_query = outputs_on_query.cpu()
             outputs_on_query = non_max_suppression(
                 outputs_on_query,
                 conf_thres=self.objectness_threshold,
@@ -329,3 +338,45 @@ class YOLOMAML(nn.Module):
             query_set.to(self.device),
             query_targets.to(self.device),
         )
+
+    def get_complete_loss_dict(self, list_of_support_loss_dicts, query_loss_dict):
+        """
+        Merge the dictionaries containing the losses on the support set and on the query set
+        Args:
+            list_of_support_loss_dicts (list): element of index i contains the losses of the model on the support set
+            after i weight updates
+            query_loss_dict (dict): contains the losses of the model on the query set
+
+        Returns:
+            dict: merged dictionary with modified keys that say whether the loss was from the support or query set
+        """
+        complete_loss_dict = {}
+
+        for task_step, support_loss_dict in enumerate(list_of_support_loss_dicts):
+            for key, value in support_loss_dict.items():
+                complete_loss_dict['support_' + str(key) + '_' + str(task_step)] = value
+
+        for key, value in query_loss_dict.items():
+            complete_loss_dict['query_' + str(key)] = value
+
+        return complete_loss_dict
+
+    def include_episode_loss_dict(self, loss_dict, episode_loss_dict, number_of_dicts):
+        """
+        Include the items of episode_loss_dict in loss_dict by creating a new item when the key is not in loss_dict, and
+        by additioning the weighted values when the key is already in loss_dict
+        Args:
+            loss_dict (dict): losses of precedent layers
+            episode_loss_dict (dict): losses of current layer
+            number_of_dicts (int): how many dicts will be added to loss_dict in one epoch
+
+        Returns:
+            dict: updated losses
+        """
+        for key, value in episode_loss_dict.items():
+            if key not in loss_dict:
+                loss_dict[key] = episode_loss_dict[key] / float(number_of_dicts)
+            else:
+                loss_dict[key] += episode_loss_dict[key] / float(number_of_dicts)
+
+        return loss_dict

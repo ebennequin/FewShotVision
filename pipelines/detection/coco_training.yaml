@@ -14,13 +14,12 @@ init:
           n_shot: 5
           n_query: 10
           optimizer: Adam
-          learning_rate: 0.01
+          learning_rate: 0.001
           approx: True
-          n_task: 1
-          task_update_num: 1
-          print_freq: 1
-          n_epoch: 50
-          n_episode: 200
+          task_update_num: 3
+          print_freq: 2
+          n_epoch: 6
+          n_episode: 2
           objectness_threshold: 0.5
           nms_threshold: 0.3
           iou_threshold: 0.5

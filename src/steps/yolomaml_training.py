@@ -28,9 +28,9 @@ class YOLOMAMLTraining(AbstractStep):
             optimizer='Adam',
             learning_rate=0.001,
             approx=True,
-            n_task=4,
             task_update_num=3,
-            print_freq=10,
+            print_freq=100,
+            validation_freq=1000,
             n_epoch=100,
             n_episode=100,
             objectness_threshold=0.8,
@@ -51,9 +51,9 @@ class YOLOMAMLTraining(AbstractStep):
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
             learning_rate (float): learning rate fed to the optimizer
             approx (bool): whether to use an approximation of the meta-backpropagation
-            n_task (int): number of episodes between each meta-backpropagation
             task_update_num (int): number of updates inside each episode
             print_freq (int): inside an epoch, print status update every print_freq episodes
+            validation_freq (int): inside an epoch, frequency with which we evaluate the model on the validation set
             n_epoch (int): number of meta-training epochs
             n_episode (int): number of episodes per epoch during meta-training
             objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
@@ -73,9 +73,9 @@ class YOLOMAMLTraining(AbstractStep):
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.approx = approx
-        self.n_task = n_task
         self.task_update_num = task_update_num
         self.print_freq = print_freq
+        self.validation_freq = validation_freq
         self.n_epoch = n_epoch
         self.n_episode = n_episode
         self.objectness_threshold = objectness_threshold
@@ -129,19 +129,26 @@ class YOLOMAMLTraining(AbstractStep):
         optimizer = self._get_optimizer(model)
 
         for epoch in range(self.n_epoch):
-            loss = model.train_loop(epoch, base_loader, optimizer)
-            precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
+            loss_dict = model.train_loop(epoch, base_loader, optimizer)
 
-            # Add metrics to tensorboard
-            self.writer.add_scalar('loss', loss, epoch)
-            self.writer.add_scalar('precision', precision.mean(), epoch)
-            self.writer.add_scalar('recall', recall.mean(), epoch)
-            self.writer.add_scalar('mAP', average_precision.mean(), epoch)
-            self.writer.add_scalar('F1', f1.mean(), epoch)
+            self.plot_tensorboard(loss_dict, epoch)
 
-            if epoch == self.n_epoch - 1:
-                outfile = os.path.join(self.checkpoint_dir, '{:d}.tar'.format(epoch))
-                torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+            if epoch % self.print_freq == 0:
+                print(
+                    'Epoch {epoch}/{n_epochs} | Loss {loss}'.format(
+                        epoch=epoch,
+                        n_epochs=self.n_epoch,
+                        loss=loss_dict['query_total_loss'],
+                    )
+                )
+
+            if epoch % self.validation_freq == -1:
+                precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
+
+                self.writer.add_scalar('precision', precision.mean(), epoch)
+                self.writer.add_scalar('recall', recall.mean(), epoch)
+                self.writer.add_scalar('mAP', average_precision.mean(), epoch)
+                self.writer.add_scalar('F1', f1.mean(), epoch)
 
         self.writer.close()
 
@@ -192,7 +199,6 @@ class YOLOMAMLTraining(AbstractStep):
             self.n_query,
             self.image_size,
             approx=self.approx,
-            n_task=self.n_task,
             task_update_num=self.task_update_num,
             print_freq=self.print_freq,
             train_lr=self.learning_rate,
@@ -203,3 +209,21 @@ class YOLOMAMLTraining(AbstractStep):
         )
 
         return model
+
+    def plot_tensorboard(self, loss_dict, epoch):
+        """
+        Writes into summary the values present in loss_dict
+        Args:
+            loss_dict (dict): contains the different parts of the average loss on one epoch. Each key describes
+            a part of the loss (ex: query_classification_loss) and each value is a 0-dim tensor. This dictionary is
+            required to contain the keys 'support_total_loss' and 'query_total_loss' which contains respectively the
+            total loss on the support set, and the total meta-loss on the query set
+            epoch (int): global step value in the summary
+
+        Returns:
+
+        """
+        for key, value in loss_dict.items():
+            self.writer.add_scalar(key, value, epoch)
+
+        return

@@ -134,31 +134,34 @@ class YOLOLayer(nn.Module):
         self.anchor_w = self.scaled_anchors[:, 0:1].view((1, self.num_anchors, 1, 1))
         self.anchor_h = self.scaled_anchors[:, 1:2].view((1, self.num_anchors, 1, 1))
 
-    def forward(self, input, targets=None, img_dim=None):
+    def forward(self, layer_input, targets=None, img_dim=None):
         """
-        Computes the classification prediction for input data. If targets is None, the loss will not be part of
-        the output.
+        Computes the classification prediction for input data.
         Args:
-            input (torch.Tensor): shape (number_of_images, dim_of_images) input data
-            targets (torch.Tensor): shape (number_of_boxes_in_all_images, 6) target boxes
+            layer_input (torch.Tensor): shape (number_of_images, dim_of_images) input data
+            targets (torch.Tensor): shape (number_of_boxes_in_all_images, 6) target boxes.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (number_of_images,
-            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0. One line
+            Tuple[dict, torch.Tensor]: respectively :
+             - a dictionary containing the different parts of the loss resulting from the output. Each key describes
+             a part of the loss (ex: classification_loss) and each value is a 0-dim tensor. This dictionary is
+             required to contain the key 'total_loss' which contains the total loss resulting from the output.
+             If targets is None, the dictionary will be empty.
+             - the YOLO output of shape (number_of_images, number_of_yolo_output_boxes, 5+n_way). One line
             (of size 5+n_way) of the YOLO output contains 4 items about the box prediction, one about the objectness
             and n_way about the classification, in that order.
         """
         # Tensors for cuda support
-        FloatTensor = torch.cuda.FloatTensor if input.is_cuda else torch.FloatTensor
-        LongTensor = torch.cuda.LongTensor if input.is_cuda else torch.LongTensor
-        ByteTensor = torch.cuda.ByteTensor if input.is_cuda else torch.ByteTensor
+        FloatTensor = torch.cuda.FloatTensor if layer_input.is_cuda else torch.FloatTensor
+        LongTensor = torch.cuda.LongTensor if layer_input.is_cuda else torch.LongTensor
+        ByteTensor = torch.cuda.ByteTensor if layer_input.is_cuda else torch.ByteTensor
 
         self.img_dim = img_dim
-        num_samples = input.size(0)
-        grid_size = input.size(2)
+        num_samples = layer_input.size(0)
+        grid_size = layer_input.size(2)
 
         prediction = (
-            input.view(num_samples, self.num_anchors, self.num_classes + 5, grid_size, grid_size)
+            layer_input.view(num_samples, self.num_anchors, self.num_classes + 5, grid_size, grid_size)
             .permute(0, 1, 3, 4, 2)
             .contiguous()
         )
@@ -192,7 +195,7 @@ class YOLOLayer(nn.Module):
         )
 
         if targets is None:
-            return output, 0
+            return output, {}
         else:
             iou_scores, class_mask, obj_mask, noobj_mask, tx, ty, tw, th, tcls, tconf = build_targets(
                 pred_boxes=pred_boxes,
@@ -212,6 +215,15 @@ class YOLOLayer(nn.Module):
             loss_conf = self.obj_scale * loss_conf_obj + self.noobj_scale * loss_conf_noobj
             loss_cls = self.bce_loss(pred_cls[obj_mask], tcls[obj_mask])
             total_loss = loss_x + loss_y + loss_w + loss_h + loss_conf + loss_cls
+
+            loss_dictionary = dict(
+                box_loss=loss_x + loss_y + loss_w + loss_h,
+                objectness_loss_obj=loss_conf_obj,
+                objectness_loss_noobj=loss_conf_noobj,
+                total_objectness_loss=loss_conf,
+                classification_loss=loss_cls,
+                total_loss=total_loss,
+            )
 
             # Metrics
             cls_acc = 100 * class_mask[obj_mask].mean()
@@ -242,7 +254,7 @@ class YOLOLayer(nn.Module):
                 "grid_size": grid_size,
             }
 
-            return output, total_loss
+            return output, loss_dictionary
 
 
 class Darknet(nn.Module):
@@ -275,20 +287,23 @@ class Darknet(nn.Module):
 
     def forward(self, x, targets=None):
         """
-        Computes the classification prediction for input data. If targets is None, the loss will not be part of
-        the output.
+        Computes the classification prediction for input data.
         Args:
             x (torch.Tensor): shape (number_of_images, dim_of_images) input data
             targets (torch.Tensor): shape (number_of_boxes_in_all_images, 6) target boxes
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: respectively the YOLO output of shape (number_of_images,
-            number_of_yolo_output_boxes, 5+n_way), and the loss resulting from this output, of shape 0. One line
+            Tuple[dict, torch.Tensor]: respectively :
+             - a dictionary containing the different parts of the loss resulting from the output. Each key describes
+             a part of the loss (ex: classification_loss) and each value is a 0-dim tensor. This dictionary is
+             required to contain the key 'total_loss' which contains the total loss resulting from the output.
+             If targets is None, the dictionary will be empty.
+             - the YOLO output of shape (number_of_images, number_of_yolo_output_boxes, 5+n_way). One line
             (of size 5+n_way) of the YOLO output contains 4 items about the box prediction, one about the objectness
             and n_way about the classification, in that order.
         """
         img_dim = x.shape[2]
-        loss = 0
+        loss_dict = {}
         layer_outputs, yolo_outputs = [], []
         for i, (module_def, module) in enumerate(zip(self.module_defs, self.module_list)):
             if module_def["type"] in ["convolutional", "upsample", "maxpool"]:
@@ -299,12 +314,32 @@ class Darknet(nn.Module):
                 layer_i = int(module_def["from"])
                 x = layer_outputs[-1] + layer_outputs[layer_i]
             elif module_def["type"] == "yolo":
-                x, layer_loss = module[0](x, targets, img_dim)
-                loss += layer_loss
+                x, layer_loss_dict = module[0](x, targets, img_dim)
+                loss_dict = self.add_loss_dict(loss_dict, layer_loss_dict)
                 yolo_outputs.append(x)
             layer_outputs.append(x)
         yolo_outputs = to_cpu(torch.cat(yolo_outputs, 1))
-        return yolo_outputs if targets is None else (loss, yolo_outputs)
+        return loss_dict, yolo_outputs
+
+    def add_loss_dict(self, loss_dict, layer_loss_dict):
+        """
+        Add the items of layer_loss_dict to loss_dict by creating a new item when the key is not in loss_dict, and
+        by additioning the values when the key is already in loss_dict
+        Args:
+            loss_dict (dict): losses of precedent layers
+            layer_loss_dict (dict): losses of current layer
+
+        Returns:
+            dict: updated losses
+        """
+        for key, value in layer_loss_dict.items():
+            if key not in loss_dict:
+                loss_dict[key] = layer_loss_dict[key]
+            else:
+                loss_dict[key] += layer_loss_dict[key]
+
+        return loss_dict
+
 
     def load_darknet_weights(self, weights_path):
         """Parses and loads the weights stored in 'weights_path'"""
