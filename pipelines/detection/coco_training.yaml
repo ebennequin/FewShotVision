@@ -10,16 +10,16 @@ init:
           dataset_config: pipelines/detection/experiments_config/coco.data
           model_config: pipelines/detection/experiments_config/deep-tiny-yolo-5-way.cfg
           pretrained_weights: ./data/weights/tiny.weights
-          n_way: 5
+          n_way: 3
           n_shot: 5
           n_query: 10
           optimizer: Adam
           learning_rate: 0.001
           approx: True
-          task_update_num: 3
-          print_freq: 2
-          n_epoch: 6
-          n_episode: 2
+          task_update_num: 2
+          n_epoch: 10000
+          n_episode: 4
+          validation_freq: 500
           objectness_threshold: 0.5
           nms_threshold: 0.3
           iou_threshold: 0.5
