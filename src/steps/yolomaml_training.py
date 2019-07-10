@@ -142,7 +142,7 @@ class YOLOMAMLTraining(AbstractStep):
                     )
                 )
 
-            if epoch % self.validation_freq == 1:
+            if epoch % self.validation_freq == -1:
                 precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
 
                 self.writer.add_scalar('precision', precision.mean(), epoch)

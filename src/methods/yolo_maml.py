@@ -110,11 +110,13 @@ class YOLOMAML(nn.Module):
             weight.fast = None
         self.zero_grad()
 
-        support_loss_dict = {}
+        list_of_support_loss_dicts = []
 
         for task_step in range(self.task_update_num):
             support_loss_dict, support_set_output = self.forward(support_set, support_set_targets)
             support_set_loss = support_loss_dict['total_loss']
+
+            list_of_support_loss_dicts.append(support_loss_dict)
 
             grad = torch.autograd.grad(support_set_loss, fast_parameters,
                                        create_graph=True)  # build full graph support gradient of gradient
@@ -137,7 +139,7 @@ class YOLOMAML(nn.Module):
 
         query_loss_dict, query_output = self.forward(query_set, query_set_targets)
 
-        complete_loss_dict = self.get_complete_loss_dict(support_loss_dict, query_loss_dict)
+        complete_loss_dict = self.get_complete_loss_dict(list_of_support_loss_dicts, query_loss_dict)
 
         return complete_loss_dict, query_output
 
@@ -179,7 +181,7 @@ class YOLOMAML(nn.Module):
         Returns:
             dict: contains the different parts of the average loss on this epoch. Each key describes
             a part of the loss (ex: query_classification_loss) and each value is a 0-dim tensor. This dictionary is
-            required to contain the keys 'support_total_loss' and 'query_total_loss' which contains respectively the
+            required to contain the keys 'support_total_loss_0' and 'query_total_loss' which contains respectively the
             total loss on the support set, and the total meta-loss on the query set
 
         """
@@ -337,11 +339,12 @@ class YOLOMAML(nn.Module):
             query_targets.to(self.device),
         )
 
-    def get_complete_loss_dict(self, support_loss_dict, query_loss_dict):
+    def get_complete_loss_dict(self, list_of_support_loss_dicts, query_loss_dict):
         """
         Merge the dictionaries containing the losses on the support set and on the query set
         Args:
-            support_loss_dict (dict): contains the losses of the model on the support set
+            list_of_support_loss_dicts (list): element of index i contains the losses of the model on the support set
+            after i weight updates
             query_loss_dict (dict): contains the losses of the model on the query set
 
         Returns:
@@ -349,8 +352,9 @@ class YOLOMAML(nn.Module):
         """
         complete_loss_dict = {}
 
-        for key, value in support_loss_dict.items():
-            complete_loss_dict['support_' + str(key)] = value
+        for task_step, support_loss_dict in enumerate(list_of_support_loss_dicts):
+            for key, value in support_loss_dict.items():
+                complete_loss_dict['support_' + str(key) + '_' + str(task_step)] = value
 
         for key, value in query_loss_dict.items():
             complete_loss_dict['query_' + str(key)] = value
