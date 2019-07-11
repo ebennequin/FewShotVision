@@ -13,7 +13,7 @@ from src.yolov3.utils.parse_config import parse_data_config
 
 class YOLOMAMLCreateEpisode(AbstractStep):
     """
-    This step creates a detection task. It will output :
+    This step creates a detection task. It outputs :
         - a .txt file containing the paths to the images composing the episode
         - a .data file containing the episode configuration
     """
@@ -51,7 +51,7 @@ class YOLOMAMLCreateEpisode(AbstractStep):
 
     def apply(self):
         """
-        Execute the YOLOMAMLCreateEpisode step
+        Creates a detection episode for YOLOMAML
 
         """
 
@@ -88,7 +88,7 @@ class YOLOMAMLCreateEpisode(AbstractStep):
                 f.write(path + '\n')
 
         with open(output_name + '.data', 'w') as f:
-            f.write('labels='+str(self.labels).strip('[]')+'\n')
+            f.write('labels={labels}\n'.format(labels=str(self.labels).strip('[]')))
             f.write('eval='+output_name+'.txt'+'\n')
             f.write('classes='+str(self.data_config['classes'])+'\n')
             f.write('names='+str(self.data_config['names'])+'\n')
