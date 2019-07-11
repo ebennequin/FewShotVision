@@ -12,6 +12,7 @@ from src.methods import YOLOMAML
 from src.yolov3.model import Darknet
 from src.yolov3.utils.datasets import ListDataset
 from src.yolov3.utils.parse_config import parse_data_config
+from src.yolov3.utils.utils import non_max_suppression, xywh2xyxy, get_batch_statistics, ap_per_class
 
 
 class YOLOMAMLDetect(AbstractStep):
@@ -53,6 +54,30 @@ class YOLOMAMLDetect(AbstractStep):
         support_set, support_targets, query_set, query_targets = model.split_support_and_query_set(images, targets)
 
         _, query_output = model.set_forward(support_set, support_targets, query_set)
+
+        query_output = query_output.cpu()
+        query_output = non_max_suppression(
+            query_output,
+            conf_thres=self.objectness_threshold,
+            nms_thres=self.nms_threshold
+        )
+
+        query_targets[:, 2:] = xywh2xyxy(query_targets[:, 2:]) * self.image_size
+        query_targets = query_targets.cpu()
+
+        batch_statistics = get_batch_statistics(
+            query_output,
+            query_targets,
+            iou_threshold=self.iou_threshold
+        )
+
+        true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
+        precision, recall, average_precision, f1, ap_class = ap_per_class(
+            true_positives,
+            pred_scores,
+            pred_labels,
+            self.labels,
+        )
 
 
     def dump_output(self, _, output_folder, output_name, **__):
