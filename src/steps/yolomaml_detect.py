@@ -27,7 +27,7 @@ class YOLOMAMLDetect(AbstractStep):
             random_seed=None,
             output_dir=configs.save_dir,
     ):
-        self.episode_config = episode_config
+        self.data_config = parse_data_config(episode_config)
         self.model_config = model_config
         self.trained_weights = trained_weights
         self.learning_rate = learning_rate
@@ -39,9 +39,45 @@ class YOLOMAMLDetect(AbstractStep):
         self.random_seed = random_seed
         self.output_dir = output_dir
 
+        self.labels = self.parse_labels(self.data_config['labels'])
 
     def apply(self):
         pass
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
+
+    def parse_labels(self, labels_str):
+        """
+        Gets labels from a string
+        Args:
+            labels_str (str): string from the data config file describing the labels of the episode
+
+        Returns:
+            list: labels of the episode
+        """
+        labels_str_split = labels_str.split(', ')
+        labels = [int(label) for label in labels_str_split]
+
+        return labels
+
+
+    def get_episode(self):
+        """
+        Returns:
+
+        """
+        dataset = ListDataset(
+            list_path=self.data_config['eval'],
+            img_size=self.image_size,
+            augment=False,
+            multiscale=False,
+            normalized_labels=True,
+        )
+
+        data_instances = [dataset[-label-1] for label in self.labels]
+        data_instances.extend([dataset[i] for i in range(len(dataset))])
+
+        paths, images, targets, _ = dataset.collate_fn(data_instances)
+
+        return paths, images, targets
