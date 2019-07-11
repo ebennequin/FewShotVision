@@ -1,4 +1,8 @@
 train=data/coco/trainvalno5k.txt
 valid=data/coco/5k.txt
+eval=data/coco/5k.txt
 train_dict_path=data/coco/trainvalno5k_dict.pkl
 valid_dict_path=data/coco/5k_dict.pkl
+eval_dict_path=data/coco/5k_dict.pkl
+classes= 80
+names=data/coco.names
