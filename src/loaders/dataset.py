@@ -184,10 +184,10 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
         self.n_query = n_query
         self.n_episodes = n_episodes
 
-        self.images_per_label = self._get_images_per_label(path_to_images_per_label)
-        self.label_list = self._get_label_list()
+        self.images_per_label = self.get_images_per_label(path_to_images_per_label)
+        self.label_list = self.get_label_list()
 
-    def _get_images_per_label(self, path):
+    def get_images_per_label(self, path):
         """
         Returns dictionary of images per label from a file if specified or compute it from scratch
         Args:
@@ -203,7 +203,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
 
         return images_per_label
 
-    def _get_label_list(self):
+    def get_label_list(self):
         """
 
         Returns:
@@ -215,7 +215,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
                 label_list.append(label)
         return label_list
 
-    def _sample_labels(self):
+    def sample_labels(self):
         """
 
         Returns:
@@ -224,7 +224,7 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
         labels = np.random.choice(self.label_list, self.n_way, replace=False)
         return labels
 
-    def _sample_images_from_labels(self, labels):
+    def sample_images_from_labels(self, labels):
         """
         For each label in labels, samples n_support+n_query images containing at least one box associated with label
         The first n_way elements of the returned tensor will be used to determine the sampled labels
@@ -251,5 +251,5 @@ class DetectionTaskSampler(torch.utils.data.Sampler):
 
     def __iter__(self):
         for i in range(self.n_episodes):
-            labels = self._sample_labels()
-            yield self._sample_images_from_labels(labels)
+            labels = self.sample_labels()
+            yield self.sample_images_from_labels(labels)
