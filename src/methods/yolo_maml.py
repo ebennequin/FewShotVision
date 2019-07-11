@@ -53,7 +53,6 @@ class YOLOMAML(nn.Module):
         self.task_update_num = task_update_num
         self.train_lr = train_lr
         self.approx = approx
-        self.print_freq = print_freq
 
         self.objectness_threshold = objectness_threshold
         self.nms_threshold = nms_threshold

@@ -3,10 +3,13 @@ import os
 import numpy as np
 from pipeline.steps import AbstractStep
 import pickle
+import torch
 
 from src.utils import configs
 
 from src.loaders.dataset import DetectionTaskSampler
+from src.methods import YOLOMAML
+from src.yolov3.model import Darknet
 from src.yolov3.utils.datasets import ListDataset
 from src.yolov3.utils.parse_config import parse_data_config
 
@@ -41,8 +44,16 @@ class YOLOMAMLDetect(AbstractStep):
 
         self.labels = self.parse_labels(self.data_config['labels'])
 
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     def apply(self):
-        pass
+        model = self.get_model()
+        paths, images, targets = self.get_episode()
+
+        support_set, support_targets, query_set, query_targets = model.split_support_and_query_set(images, targets)
+
+        _, query_output = model.set_forward(support_set, support_targets, query_set)
+
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
@@ -65,7 +76,8 @@ class YOLOMAMLDetect(AbstractStep):
     def get_episode(self):
         """
         Returns:
-
+            Tuple[Tuple, torch.Tensor, torch.Tensor]: the paths, images and target boxes of data instances composing
+            the episode described in the data configuration file
         """
         dataset = ListDataset(
             list_path=self.data_config['eval'],
@@ -81,3 +93,28 @@ class YOLOMAMLDetect(AbstractStep):
         paths, images, targets, _ = dataset.collate_fn(data_instances)
 
         return paths, images, targets
+
+    def get_model(self):
+        """
+        Returns:
+            YOLOMAML: meta-model
+        """
+
+        base_model = Darknet(self.model_config, self.image_size, self.trained_weights)
+
+        model = YOLOMAML(
+            base_model,
+            self.data_config['n_way'],
+            self.data_config['n_shot'],
+            self.data_config['n_query'],
+            self.image_size,
+            approx=True,
+            task_update_num=self.task_update_num,
+            train_lr=self.learning_rate,
+            objectness_threshold=self.objectness_threshold,
+            nms_threshold=self.nms_threshold,
+            iou_threshold=self.iou_threshold,
+            device=self.device,
+        )
+
+        return model
