@@ -69,10 +69,10 @@ class YOLOMAMLCreateEpisode(AbstractStep):
         if self.labels is None:
             self.labels = list(sampler.sample_labels())
         else:
-            assert len(self.labels) == self.n_way, 'You have to provide exactly n_way labels'
-            assert all(
-                label in sampler.label_list for label in self.labels
-            ), "At least one label doesn't have enough instances in the dataset"
+            if len(self.labels) != self.n_way:
+                raise ValueError('You have to provide exactly n_way labels')
+            if not all(label in sampler.label_list for label in self.labels):
+                raise ValueError("At least one label doesn't have enough instances in the dataset")
 
         image_indices = list(sampler.sample_images_from_labels(np.array(self.labels))[self.n_way:])
 
