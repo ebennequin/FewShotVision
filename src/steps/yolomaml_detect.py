@@ -1,3 +1,5 @@
+import os
+import random
 from PIL import Image
 
 import matplotlib.pyplot as plt
@@ -18,6 +20,9 @@ from src.yolov3.utils.utils import non_max_suppression, xywh2xyxy, get_batch_sta
 
 
 class YOLOMAMLDetect(AbstractStep):
+    """
+    This step performs detection on a given episode using a trained YOLOMAML model.
+    """
 
     def __init__(
             self,
@@ -31,8 +36,23 @@ class YOLOMAMLDetect(AbstractStep):
             iou_threshold=0.2,
             image_size=416,
             random_seed=None,
-            output_dir=configs.save_dir,
+            output_dir='output/detections',
     ):
+        """
+
+        Args:
+            episode_config (str): path to the .data configuration file of the episode
+            model_config (str): path to the .cfg file defining the structure of the YOLO model
+            trained_weights (str): path to the file containing the trained weights of the model
+            learning_rate (str): learning rate for weight updates on the support set
+            task_update_num (str): number of weight updates on the support set
+            objectness_threshold (float): the algorithm only keep boxes with a higher objectness confidence
+            nms_threshold (float): non maximum suppression threshold
+            iou_threshold (float): intersection over union threshold
+            image_size (int): size of input images
+            random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
+            output_dir (str): directory where the predicted boxes are saved
+        """
         self.data_config = parse_data_config(episode_config)
         self.model_config = model_config
         self.trained_weights = trained_weights
@@ -50,6 +70,9 @@ class YOLOMAMLDetect(AbstractStep):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def apply(self):
+        """
+        Executes YOLOMAMLDetect step.
+        """
         model = self.get_model()
         paths, images, targets = self.get_episode()
 
@@ -64,27 +87,9 @@ class YOLOMAMLDetect(AbstractStep):
             nms_thres=self.nms_threshold
         )
 
-        query_targets[:, 2:] = xywh2xyxy(query_targets[:, 2:]) * self.image_size
-        query_targets = query_targets.cpu()
-
-        batch_statistics = get_batch_statistics(
-            query_output,
-            query_targets,
-            iou_threshold=self.iou_threshold
-        )
-
-        true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
-        precision, recall, average_precision, f1, ap_class = ap_per_class(
-            true_positives,
-            pred_scores,
-            pred_labels,
-            self.labels,
-        )
-
         self.save_detections(list(paths), query_output)
 
-
-    def dump_output(self, _, output_folder, output_name, **__):
+    def dump_output(self, *_, **__):
         pass
 
     def parse_labels(self, labels_str):
@@ -133,9 +138,9 @@ class YOLOMAMLDetect(AbstractStep):
 
         model = YOLOMAML(
             base_model,
-            self.data_config['n_way'],
-            self.data_config['n_shot'],
-            self.data_config['n_query'],
+            int(self.data_config['n_way']),
+            int(self.data_config['n_shot']),
+            int(self.data_config['n_query']),
             self.image_size,
             approx=True,
             task_update_num=self.task_update_num,
@@ -149,6 +154,12 @@ class YOLOMAMLDetect(AbstractStep):
         return model
 
     def save_detections(self, paths, output):
+        """
+        Draws predicted boxes on input images and saves them in self.output_dir
+        Args:
+            paths (list): paths to input images
+            output (torch.Tensor): output of the model
+        """
         # Bounding-box colors
         cmap = plt.get_cmap("tab20b")
         colors = [cmap(i) for i in np.linspace(0, 1, 20)]
@@ -171,17 +182,17 @@ class YOLOMAMLDetect(AbstractStep):
                 detections = rescale_boxes(detections, self.image_size, img.shape[:2])
                 unique_labels = detections[:, -1].cpu().unique()
                 n_cls_preds = len(unique_labels)
-                bbox_colors = np.random.choice(colors, n_cls_preds)
+                bbox_colors = random.sample(colors, n_cls_preds)
                 classes = load_classes(self.data_config['names'])
                 for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                    print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
+                    print('\t+ Label: {label_name}, Classif conf: {class_conf}'.format(label_name=classes[int(cls_pred)], class_conf=cls_conf.item()))
 
                     box_w = x2 - x1
                     box_h = y2 - y1
 
                     color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
                     # Create a Rectangle patch
-                    bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=2, edgecolor=color, facecolor="none")
+                    bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=2, edgecolor=color, facecolor='none')
                     # Add the bbox to the plot
                     ax.add_patch(bbox)
                     # Add label
@@ -189,15 +200,44 @@ class YOLOMAMLDetect(AbstractStep):
                         x1,
                         y1,
                         s=classes[int(cls_pred)],
-                        color="white",
-                        verticalalignment="top",
-                        bbox={"color": color, "pad": 0},
+                        color='white',
+                        verticalalignment='top',
+                        bbox={'color': color, 'pad': 0},
                     )
 
             # Save generated image with detections
-            plt.axis("off")
+            plt.axis('off')
             plt.gca().xaxis.set_major_locator(NullLocator())
             plt.gca().yaxis.set_major_locator(NullLocator())
-            filename = path.split("/")[-1].split(".")[0]
-            plt.savefig(f"output/{filename}.png", bbox_inches="tight", pad_inches=0.0)
+            filename = path.split('/')[-1].split('.')[0] + '.png'
+            plt.savefig(os.path.join(self.output_dir, filename), bbox_inches='tight', pad_inches=0.0)
             plt.close()
+
+    def get_statistics(self, output, targets):
+        """
+
+        Args:
+            output (torch.Tensor): output of the model
+            targets (torch.Tensor): ground truth
+
+        Returns:
+            Tuple: detection metrics
+        """
+        targets[:, 2:] = xywh2xyxy(targets[:, 2:]) * self.image_size
+        targets = targets.cpu()
+
+        batch_statistics = get_batch_statistics(
+            output,
+            targets,
+            iou_threshold=self.iou_threshold
+        )
+
+        true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
+        precision, recall, average_precision, f1, ap_class = ap_per_class(
+            true_positives,
+            pred_scores,
+            pred_labels,
+            self.labels,
+        )
+
+        return precision, recall, average_precision, f1, ap_class
