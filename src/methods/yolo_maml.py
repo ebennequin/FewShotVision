@@ -17,7 +17,6 @@ class YOLOMAML(nn.Module):
                  approx=True,
                  task_update_num=5,
                  train_lr=0.01,
-                 print_freq=10,
                  objectness_threshold=0.8,
                  nms_threshold=0.4,
                  iou_threshold=0.2,
@@ -37,7 +36,6 @@ class YOLOMAML(nn.Module):
             objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
             nms_threshold (float): threshold for non maximum suppression, at evaluation time
             iou_threshold (float): threshold for intersection over union
-            print_freq (int): inside an epoch, print status update every print_freq episodes
             device (str): cuda or cpu
         """
         super(YOLOMAML, self).__init__()

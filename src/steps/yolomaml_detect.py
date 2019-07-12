@@ -1,18 +1,20 @@
-import os
+from PIL import Image
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.ticker import NullLocator
 import numpy as np
-from pipeline.steps import AbstractStep
-import pickle
 import torch
+from pipeline.steps import AbstractStep
 
 from src.utils import configs
 
-from src.loaders.dataset import DetectionTaskSampler
 from src.methods import YOLOMAML
 from src.yolov3.model import Darknet
 from src.yolov3.utils.datasets import ListDataset
 from src.yolov3.utils.parse_config import parse_data_config
-from src.yolov3.utils.utils import non_max_suppression, xywh2xyxy, get_batch_statistics, ap_per_class
+from src.yolov3.utils.utils import non_max_suppression, xywh2xyxy, get_batch_statistics, ap_per_class, rescale_boxes, \
+    load_classes
 
 
 class YOLOMAMLDetect(AbstractStep):
@@ -79,6 +81,8 @@ class YOLOMAMLDetect(AbstractStep):
             self.labels,
         )
 
+        self.save_detections(list(paths), query_output)
+
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
@@ -143,3 +147,57 @@ class YOLOMAMLDetect(AbstractStep):
         )
 
         return model
+
+    def save_detections(self, paths, output):
+        # Bounding-box colors
+        cmap = plt.get_cmap("tab20b")
+        colors = [cmap(i) for i in np.linspace(0, 1, 20)]
+
+        print("\nSaving images:")
+        # Iterate through images and save plot of detections
+        for img_i, (path, detections) in enumerate(zip(paths, output)):
+
+            print("(%d) Image: '%s'" % (img_i, path))
+
+            # Create plot
+            img = np.array(Image.open(path))
+            plt.figure()
+            fig, ax = plt.subplots(1)
+            ax.imshow(img)
+
+            # Draw bounding boxes and labels of detections
+            if detections is not None:
+                # Rescale boxes to original image
+                detections = rescale_boxes(detections, self.image_size, img.shape[:2])
+                unique_labels = detections[:, -1].cpu().unique()
+                n_cls_preds = len(unique_labels)
+                bbox_colors = np.random.choice(colors, n_cls_preds)
+                classes = load_classes(self.data_config['names'])
+                for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
+                    print("\t+ Label: %s, Conf: %.5f" % (classes[int(cls_pred)], cls_conf.item()))
+
+                    box_w = x2 - x1
+                    box_h = y2 - y1
+
+                    color = bbox_colors[int(np.where(unique_labels == int(cls_pred))[0])]
+                    # Create a Rectangle patch
+                    bbox = patches.Rectangle((x1, y1), box_w, box_h, linewidth=2, edgecolor=color, facecolor="none")
+                    # Add the bbox to the plot
+                    ax.add_patch(bbox)
+                    # Add label
+                    plt.text(
+                        x1,
+                        y1,
+                        s=classes[int(cls_pred)],
+                        color="white",
+                        verticalalignment="top",
+                        bbox={"color": color, "pad": 0},
+                    )
+
+            # Save generated image with detections
+            plt.axis("off")
+            plt.gca().xaxis.set_major_locator(NullLocator())
+            plt.gca().yaxis.set_major_locator(NullLocator())
+            filename = path.split("/")[-1].split(".")[0]
+            plt.savefig(f"output/{filename}.png", bbox_inches="tight", pad_inches=0.0)
+            plt.close()
