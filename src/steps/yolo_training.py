@@ -7,6 +7,7 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from src.loaders.data_managers import DetectionSetDataManager
 from src.methods import YOLOMAML
 from src.utils import configs
+from src.utils.utils import include_episode_loss_dict
 from src.utils.io_utils import set_and_print_random_seed
 from src.yolov3.model import Darknet
 from src.yolov3.utils.datasets import ListDataset
@@ -28,8 +29,8 @@ class YOLOTraining(AbstractStep):
             multiscale_training=True,
             batch_size=16,
             n_cpu=8,
-            print_freq=100,
-            validation_freq=1000,
+            print_freq=1,
+            validation_freq=5,
             n_epoch=100,
             objectness_threshold=0.8,
             nms_threshold=0.4,
@@ -92,12 +93,10 @@ class YOLOTraining(AbstractStep):
 
         data_config = parse_data_config(self.dataset_config)
         train_path = data_config["train"]
-        train_dict_path = data_config.get("train_dict_path", None)
         valid_path = data_config.get("valid", None)
-        valid_dict_path = data_config.get("valid_dict_path", None)
 
-        train_loader = self._get_data_loader(train_path, train_dict_path)
-        val_loader = self._get_data_loader(valid_path, valid_dict_path)
+        train_loader = self._get_data_loader(train_path)
+        val_loader = self._get_data_loader(valid_path)
 
         model = self._get_model()
 
@@ -122,11 +121,14 @@ class YOLOTraining(AbstractStep):
         optimizer.zero_grad()
 
         for epoch in range(self.n_epoch):
+            loss_dict = {}
+
             model.train()
             for _, images, targets in train_loader:
-                loss_dict, _ = model.forward(images, targets)
-                loss = loss_dict['total_loss']
+                batch_loss_dict, _ = model.forward(images, targets)
+                loss = batch_loss_dict['total_loss']
                 loss.backward()
+                loss_dict = include_episode_loss_dict(loss_dict, batch_loss_dict, len(train_loader))
 
             optimizer.step()
             self.plot_tensorboard(loss_dict, epoch)
@@ -136,18 +138,9 @@ class YOLOTraining(AbstractStep):
                     'Epoch {epoch}/{n_epochs} | Loss {loss}'.format(
                         epoch=epoch,
                         n_epochs=self.n_epoch,
-                        loss=loss_dict['query_total_loss'],
+                        loss=loss_dict['total_loss'],
                     )
                 )
-
-            if epoch % self.validation_freq == self.validation_freq - 1:
-                model.eval()
-                precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
-
-                self.writer.add_scalar('precision', precision.mean(), epoch)
-                self.writer.add_scalar('recall', recall.mean(), epoch)
-                self.writer.add_scalar('mAP', average_precision.mean(), epoch)
-                self.writer.add_scalar('F1', f1.mean(), epoch)
 
         self.writer.close()
 
