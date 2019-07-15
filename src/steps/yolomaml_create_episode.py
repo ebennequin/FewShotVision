@@ -92,6 +92,9 @@ class YOLOMAMLCreateEpisode(AbstractStep):
             f.write('eval='+output_name+'.txt'+'\n')
             f.write('classes='+str(self.data_config['classes'])+'\n')
             f.write('names='+str(self.data_config['names'])+'\n')
+            f.write('n_way='+str(self.n_way)+'\n')
+            f.write('n_shot='+str(self.n_shot)+'\n')
+            f.write('n_query='+str(self.n_query)+'\n')
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass

@@ -200,7 +200,6 @@ class YOLOMAMLTraining(AbstractStep):
             self.image_size,
             approx=self.approx,
             task_update_num=self.task_update_num,
-            print_freq=self.print_freq,
             train_lr=self.learning_rate,
             objectness_threshold=self.objectness_threshold,
             nms_threshold=self.nms_threshold,
