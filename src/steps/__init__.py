@@ -6,6 +6,7 @@ from .yolomaml_training import YOLOMAMLTraining
 from .yolomaml_create_dic import YOLOMAMLCreateDic
 from .yolomaml_create_episode import YOLOMAMLCreateEpisode
 from .yolomaml_detect import YOLOMAMLDetect
+from .yolo_training import YOLOTraining
 
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     'YOLOMAMLTraining',
     'YOLOMAMLCreateDic',
     'YOLOMAMLCreateEpisode',
-    'YOLOMAMLDetect'
+    'YOLOMAMLDetect',
+    'YOLOTraining',
 ]
