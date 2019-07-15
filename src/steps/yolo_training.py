@@ -27,8 +27,9 @@ class YOLOTraining(AbstractStep):
             optimizer='Adam',
             learning_rate=0.001,
             multiscale_training=True,
-            batch_size=16,
+            batch_size=32,
             n_cpu=8,
+            gradient_accumulation=10,
             print_freq=1,
             validation_freq=5,
             n_epoch=100,
@@ -49,6 +50,7 @@ class YOLOTraining(AbstractStep):
             multiscale_training (bool): whether to sample batches with different image sizes
             batch_size (int): size of a training batch
             n_cpu (int): number of workers for the computation of the dataloader
+            gradient_accumulation (int): number of gradients from batches to accumulate before a gradient descent
             print_freq (int): inside an epoch, print status update every print_freq episodes
             validation_freq (int): inside an epoch, frequency with which we evaluate the model on the validation set
             n_epoch (int): number of meta-training epochs
@@ -68,6 +70,7 @@ class YOLOTraining(AbstractStep):
         self.multiscale_training = multiscale_training
         self.batch_size = batch_size
         self.n_cpu = n_cpu
+        self.gradient_accumulation = gradient_accumulation
         self.print_freq = print_freq
         self.validation_freq = validation_freq
         self.n_epoch = n_epoch
@@ -124,13 +127,16 @@ class YOLOTraining(AbstractStep):
             loss_dict = {}
 
             model.train()
-            for _, images, targets in train_loader:
-                batch_loss_dict, _ = model.forward(images, targets)
+            for batch_index, (_, images, targets) in enumerate(train_loader):
+                batch_loss_dict, _ = model.forward(images.to(self.device), targets.to(self.device))
                 loss = batch_loss_dict['total_loss']
                 loss.backward()
                 loss_dict = include_episode_loss_dict(loss_dict, batch_loss_dict, len(train_loader))
 
-            optimizer.step()
+                if batch_index % self.gradient_accumulation == 0:
+                    optimizer.step()
+                    optimizer.zero_grad()
+
             self.plot_tensorboard(loss_dict, epoch)
 
             if epoch % self.print_freq == 0:
@@ -190,7 +196,7 @@ class YOLOTraining(AbstractStep):
             Darknet: YOLO model
         """
 
-        model = Darknet(self.model_config, self.image_size, self.pretrained_weights)
+        model = Darknet(self.model_config, self.image_size, self.pretrained_weights).to(self.device)
 
         return model
 
