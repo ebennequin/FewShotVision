@@ -129,7 +129,7 @@ class YOLOMAMLTraining(AbstractStep):
         optimizer = self._get_optimizer(model)
 
         for epoch in range(self.n_epoch):
-            loss_dict = model.train_loop(epoch, base_loader, optimizer)
+            loss_dict = model.train_loop(base_loader, optimizer)
 
             self.plot_tensorboard(loss_dict, epoch)
 
