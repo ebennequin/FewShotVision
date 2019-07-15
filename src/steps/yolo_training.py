@@ -9,6 +9,7 @@ from src.methods import YOLOMAML
 from src.utils import configs
 from src.utils.io_utils import set_and_print_random_seed
 from src.yolov3.model import Darknet
+from src.yolov3.utils.datasets import ListDataset
 from src.yolov3.utils.parse_config import parse_data_config
 
 
@@ -24,6 +25,9 @@ class YOLOTraining(AbstractStep):
             pretrained_weights=None,
             optimizer='Adam',
             learning_rate=0.001,
+            multiscale_training=True,
+            batch_size=16,
+            n_cpu=8,
             print_freq=100,
             validation_freq=1000,
             n_epoch=100,
@@ -40,13 +44,11 @@ class YOLOTraining(AbstractStep):
             dataset_config (str): path to data config file
             model_config (str): path to model definition file
             pretrained_weights (str): path to a file containing pretrained weights for the model
-            n_way (int): number of labels in a detection task
-            n_shot (int): number of support data in each class in an episode
-            n_query (int): number of query data in each class in an episode
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
             learning_rate (float): learning rate fed to the optimizer
-            approx (bool): whether to use an approximation of the meta-backpropagation
-            task_update_num (int): number of updates inside each episode
+            multiscale_training (bool): whether to sample batches with different image sizes
+            batch_size (int): size of a training batch
+            n_cpu (int): number of workers for the computation of the dataloader
             print_freq (int): inside an epoch, print status update every print_freq episodes
             validation_freq (int): inside an epoch, frequency with which we evaluate the model on the validation set
             n_epoch (int): number of meta-training epochs
@@ -62,13 +64,11 @@ class YOLOTraining(AbstractStep):
         self.dataset_config = dataset_config
         self.model_config = model_config
         self.pretrained_weights = pretrained_weights
-        self.n_way = n_way
-        self.n_shot = n_shot
-        self.n_query = n_query
         self.optimizer = optimizer
         self.learning_rate = learning_rate
-        self.approx = approx
-        self.task_update_num = task_update_num
+        self.multiscale_training = multiscale_training
+        self.batch_size = batch_size
+        self.n_cpu = n_cpu
         self.print_freq = print_freq
         self.validation_freq = validation_freq
         self.n_epoch = n_epoch
@@ -172,11 +172,19 @@ class YOLOTraining(AbstractStep):
             path_to_data_file (str): path to file containing paths to images
 
         Returns:
-            torch.utils.data.DataLoader: samples data in the shape of a detection task
+            torch.utils.data.DataLoader: samples data in the shape of batches
         """
-        data_manager = DetectionSetDataManager(self.n_way, self.n_shot, self.n_query, self.n_episode, self.image_size)
+        dataset = ListDataset(path_to_data_file, augment=True, multiscale=self.multiscale_training)
+        dataloader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.n_cpu,
+            pin_memory=True,
+            collate_fn=dataset.collate_fn,
+        )
 
-        return data_manager.get_data_loader(path_to_data_file, path_to_images_per_label)
+        return dataloader
 
     def _get_model(self):
         """

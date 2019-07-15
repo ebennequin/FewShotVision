@@ -124,7 +124,7 @@ class YOLOMAMLDetect(AbstractStep):
         data_instances = [dataset[-label-1] for label in self.labels]
         data_instances.extend([dataset[i] for i in range(len(dataset))])
 
-        paths, images, targets, _ = dataset.collate_fn(data_instances)
+        paths, images, targets, _ = dataset.collate_fn_episodic(data_instances)
 
         return paths, images, targets
 
