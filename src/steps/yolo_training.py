@@ -190,25 +190,10 @@ class YOLOTraining(AbstractStep):
         """
 
         Returns:
-            YOLOMAML: meta-model
+            Darknet: YOLO model
         """
 
-        base_model = Darknet(self.model_config, self.image_size, self.pretrained_weights)
-
-        model = YOLOMAML(
-            base_model,
-            self.n_way,
-            self.n_shot,
-            self.n_query,
-            self.image_size,
-            approx=self.approx,
-            task_update_num=self.task_update_num,
-            train_lr=self.learning_rate,
-            objectness_threshold=self.objectness_threshold,
-            nms_threshold=self.nms_threshold,
-            iou_threshold=self.iou_threshold,
-            device=self.device,
-        )
+        model = Darknet(self.model_config, self.image_size, self.pretrained_weights)
 
         return model
 
