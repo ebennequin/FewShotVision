@@ -1,12 +1,12 @@
 import os
 import random
-from PIL import Image
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.ticker import NullLocator
 import numpy as np
 import torch
+from PIL import Image
 from pipeline.steps import AbstractStep
 
 from src.utils import configs
@@ -71,7 +71,7 @@ class YOLOMAMLDetect(AbstractStep):
 
     def apply(self):
         """
-        Executes YOLOMAMLDetect step.
+        Executes YOLOMAMLDetect step and saves the result images
         """
         model = self.get_model()
         paths, images, targets = self.get_episode()
@@ -164,11 +164,11 @@ class YOLOMAMLDetect(AbstractStep):
         cmap = plt.get_cmap("tab20b")
         colors = [cmap(i) for i in np.linspace(0, 1, 20)]
 
-        print("\nSaving images:")
+        print('Saving images:')
         # Iterate through images and save plot of detections
         for img_i, (path, detections) in enumerate(zip(paths, output)):
 
-            print("(%d) Image: '%s'" % (img_i, path))
+            print('Image {index}: {path}'.format(index=img_i, path=path))
 
             # Create plot
             img = np.array(Image.open(path))
@@ -185,7 +185,10 @@ class YOLOMAMLDetect(AbstractStep):
                 bbox_colors = random.sample(colors, n_cls_preds)
                 classes = load_classes(self.data_config['names'])
                 for x1, y1, x2, y2, conf, cls_conf, cls_pred in detections:
-                    print('\t+ Label: {label_name}, Classif conf: {class_conf}'.format(label_name=classes[int(cls_pred)], class_conf=cls_conf.item()))
+                    print('\t+ Label: {label_name}, Classif conf: {class_conf}'.format(
+                        label_name=classes[int(cls_pred)],
+                        class_conf=cls_conf.item())
+                    )
 
                     box_w = x2 - x1
                     box_h = y2 - y1
@@ -215,13 +218,13 @@ class YOLOMAMLDetect(AbstractStep):
 
     def get_statistics(self, output, targets):
         """
-
+        Computes the detection metrics on the output compared to the ground truth
         Args:
             output (torch.Tensor): output of the model
             targets (torch.Tensor): ground truth
 
         Returns:
-            Tuple: detection metrics
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]: detection metrics
         """
         targets[:, 2:] = xywh2xyxy(targets[:, 2:]) * self.image_size
         targets = targets.cpu()
