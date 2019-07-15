@@ -175,6 +175,7 @@ class YOLOMAMLTraining(AbstractStep):
 
         Args:
             path_to_data_file (str): path to file containing paths to images
+            path_to_images_per_label (str): path to pickle file containing the dictionary of images per label
 
         Returns:
             torch.utils.data.DataLoader: samples data in the shape of a detection task

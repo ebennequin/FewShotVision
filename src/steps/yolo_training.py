@@ -31,7 +31,6 @@ class YOLOTraining(AbstractStep):
             print_freq=100,
             validation_freq=1000,
             n_epoch=100,
-            n_episode=100,
             objectness_threshold=0.8,
             nms_threshold=0.4,
             iou_threshold=0.2,
@@ -52,7 +51,6 @@ class YOLOTraining(AbstractStep):
             print_freq (int): inside an epoch, print status update every print_freq episodes
             validation_freq (int): inside an epoch, frequency with which we evaluate the model on the validation set
             n_epoch (int): number of meta-training epochs
-            n_episode (int): number of episodes per epoch during meta-training
             objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
             nms_threshold (float): threshold for non maximum suppression, at evaluation time
             iou_threshold (float): threshold for intersection over union
@@ -72,7 +70,6 @@ class YOLOTraining(AbstractStep):
         self.print_freq = print_freq
         self.validation_freq = validation_freq
         self.n_epoch = n_epoch
-        self.n_episode = n_episode
         self.objectness_threshold = objectness_threshold
         self.nms_threshold = nms_threshold
         self.iou_threshold = iou_threshold
@@ -99,33 +96,39 @@ class YOLOTraining(AbstractStep):
         valid_path = data_config.get("valid", None)
         valid_dict_path = data_config.get("valid_dict_path", None)
 
-        base_loader = self._get_data_loader(train_path, train_dict_path)
+        train_loader = self._get_data_loader(train_path, train_dict_path)
         val_loader = self._get_data_loader(valid_path, valid_dict_path)
 
         model = self._get_model()
 
-        return self._train(base_loader, val_loader, model)
+        return self._train(train_loader, val_loader, model)
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _train(self, base_loader, val_loader, model):
+    def _train(self, train_loader, val_loader, model):
         """
-        Trains the model on the base set
+        Trains the model on the training set
         Args:
-            base_loader (torch.utils.data.DataLoader): data loader for base set
+            train_loader (torch.utils.data.DataLoader): data loader for training set
             val_loader (torch.utils.data.DataLoader): data loader for validation set
-            model (YOLOMAML): neural network model to train
+            model (Darknet): neural network model to train
 
         Returns:
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
         """
         optimizer = self._get_optimizer(model)
+        optimizer.zero_grad()
 
         for epoch in range(self.n_epoch):
-            loss_dict = model.train_loop(epoch, base_loader, optimizer)
+            model.train()
+            for _, images, targets in train_loader:
+                loss_dict, _ = model.forward(images, targets)
+                loss = loss_dict['total_loss']
+                loss.backward()
 
+            optimizer.step()
             self.plot_tensorboard(loss_dict, epoch)
 
             if epoch % self.print_freq == 0:
@@ -138,6 +141,7 @@ class YOLOTraining(AbstractStep):
                 )
 
             if epoch % self.validation_freq == self.validation_freq - 1:
+                model.eval()
                 precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
 
                 self.writer.add_scalar('precision', precision.mean(), epoch)
@@ -147,7 +151,7 @@ class YOLOTraining(AbstractStep):
 
         self.writer.close()
 
-        model.base_model.save_darknet_weights(os.path.join(self.checkpoint_dir, 'final.weights'))
+        model.save_darknet_weights(os.path.join(self.checkpoint_dir, 'final.weights'))
 
         return {'epoch': self.n_epoch, 'state': model.state_dict()}
 
@@ -165,7 +169,7 @@ class YOLOTraining(AbstractStep):
 
         return optimizer
 
-    def _get_data_loader(self, path_to_data_file, path_to_images_per_label):
+    def _get_data_loader(self, path_to_data_file):
         """
 
         Args:
