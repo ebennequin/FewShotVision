@@ -144,9 +144,9 @@ class ListDataset(Dataset):
 
         return img_path, img, targets
 
-    def collate_fn(self, batch):
+    def collate_fn_episodic(self, batch):
         """
-        Merges a list of samples to form a mini-batch
+        Merges a list of samples to form an episode
         Args:
             batch (list): contains the elements sampled from the datasets
 
@@ -180,6 +180,31 @@ class ListDataset(Dataset):
         imgs = torch.stack([resize(img, self.img_size) for img in imgs])
         self.batch_count += 1
         return paths, imgs, targets, torch.tensor(labels, dtype=torch.int32)
+
+    def collate_fn(self, batch):
+        """
+        Merges a list of samples to form a batch
+        Args:
+            batch (list): contains the elements sampled from the datasets
+
+        Returns:
+            Tuple[Tuple, torch.Tensor, torch.Tensor, torch.Tensor]: respectively contains 0. the paths to sampled
+            images ; 1. the sampled images ; 2. targets of the sampled images and 3. the sampled labels
+        """
+        paths, imgs, targets = list(zip(*batch))
+        # Remove empty placeholder targets
+        targets = [boxes for boxes in targets if boxes is not None]
+        # Add sample index to targets
+        for i, boxes in enumerate(targets):
+            boxes[:, 0] = i
+        targets = torch.cat(targets, 0)
+        # Selects new image size every tenth batch
+        if self.multiscale and self.batch_count % 10 == 0:
+            self.img_size = random.choice(range(self.min_size, self.max_size + 1, 32))
+        # Resize images to input shape
+        imgs = torch.stack([resize(img, self.img_size) for img in imgs])
+        self.batch_count += 1
+        return paths, imgs, targets
 
     def __len__(self):
         return len(self.img_files)

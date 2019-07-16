@@ -139,6 +139,6 @@ class DetectionSetDataManager(DataManager):
         data_loader = torch.utils.data.DataLoader(dataset,
                                                   batch_sampler=sampler,
                                                   num_workers=12,
-                                                  collate_fn=dataset.collate_fn,
+                                                  collate_fn=dataset.collate_fn_episodic,
                                                   )
         return data_loader

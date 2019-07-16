@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from src.utils.utils import include_episode_loss_dict, get_complete_loss_dict
 from src.yolov3.utils.utils import xywh2xyxy, non_max_suppression, get_batch_statistics, ap_per_class
 
 
@@ -136,7 +137,7 @@ class YOLOMAML(nn.Module):
 
         query_loss_dict, query_output = self.forward(query_set, query_set_targets)
 
-        complete_loss_dict = self.get_complete_loss_dict(list_of_support_loss_dicts, query_loss_dict)
+        complete_loss_dict = get_complete_loss_dict(list_of_support_loss_dicts, query_loss_dict)
 
         return complete_loss_dict, query_output
 
@@ -166,11 +167,10 @@ class YOLOMAML(nn.Module):
 
         return loss_dict
 
-    def train_loop(self, epoch, train_loader, optimizer):
+    def train_loop(self, train_loader, optimizer):
         """
         Executes one meta-training epoch. Executes several episodes then one meta-backpropagation.
         Args:
-            epoch (int): current epoch
             train_loader (DataLoader): loader of a given number of episodes.  It returns a tuple of size 4 respectively
             containing the paths, the images, the targets and the labels
             optimizer (torch.optim.Optimizer): model optimizer
@@ -184,7 +184,6 @@ class YOLOMAML(nn.Module):
         """
         self.train()
 
-        cumulative_loss = 0
         loss_all = []
         optimizer.zero_grad()
         loss_dict = {}
@@ -200,7 +199,7 @@ class YOLOMAML(nn.Module):
 
             loss_all.append(episode_loss_dict['query_total_loss'])
 
-            loss_dict = self.include_episode_loss_dict(loss_dict, episode_loss_dict, len(train_loader))
+            loss_dict = include_episode_loss_dict(loss_dict, episode_loss_dict, len(train_loader))
 
         loss_q = torch.stack(loss_all).sum(0)
         loss_q.backward()
@@ -335,45 +334,3 @@ class YOLOMAML(nn.Module):
             query_set.to(self.device),
             query_targets.to(self.device),
         )
-
-    def get_complete_loss_dict(self, list_of_support_loss_dicts, query_loss_dict):
-        """
-        Merge the dictionaries containing the losses on the support set and on the query set
-        Args:
-            list_of_support_loss_dicts (list): element of index i contains the losses of the model on the support set
-            after i weight updates
-            query_loss_dict (dict): contains the losses of the model on the query set
-
-        Returns:
-            dict: merged dictionary with modified keys that say whether the loss was from the support or query set
-        """
-        complete_loss_dict = {}
-
-        for task_step, support_loss_dict in enumerate(list_of_support_loss_dicts):
-            for key, value in support_loss_dict.items():
-                complete_loss_dict['support_' + str(key) + '_' + str(task_step)] = value
-
-        for key, value in query_loss_dict.items():
-            complete_loss_dict['query_' + str(key)] = value
-
-        return complete_loss_dict
-
-    def include_episode_loss_dict(self, loss_dict, episode_loss_dict, number_of_dicts):
-        """
-        Include the items of episode_loss_dict in loss_dict by creating a new item when the key is not in loss_dict, and
-        by additioning the weighted values when the key is already in loss_dict
-        Args:
-            loss_dict (dict): losses of precedent layers
-            episode_loss_dict (dict): losses of current layer
-            number_of_dicts (int): how many dicts will be added to loss_dict in one epoch
-
-        Returns:
-            dict: updated losses
-        """
-        for key, value in episode_loss_dict.items():
-            if key not in loss_dict:
-                loss_dict[key] = episode_loss_dict[key] / float(number_of_dicts)
-            else:
-                loss_dict[key] += episode_loss_dict[key] / float(number_of_dicts)
-
-        return loss_dict

@@ -74,6 +74,52 @@ def random_swap_tensor(classification_task, n_swaps, n_shot):
 
     return result
 
+
+def get_complete_loss_dict(list_of_support_loss_dicts, query_loss_dict):
+    """
+    Merge the dictionaries containing the losses on the support set and on the query set
+    Args:
+        list_of_support_loss_dicts (list): element of index i contains the losses of the model on the support set
+        after i weight updates
+        query_loss_dict (dict): contains the losses of the model on the query set
+
+    Returns:
+        dict: merged dictionary with modified keys that say whether the loss was from the support or query set
+    """
+    complete_loss_dict = {}
+
+    for task_step, support_loss_dict in enumerate(list_of_support_loss_dicts):
+        for key, value in support_loss_dict.items():
+            complete_loss_dict['support_' + str(key) + '_' + str(task_step)] = value
+
+    for key, value in query_loss_dict.items():
+        complete_loss_dict['query_' + str(key)] = value
+
+    return complete_loss_dict
+
+
+def include_episode_loss_dict(loss_dict, episode_loss_dict, number_of_dicts):
+    """
+    Include the items of episode_loss_dict in loss_dict by creating a new item when the key is not in loss_dict, and
+    by additioning the weighted values when the key is already in loss_dict
+    Args:
+        loss_dict (dict): losses of precedent layers
+        episode_loss_dict (dict): losses of current layer
+        number_of_dicts (int): how many dicts will be added to loss_dict in one epoch
+
+    Returns:
+        dict: updated losses
+    """
+    new_loss_dict = {}
+    for key, value in episode_loss_dict.items():
+        if key not in loss_dict:
+            new_loss_dict[key] = episode_loss_dict[key] / float(number_of_dicts)
+        else:
+            new_loss_dict[key] = loss_dict[key] + (episode_loss_dict[key] / float(number_of_dicts))
+
+    return new_loss_dict
+
+
 def one_hot(y, num_class):
     return torch.zeros((len(y), num_class)).scatter_(1, y.unsqueeze(1), 1)
 

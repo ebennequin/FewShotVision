@@ -7,12 +7,14 @@ from torch.utils.tensorboard.writer import SummaryWriter
 from src.loaders.data_managers import DetectionSetDataManager
 from src.methods import YOLOMAML
 from src.utils import configs
+from src.utils.utils import include_episode_loss_dict
 from src.utils.io_utils import set_and_print_random_seed
 from src.yolov3.model import Darknet
+from src.yolov3.utils.datasets import ListDataset
 from src.yolov3.utils.parse_config import parse_data_config
 
 
-class YOLOMAMLTraining(AbstractStep):
+class YOLOTraining(AbstractStep):
     """
     This step handles the training of the algorithm on the base dataset
     """
@@ -22,17 +24,15 @@ class YOLOMAMLTraining(AbstractStep):
             dataset_config='yolov3/config/black.data',
             model_config='yolov3/config/yolov3.cfg',
             pretrained_weights=None,
-            n_way=5,
-            n_shot=5,
-            n_query=16,
             optimizer='Adam',
             learning_rate=0.001,
-            approx=True,
-            task_update_num=3,
-            print_freq=100,
-            validation_freq=1000,
+            multiscale_training=True,
+            batch_size=32,
+            n_cpu=8,
+            gradient_accumulation=10,
+            print_freq=1,
+            validation_freq=5,
             n_epoch=100,
-            n_episode=100,
             objectness_threshold=0.8,
             nms_threshold=0.4,
             iou_threshold=0.2,
@@ -45,17 +45,15 @@ class YOLOMAMLTraining(AbstractStep):
             dataset_config (str): path to data config file
             model_config (str): path to model definition file
             pretrained_weights (str): path to a file containing pretrained weights for the model
-            n_way (int): number of labels in a detection task
-            n_shot (int): number of support data in each class in an episode
-            n_query (int): number of query data in each class in an episode
             optimizer (str): must be a valid class of torch.optim (Adam, SGD, ...)
             learning_rate (float): learning rate fed to the optimizer
-            approx (bool): whether to use an approximation of the meta-backpropagation
-            task_update_num (int): number of updates inside each episode
+            multiscale_training (bool): whether to sample batches with different image sizes
+            batch_size (int): size of a training batch
+            n_cpu (int): number of workers for the computation of the dataloader
+            gradient_accumulation (int): number of gradients from batches to accumulate before a gradient descent
             print_freq (int): inside an epoch, print status update every print_freq episodes
             validation_freq (int): inside an epoch, frequency with which we evaluate the model on the validation set
             n_epoch (int): number of meta-training epochs
-            n_episode (int): number of episodes per epoch during meta-training
             objectness_threshold (float): at evaluation time, only keep boxes with objectness above this threshold
             nms_threshold (float): threshold for non maximum suppression, at evaluation time
             iou_threshold (float): threshold for intersection over union
@@ -67,17 +65,15 @@ class YOLOMAMLTraining(AbstractStep):
         self.dataset_config = dataset_config
         self.model_config = model_config
         self.pretrained_weights = pretrained_weights
-        self.n_way = n_way
-        self.n_shot = n_shot
-        self.n_query = n_query
         self.optimizer = optimizer
         self.learning_rate = learning_rate
-        self.approx = approx
-        self.task_update_num = task_update_num
+        self.multiscale_training = multiscale_training
+        self.batch_size = batch_size
+        self.n_cpu = n_cpu
+        self.gradient_accumulation = gradient_accumulation
         self.print_freq = print_freq
         self.validation_freq = validation_freq
         self.n_epoch = n_epoch
-        self.n_episode = n_episode
         self.objectness_threshold = objectness_threshold
         self.nms_threshold = nms_threshold
         self.iou_threshold = iou_threshold
@@ -100,36 +96,46 @@ class YOLOMAMLTraining(AbstractStep):
 
         data_config = parse_data_config(self.dataset_config)
         train_path = data_config["train"]
-        train_dict_path = data_config.get("train_dict_path", None)
         valid_path = data_config.get("valid", None)
-        valid_dict_path = data_config.get("valid_dict_path", None)
 
-        base_loader = self._get_data_loader(train_path, train_dict_path)
-        val_loader = self._get_data_loader(valid_path, valid_dict_path)
+        train_loader = self._get_data_loader(train_path)
+        val_loader = self._get_data_loader(valid_path)
 
         model = self._get_model()
 
-        return self._train(base_loader, val_loader, model)
+        return self._train(train_loader, val_loader, model)
 
     def dump_output(self, _, output_folder, output_name, **__):
         pass
 
-    def _train(self, base_loader, val_loader, model):
+    def _train(self, train_loader, val_loader, model):
         """
-        Trains the model on the base set
+        Trains the model on the training set
         Args:
-            base_loader (torch.utils.data.DataLoader): data loader for base set
+            train_loader (torch.utils.data.DataLoader): data loader for training set
             val_loader (torch.utils.data.DataLoader): data loader for validation set
-            model (YOLOMAML): neural network model to train
+            model (Darknet): neural network model to train
 
         Returns:
             dict: a dictionary containing the whole state of the model that gave the higher validation accuracy
 
         """
         optimizer = self._get_optimizer(model)
+        optimizer.zero_grad()
 
         for epoch in range(self.n_epoch):
-            loss_dict = model.train_loop(base_loader, optimizer)
+            loss_dict = {}
+
+            model.train()
+            for batch_index, (_, images, targets) in enumerate(train_loader):
+                batch_loss_dict, _ = model.forward(images.to(self.device), targets.to(self.device))
+                loss = batch_loss_dict['total_loss']
+                loss.backward()
+                loss_dict = include_episode_loss_dict(loss_dict, batch_loss_dict, len(train_loader))
+
+                if batch_index % self.gradient_accumulation == 0:
+                    optimizer.step()
+                    optimizer.zero_grad()
 
             self.plot_tensorboard(loss_dict, epoch)
 
@@ -138,21 +144,13 @@ class YOLOMAMLTraining(AbstractStep):
                     'Epoch {epoch}/{n_epochs} | Loss {loss}'.format(
                         epoch=epoch,
                         n_epochs=self.n_epoch,
-                        loss=loss_dict['query_total_loss'],
+                        loss=loss_dict['total_loss'],
                     )
                 )
 
-            if epoch % self.validation_freq == self.validation_freq - 1:
-                precision, recall, average_precision, f1, ap_class = model.eval_loop(val_loader)
-
-                self.writer.add_scalar('precision', precision.mean(), epoch)
-                self.writer.add_scalar('recall', recall.mean(), epoch)
-                self.writer.add_scalar('mAP', average_precision.mean(), epoch)
-                self.writer.add_scalar('F1', f1.mean(), epoch)
-
         self.writer.close()
 
-        model.base_model.save_darknet_weights(os.path.join(self.checkpoint_dir, 'final.weights'))
+        model.save_darknet_weights(os.path.join(self.checkpoint_dir, 'final.weights'))
 
         return {'epoch': self.n_epoch, 'state': model.state_dict()}
 
@@ -170,43 +168,35 @@ class YOLOMAMLTraining(AbstractStep):
 
         return optimizer
 
-    def _get_data_loader(self, path_to_data_file, path_to_images_per_label):
+    def _get_data_loader(self, path_to_data_file):
         """
 
         Args:
             path_to_data_file (str): path to file containing paths to images
-            path_to_images_per_label (str): path to pickle file containing the dictionary of images per label
 
         Returns:
-            torch.utils.data.DataLoader: samples data in the shape of a detection task
+            torch.utils.data.DataLoader: samples data in the shape of batches
         """
-        data_manager = DetectionSetDataManager(self.n_way, self.n_shot, self.n_query, self.n_episode, self.image_size)
+        dataset = ListDataset(path_to_data_file, augment=True, multiscale=self.multiscale_training)
+        dataloader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.n_cpu,
+            pin_memory=True,
+            collate_fn=dataset.collate_fn,
+        )
 
-        return data_manager.get_data_loader(path_to_data_file, path_to_images_per_label)
+        return dataloader
 
     def _get_model(self):
         """
 
         Returns:
-            YOLOMAML: meta-model
+            Darknet: YOLO model
         """
 
-        base_model = Darknet(self.model_config, self.image_size, self.pretrained_weights)
-
-        model = YOLOMAML(
-            base_model,
-            self.n_way,
-            self.n_shot,
-            self.n_query,
-            self.image_size,
-            approx=self.approx,
-            task_update_num=self.task_update_num,
-            train_lr=self.learning_rate,
-            objectness_threshold=self.objectness_threshold,
-            nms_threshold=self.nms_threshold,
-            iou_threshold=self.iou_threshold,
-            device=self.device,
-        )
+        model = Darknet(self.model_config, self.image_size, self.pretrained_weights).to(self.device)
 
         return model
 
