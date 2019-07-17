@@ -108,12 +108,11 @@ class YOLODetect(AbstractStep):
             normalized_labels=True,
         )
 
-        data_instances = [dataset[-label-1] for label in self.labels]
-        data_instances.extend([dataset[i] for i in range(len(dataset))])
+        data_instances = [dataset[i] for i in range(len(dataset))]
 
-        paths, images, _, __ = dataset.collate_fn(data_instances)
+        paths, images, _ = dataset.collate_fn(data_instances)
 
-        return paths, images
+        return paths, images.to(self.device)
 
     def get_model(self):
         """
@@ -121,7 +120,7 @@ class YOLODetect(AbstractStep):
             Darknet: model
         """
 
-        return Darknet(self.model_config, self.image_size, self.trained_weights)
+        return Darknet(self.model_config, self.image_size, self.trained_weights).to(self.device)
 
 
     def save_detections(self, paths, output):
@@ -129,7 +128,8 @@ class YOLODetect(AbstractStep):
         Draws predicted boxes on input images and saves them in self.output_dir
         Args:
             paths (list): paths to input images
-            output (torch.Tensor): output of the model
+            output (list): output of the model. Each element is a torch.Tensor of shape (number_of_kept_detections, 7).
+            Each detection contains (x1, y1, x2, y2, objectness_confidence, class_score, class_predicted)
         """
         # Bounding-box colors
         cmap = plt.get_cmap("tab20b")

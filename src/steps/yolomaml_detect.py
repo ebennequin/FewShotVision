@@ -158,7 +158,8 @@ class YOLOMAMLDetect(AbstractStep):
         Draws predicted boxes on input images and saves them in self.output_dir
         Args:
             paths (list): paths to input images
-            output (torch.Tensor): output of the model
+            output (list): output of the model. Each element is a torch.Tensor of shape (number_of_kept_detections, 7).
+            Each detection contains (x1, y1, x2, y2, objectness_confidence, class_score, class_predicted)
         """
         # Bounding-box colors
         cmap = plt.get_cmap("tab20b")
