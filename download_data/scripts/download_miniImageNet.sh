@@ -13,5 +13,5 @@ tar -zxvf ILSVRC2015_CLS-LOC.tar.gz
 
 cd ../..
 
-python src/downloaders/miniImageNet/write_mini_imagenet_filelist.py
-python src/downloaders/miniImageNet/write_cross_filelist.py
+python download_data/src/miniImageNet/write_mini_imagenet_filelist.py
+python download_data/src/miniImageNet/write_cross_filelist.py

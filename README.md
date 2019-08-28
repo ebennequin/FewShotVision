@@ -12,10 +12,10 @@
 Git clone the repo:
 
 ```
-git clone git@github.com:sicara/FewShotLearning.git
+git clone git@github.com:ebennequin/FewShotLearning.git
 ```
 
-Then `cd FewShotLearning` and install virtualenv:
+Then `cd FewShotLearning` and install and activate virtualenv:
 
 ```
 virtualenv venv --python=python3
@@ -26,11 +26,11 @@ Then install dependencies. If you are on linux run `pip install -r dev_requireme
 run `pip install -r dev_requirements_macOS.txt`
 
 ### CUB
-* run `source ./scripts/downloaders/download_CUB.sh`
+* run `source ./download_data/scripts/download_CUB.sh`
 You will need wget for that script.
 
 ### mini-ImageNet
-* run `source ./scripts/downloaders/download_miniImagenet.sh`
+* run `source ./download_data/scripts/download_miniImagenet.sh`
 
 (WARNING: This would download the 155G ImageNet dataset.) The compress file of mini-ImageNet is on muaddib.
 

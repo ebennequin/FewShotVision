@@ -21,7 +21,7 @@ rmdir $DATADIR/images_evaluation
 
 cd ../..
 
-python src/downloaders/omniglot/rot_omniglot.py
-python src/downloaders/omniglot/write_omniglot_filelist.py
-python src/downloaders/omniglot/write_cross_char_base_filelist.py
+python download_data/src/omniglot/rot_omniglot.py
+python download_data/src/omniglot/write_omniglot_filelist.py
+python download_data/src/omniglot/write_cross_char_base_filelist.py
 
