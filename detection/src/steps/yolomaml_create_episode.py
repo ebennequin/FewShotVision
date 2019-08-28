@@ -2,13 +2,10 @@ import os
 
 import numpy as np
 from pipeline.steps import AbstractStep
-import pickle
 
-from src.utils import configs
-
-from src.loaders.dataset import DetectionTaskSampler
-from src.yolov3.utils.datasets import ListDataset
-from src.yolov3.utils.parse_config import parse_data_config
+from detection.src.loaders.data_manager import DetectionTaskSampler
+from detection.src.yolov3.utils.datasets import ListDataset
+from detection.src.yolov3.utils.parse_config import parse_data_config
 
 
 class YOLOMAMLCreateEpisode(AbstractStep):

@@ -17,7 +17,7 @@ init:
           learning_rate: 0.001
           approx: True
           task_update_num: 2
-          n_epoch: 100000
+          n_epoch: 2
           n_episode: 4
           validation_freq: 5000
           objectness_threshold: 0.5

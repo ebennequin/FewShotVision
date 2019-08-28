@@ -1,6 +1,6 @@
 import torch
 
-from src.methods.yolo_maml import YOLOMAML
+from detection.src.yolo_maml import YOLOMAML
 
 class TestYOLOMAML:
 

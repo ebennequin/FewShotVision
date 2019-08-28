@@ -42,6 +42,11 @@ def rescale_boxes(boxes, current_dim, original_shape):
     boxes[:, 3] = ((boxes[:, 3] - pad_y // 2) / unpad_h) * orig_h
     return boxes
 
+def horisontal_flip(images, targets):
+    images = torch.flip(images, [-1])
+    if targets is not None:
+        targets[:, 2] = 1 - targets[:, 2]
+    return images, targets
 
 def xywh2xyxy(x):
     y = x.new(x.shape)

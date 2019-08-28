@@ -5,8 +5,8 @@ import pickle
 
 from src.utils import configs
 
-from src.loaders.dataset import create_dict_images_per_label
-from src.yolov3.utils.datasets import ListDataset
+from detection.src.loaders.data_manager import create_dict_images_per_label
+from detection.src.yolov3.utils.datasets import ListDataset
 
 
 class YOLOMAMLCreateDic(AbstractStep):

@@ -1,0 +1,2 @@
+train=src/loaders/tests/small_image_list.txt
+valid=src/loaders/tests/small_image_list.txt

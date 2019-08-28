@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from src.yolov3.utils.parse_config import *
-from src.yolov3.utils.utils import build_targets, to_cpu, binary_cross_entropy
+from detection.src.yolov3.utils.parse_config import *
+from detection.src.yolov3.utils.utils import build_targets, to_cpu, binary_cross_entropy
 
 from src.backbones import Conv2d_fw, BatchNorm2d_fw
 

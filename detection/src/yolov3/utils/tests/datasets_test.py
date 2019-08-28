@@ -1,5 +1,5 @@
-from src.yolov3.utils.datasets import ListDataset
-from torch.utils.data import DataLoader
+from detection.src.yolov3.utils.datasets import ListDataset
+
 
 class TestListDataset:
 

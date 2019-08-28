@@ -9,16 +9,17 @@ import torch
 from PIL import Image
 from pipeline.steps import AbstractStep
 
+from detection.src.yolo_maml import YOLOMAML
+from detection.src.yolov3.model import Darknet
+from detection.src.yolov3.utils.datasets import ListDataset
+from detection.src.yolov3.utils.parse_config import parse_data_config
+from detection.src.yolov3.utils.utils import non_max_suppression, xywh2xyxy, get_batch_statistics, ap_per_class, rescale_boxes, \
+    load_classes
 
-from src.yolov3.model import Darknet
-from src.yolov3.utils.datasets import ListDataset
-from src.yolov3.utils.parse_config import parse_data_config
-from src.yolov3.utils.utils import non_max_suppression, rescale_boxes, load_classes
 
-
-class YOLODetect(AbstractStep):
+class YOLOMAMLDetect(AbstractStep):
     """
-    This step performs detection on a given episode using a trained YOLO model.
+    This step performs detection on a given episode using a trained YOLOMAML model.
     """
 
     def __init__(
@@ -26,10 +27,13 @@ class YOLODetect(AbstractStep):
             episode_config,
             model_config,
             trained_weights,
+            learning_rate,
+            task_update_num,
             objectness_threshold=0.8,
             nms_threshold=0.4,
             iou_threshold=0.2,
             image_size=416,
+            random_seed=None,
             output_dir='output/detections',
     ):
         """
@@ -38,19 +42,25 @@ class YOLODetect(AbstractStep):
             episode_config (str): path to the .data configuration file of the episode
             model_config (str): path to the .cfg file defining the structure of the YOLO model
             trained_weights (str): path to the file containing the trained weights of the model
+            learning_rate (str): learning rate for weight updates on the support set
+            task_update_num (str): number of weight updates on the support set
             objectness_threshold (float): the algorithm only keep boxes with a higher objectness confidence
             nms_threshold (float): non maximum suppression threshold
             iou_threshold (float): intersection over union threshold
             image_size (int): size of input images
+            random_seed (int): seed for random instantiations ; if none is provided, a seed is randomly defined
             output_dir (str): directory where the predicted boxes are saved
         """
         self.data_config = parse_data_config(episode_config)
         self.model_config = model_config
         self.trained_weights = trained_weights
+        self.learning_rate = learning_rate
+        self.task_update_num = task_update_num
         self.objectness_threshold = objectness_threshold
         self.nms_threshold = nms_threshold
         self.iou_threshold = iou_threshold
         self.image_size = image_size
+        self.random_seed = random_seed
         self.output_dir = output_dir
 
         self.labels = self.parse_labels(self.data_config['labels'])
@@ -59,21 +69,23 @@ class YOLODetect(AbstractStep):
 
     def apply(self):
         """
-        Executes YOLODetect step and saves the result images
+        Executes YOLOMAMLDetect step and saves the result images
         """
         model = self.get_model()
-        paths, images = self.get_episode()
+        paths, images, targets = self.get_episode()
 
-        _, outputs = model.forward(images)
+        support_set, support_targets, query_set, query_targets = model.split_support_and_query_set(images, targets)
 
-        outputs = outputs.cpu()
-        outputs = non_max_suppression(
-            outputs,
+        _, query_output = model.set_forward(support_set, support_targets, query_set)
+
+        query_output = query_output.cpu()
+        query_output = non_max_suppression(
+            query_output,
             conf_thres=self.objectness_threshold,
             nms_thres=self.nms_threshold
         )
 
-        self.save_detections(list(paths), outputs)
+        self.save_detections(list(paths), query_output)
 
     def dump_output(self, *_, **__):
         pass
@@ -95,7 +107,6 @@ class YOLODetect(AbstractStep):
 
     def get_episode(self):
         """
-        TODO: change from episodic collate_fn to standard collate_fn
         Returns:
             Tuple[Tuple, torch.Tensor, torch.Tensor]: the paths, images and target boxes of data instances composing
             the episode described in the data configuration file
@@ -108,20 +119,37 @@ class YOLODetect(AbstractStep):
             normalized_labels=True,
         )
 
-        data_instances = [dataset[i] for i in range(len(dataset))]
+        data_instances = [dataset[-label-1] for label in self.labels]
+        data_instances.extend([dataset[i] for i in range(len(dataset))])
 
-        paths, images, _ = dataset.collate_fn(data_instances)
+        paths, images, targets, _ = dataset.collate_fn_episodic(data_instances)
 
-        return paths, images.to(self.device)
+        return paths, images, targets
 
     def get_model(self):
         """
         Returns:
-            Darknet: model
+            YOLOMAML: meta-model
         """
 
-        return Darknet(self.model_config, self.image_size, self.trained_weights).to(self.device)
+        base_model = Darknet(self.model_config, self.image_size, self.trained_weights)
 
+        model = YOLOMAML(
+            base_model,
+            int(self.data_config['n_way']),
+            int(self.data_config['n_shot']),
+            int(self.data_config['n_query']),
+            self.image_size,
+            approx=True,
+            task_update_num=self.task_update_num,
+            train_lr=self.learning_rate,
+            objectness_threshold=self.objectness_threshold,
+            nms_threshold=self.nms_threshold,
+            iou_threshold=self.iou_threshold,
+            device=self.device,
+        )
+
+        return model
 
     def save_detections(self, paths, output):
         """
@@ -187,3 +215,31 @@ class YOLODetect(AbstractStep):
             plt.savefig(os.path.join(self.output_dir, filename), bbox_inches='tight', pad_inches=0.0)
             plt.close()
 
+    def get_statistics(self, output, targets):
+        """
+        Computes the detection metrics on the output compared to the ground truth
+        Args:
+            output (torch.Tensor): output of the model
+            targets (torch.Tensor): ground truth
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]: detection metrics
+        """
+        targets[:, 2:] = xywh2xyxy(targets[:, 2:]) * self.image_size
+        targets = targets.cpu()
+
+        batch_statistics = get_batch_statistics(
+            output,
+            targets,
+            iou_threshold=self.iou_threshold
+        )
+
+        true_positives, pred_scores, pred_labels = [np.concatenate(x, 0) for x in list(zip(*batch_statistics))]
+        precision, recall, average_precision, f1, ap_class = ap_per_class(
+            true_positives,
+            pred_scores,
+            pred_labels,
+            self.labels,
+        )
+
+        return precision, recall, average_precision, f1, ap_class
