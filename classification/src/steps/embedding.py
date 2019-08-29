@@ -38,7 +38,7 @@ class Embedding():
     ):
         """
         Args:
-            dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
+            dataset (str): CUB/miniImageNet
             model (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
@@ -60,10 +60,6 @@ class Embedding():
         self.split = split
         self.save_iter = save_iter
         self.random_seed = random_seed
-
-        if self.dataset in ['omniglot', 'cross_char']:
-            assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
-            self.backbone = 'Conv4S'
 
         self.checkpoint_dir = path_to_step_output(
             self.dataset,
@@ -148,10 +144,7 @@ class Embedding():
 
         # Defines image size
         if 'Conv' in self.backbone:
-            if self.dataset in ['omniglot', 'cross_char']:
-                image_size = 28
-            else:
-                image_size = 84
+            image_size = 84
         else:
             image_size = 224
 

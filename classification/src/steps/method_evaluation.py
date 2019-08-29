@@ -41,7 +41,7 @@ class MethodEvaluation():
     ):
         """
         Args:
-            dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
+            dataset (str): CUB/miniImageNet
             model (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
@@ -74,10 +74,6 @@ class MethodEvaluation():
         self.random_seed = random_seed
         self.n_swaps = n_swaps
 
-        if self.dataset in ['omniglot', 'cross_char']:
-            assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
-            self.backbone = 'Conv4S'
-
         self.checkpoint_dir = path_to_step_output(
             self.dataset,
             self.backbone,
@@ -109,10 +105,7 @@ class MethodEvaluation():
 
         if self.method in ['maml', 'maml_approx']:  # maml do not support testing with feature
             if 'Conv' in self.backbone:
-                if self.dataset in ['omniglot', 'cross_char']:
-                    image_size = 28
-                else:
-                    image_size = 84
+                image_size = 84
             else:
                 image_size = 224
 
@@ -254,10 +247,6 @@ class MethodEvaluation():
             backbones.BottleneckBlock.maml = True
             backbones.ResNet.maml = True
             model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **few_shot_params)
-            if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
-                model.n_task = 32
-                model.task_update_num = 1
-                model.train_lr = 0.1
         else:
             raise ValueError('Unknown method')
 

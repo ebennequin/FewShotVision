@@ -47,7 +47,7 @@ class MethodTraining():
     ):
         """
         Args:
-            dataset (str): CUB/miniImageNet/cross/omniglot/cross_char
+            dataset (str): CUB/miniImageNet
             backbone (str): Conv{4|6} / ResNet{10|18|34|50|101}
             method (str): baseline/baseline++/protonet/matchingnet/relationnet{_softmax}/maml{_approx}
             train_n_way (int): number of labels in a classification task during training
@@ -55,7 +55,7 @@ class MethodTraining():
             n_shot (int): number of labeled data in each class
             train_aug (bool): perform data augmentation or not during training
             shallow (bool): reduces the dataset to 256 images (typically for quick code testing)
-            num_classes (int): total number of classes in softmax, only used in baseline #TODO delete this parameter
+            num_classes (int): total number of classes in softmax, only used in baseline
             start_epoch (int): starting epoch
             stop_epoch (int): stopping epoch
             resume (bool): continue from previous trained model with largest epoch
@@ -87,10 +87,6 @@ class MethodTraining():
         self.n_episode = n_episode
         self.random_seed = random_seed
         self.n_swaps = n_swaps
-
-        if self.dataset in ['omniglot', 'cross_char']:
-            assert self.backbone == 'Conv4' and not self.train_aug, 'omniglot only support Conv4 without augmentation'
-            self.backbone = 'Conv4S'
 
         self.checkpoint_dir = path_to_step_output(
             self.dataset,
@@ -179,10 +175,7 @@ class MethodTraining():
 
         # Define size of input image depending on backbone and dataset
         if 'Conv' in self.backbone:
-            if self.dataset in ['omniglot', 'cross_char']:
-                image_size = 28
-            else:
-                image_size = 84
+            image_size = 84
         else:
             image_size = 224
 
@@ -194,12 +187,6 @@ class MethodTraining():
             base_loader = base_data_manager.get_data_loader(path_to_base_file, aug=self.train_aug, shallow=self.shallow)
             val_data_manager = SimpleDataManager(image_size, batch_size=64)
             val_loader = val_data_manager.get_data_loader(path_to_val_file, aug=False)
-
-            if self.dataset == 'omniglot':
-                # TODO : change num_classes
-                assert self.num_classes >= 4112, 'class number need to be larger than max label id in base class'
-            if self.dataset == 'cross_char':
-                assert self.num_classes >= 1597, 'class number need to be larger than max label id in base class'
 
             if self.method == 'baseline':
                 model = BaselineTrain(model_dict[self.backbone], self.num_classes)
@@ -246,10 +233,6 @@ class MethodTraining():
                 backbones.BottleneckBlock.maml = True
                 backbones.ResNet.maml = True
                 model = MAML(model_dict[self.backbone], approx=(self.method == 'maml_approx'), **train_few_shot_params)
-                if self.dataset in ['omniglot', 'cross_char']:  # maml use different parameter in omniglot
-                    model.n_task = 32
-                    model.task_update_num = 1
-                    model.train_lr = 0.1
         else:
             raise ValueError('Unknown method')
 
@@ -272,9 +255,7 @@ class MethodTraining():
         """
         if self.stop_epoch == -1:
             if self.method in ['baseline', 'baseline++']:
-                if self.dataset in ['omniglot', 'cross_char']:
-                    self.stop_epoch = 5
-                elif self.dataset in ['CUB']:
+                if self.dataset in ['CUB']:
                     self.stop_epoch = 200
                 elif self.dataset in ['miniImageNet', 'cross']:
                     self.stop_epoch = 400
