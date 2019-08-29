@@ -2,9 +2,8 @@ import os
 
 import pytest
 
-from classification.src import load_features_and_labels_from_file
-from classification.src import MethodEvaluation
-from classification.src import FetchModel
+from classification.src.loaders.feature_loader import load_features_and_labels_from_file
+from classification.src.steps import MethodEvaluation, FetchModel
 from utils.io_utils import path_to_step_output
 
 class TestEvaluation:

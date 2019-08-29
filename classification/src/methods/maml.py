@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 from utils import backbones
-from classification.src import MetaTemplate
+from classification.src.methods.meta_template import MetaTemplate
 from utils.utils import random_swap_tensor
 
 class MAML(MetaTemplate):

@@ -1,6 +1,6 @@
 import os
 
-from pipeline.steps import AbstractStep
+
 import torch
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -12,7 +12,7 @@ from detection.src.yolov3.utils.datasets import ListDataset
 from detection.src.yolov3.utils.parse_config import parse_data_config
 
 
-class YOLOTraining(AbstractStep):
+class YOLOTraining():
     """
     This step handles the training of the algorithm on the base dataset
     """

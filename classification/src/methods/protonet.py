@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-from classification.src import MetaTemplate
+from classification.src.methods.meta_template import MetaTemplate
 
 
 class ProtoNet(MetaTemplate):

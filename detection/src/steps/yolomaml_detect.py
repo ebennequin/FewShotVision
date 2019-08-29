@@ -7,7 +7,7 @@ from matplotlib.ticker import NullLocator
 import numpy as np
 import torch
 from PIL import Image
-from pipeline.steps import AbstractStep
+
 
 from detection.src.yolo_maml import YOLOMAML
 from detection.src.yolov3.model import Darknet
@@ -17,7 +17,7 @@ from detection.src.yolov3.utils.utils import non_max_suppression, xywh2xyxy, get
     load_classes
 
 
-class YOLOMAMLDetect(AbstractStep):
+class YOLOMAMLDetect():
     """
     This step performs detection on a given episode using a trained YOLOMAML model.
     """

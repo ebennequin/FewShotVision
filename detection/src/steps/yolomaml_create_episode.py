@@ -1,14 +1,14 @@
 import os
 
 import numpy as np
-from pipeline.steps import AbstractStep
+
 
 from detection.src.loaders.data_manager import DetectionTaskSampler
 from detection.src.yolov3.utils.datasets import ListDataset
 from detection.src.yolov3.utils.parse_config import parse_data_config
 
 
-class YOLOMAMLCreateEpisode(AbstractStep):
+class YOLOMAMLCreateEpisode():
     """
     This step creates a detection task. It outputs :
         - a .txt file containing the paths to the images composing the episode

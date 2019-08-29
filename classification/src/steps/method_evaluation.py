@@ -1,18 +1,14 @@
 import os
 
 import numpy as np
-from pipeline.steps import AbstractStep
+
 import torch
 import torch.optim
 import torch.utils.data.sampler
 
 from utils import backbones
 from classification.src.loaders.data_managers import SetDataManager
-from classification.src import BaselineFinetune
-from classification.src import ProtoNet
-from classification.src import MatchingNet
-from classification.src import RelationNet
-from classification.src import MAML
+from classification.src.methods import *
 from utils.io_utils import (
     model_dict,
     path_to_step_output,
@@ -22,7 +18,7 @@ from utils.io_utils import (
 from utils.utils import random_swap_numpy
 
 
-class MethodEvaluation(AbstractStep):
+class MethodEvaluation():
     """
     This step handles the evaluation of the trained model on the novel dataset
     """
@@ -93,7 +89,8 @@ class MethodEvaluation(AbstractStep):
         Executes MethodEvaluation step
         Args:
             model_state (dict): contains the state of the trained model and the number of training epochs
-            features_and_labels: contains the features and labels of all images in the evaluation dataset
+            features_and_labels (Tuple[numpy.array, numpy.array]): contains the features and labels of all images in
+            the evaluation dataset
 
         Returns:
             float: average accuracy on few shot classification tasks sampled from the evaluation dataset

@@ -8,7 +8,7 @@ import numpy as np
 from detection.src.yolov3.utils.parse_config import *
 from detection.src.yolov3.utils.utils import build_targets, to_cpu, binary_cross_entropy
 
-from classification.src import Conv2d_fw, BatchNorm2d_fw
+from utils.backbones import Conv2d_fw, BatchNorm2d_fw
 
 LAYER_END_DARKNET_YOLO = 156
 LAYER_END_BACKBONE_TINY_YOLO = 20

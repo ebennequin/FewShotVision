@@ -3,8 +3,8 @@ import os
 import numpy as np
 import pytest
 
-from classification.src import Embedding
-from classification.src import FetchModel
+from classification.src.steps import Embedding
+from classification.src.steps import FetchModel
 from utils.io_utils import path_to_step_output
 
 class TestEmbedding:

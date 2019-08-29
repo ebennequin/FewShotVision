@@ -1,14 +1,14 @@
 import os
 
-from pipeline.steps import AbstractStep
+
 import torch
 
 from classification.src.loaders.data_managers import SimpleDataManager, SetDataManager
-from classification.src import BaselineTrain
-from classification.src import ProtoNet
-from classification.src import MatchingNet
-from classification.src import RelationNet
-from classification.src import MAML
+from classification.src.methods import BaselineTrain
+from classification.src.methods import ProtoNet
+from classification.src.methods import MatchingNet
+from classification.src.methods import RelationNet
+from classification.src.methods import MAML
 from utils import configs, backbones
 from utils.io_utils import (
     model_dict,
@@ -18,7 +18,7 @@ from utils.io_utils import (
 )
 
 
-class MethodTraining(AbstractStep):
+class MethodTraining():
     """
     This step handles the training of the algorithm on the base dataset
     """
@@ -35,7 +35,7 @@ class MethodTraining(AbstractStep):
             shallow=False,
             num_classes=4412,
             start_epoch=0,
-            stop_epoch=-1,
+            stop_epoch=1,
             resume=False,
             warmup=False,
             optimizer='Adam',
@@ -258,33 +258,6 @@ class MethodTraining(AbstractStep):
 
         if self.method == 'maml' or self.method == 'maml_approx':
             self.stop_epoch = self.stop_epoch * model.n_task  # maml use multiple tasks in one update
-
-        if self.resume:
-            resume_file = get_resume_file(self.checkpoint_dir)
-            if resume_file is not None:
-                tmp = torch.load(resume_file)
-                self.start_epoch = tmp['epoch'] + 1
-                model.load_state_dict(tmp['state'])
-        elif self.warmup:  # We also support warmup from pretrained baseline feature, but we never used in our paper
-            baseline_checkpoint_dir = '%s/checkpoints/%s/%s_%s' % (
-                configs.save_dir, self.dataset, self.backbone, 'baseline')
-            if self.train_aug:
-                baseline_checkpoint_dir += '_aug'
-            warmup_resume_file = get_resume_file(baseline_checkpoint_dir)
-            tmp = torch.load(warmup_resume_file)
-            if tmp is not None:
-                state = tmp['state']
-                state_keys = list(state.keys())
-                for i, key in enumerate(state_keys):
-                    if "feature." in key:
-                        newkey = key.replace("feature.",
-                                             "")  # an architecture model has attribute 'feature', load architecture feature to backbone by casting name from 'feature.trunk.xx' to 'trunk.xx'
-                        state[newkey] = state.pop(key)
-                    else:
-                        state.pop(key)
-                model.feature.load_state_dict(state)
-            else:
-                raise ValueError('No warm_up file')
 
         return (
             base_loader,

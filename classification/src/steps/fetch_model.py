@@ -1,11 +1,11 @@
 import os
 
-from pipeline.steps import AbstractStep
+
 import torch
 
 from utils import configs
 
-class FetchModel(AbstractStep):
+class FetchModel():
     """
     This step returns the state of a trained model in a dictionary, from the path to a .tar file
     """

@@ -2,7 +2,7 @@ import os
 
 import h5py
 import numpy as np
-from pipeline.steps import AbstractStep
+
 from torch.autograd import Variable
 
 from classification.src.loaders.data_managers import SimpleDataManager
@@ -15,7 +15,7 @@ from utils.io_utils import (
 )
 
 
-class Embedding(AbstractStep):
+class Embedding():
     """
     This step handles the computing of the embeddings of the evaluation dataset prior to evaluation,
     for computation efficiency. It does not support methods using meta-models, like MAML.
@@ -73,6 +73,14 @@ class Embedding(AbstractStep):
         )
 
     def apply(self, model_state):
+        """
+        Executes the Embedding step
+        Args:
+            model_state (dict): contains the whole state of the model that gave the higher validation accuracy
+
+        Returns:
+            Tuple[numpy.array, numppy.array]: contain respectively all the features and the corresponding labels
+        """
         set_and_print_random_seed(self.random_seed, True, self.checkpoint_dir)
 
         if self.method in ['maml', 'maml_approx']:
@@ -92,12 +100,12 @@ class Embedding(AbstractStep):
         """
         Computes and save the embeddings of all images with the given feature extractor
         Args:
-            model: trained feature extractor
-            data_loader: contains all examples of novel dataset, in batches
-            outfile: where to save features
+            model (nn.Module): trained feature extractor
+            data_loader (torch.Dataloader): contains all examples of novel dataset, in batches
+            outfile (str): where to save features
 
         Returns:
-            tuple: numpy arrays containing respectively all the features and the corresponding labels
+            Tuple[numpy.array, numppy.array]: contain respectively all the features and the corresponding labels
         """
         f = h5py.File(outfile, 'w')
         max_count = len(data_loader) * data_loader.batch_size
@@ -153,9 +161,9 @@ class Embedding(AbstractStep):
         #TODO no need for outfile anymore
         if self.save_iter != -1:
             outfile = os.path.join(self.checkpoint_dir,
-                                   f'{split}_{self.save_iter}.hdf5')
+                                   f'{self.split}_{self.save_iter}.hdf5')
         else:
-            outfile = os.path.join(self.checkpoint_dir, split + ".hdf5")
+            outfile = os.path.join(self.checkpoint_dir, self.split + ".hdf5")
 
         # Return data loader TODO: why do we do batches here ?
         datamgr = SimpleDataManager(image_size, batch_size=64)
@@ -174,7 +182,7 @@ class Embedding(AbstractStep):
             model_state (dict): contains the state of the trained model. If None, loads from .tar file
 
         Returns:
-            model: torch module
+            nn.Module: trained features extractor
         """
         state = model_state['state'].copy()
 

@@ -1,6 +1,6 @@
 import os
 
-from pipeline.steps import AbstractStep
+
 import torch
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -12,7 +12,7 @@ from detection.src.yolov3.model import Darknet
 from detection.src.yolov3.utils.parse_config import parse_data_config
 
 
-class YOLOMAMLTraining(AbstractStep):
+class YOLOMAMLTraining():
     """
     This step handles the training of the algorithm on the base dataset
     """

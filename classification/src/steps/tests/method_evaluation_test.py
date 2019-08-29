@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from classification.src import MethodEvaluation
+from classification.src.steps import MethodEvaluation
 
 class TestSetClassificationTask:
 

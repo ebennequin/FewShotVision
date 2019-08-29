@@ -1,6 +1,6 @@
 import os
 
-from classification.src import FetchModel
+from classification.src.steps import FetchModel
 from utils.io_utils import path_to_step_output
 
 class TestFetchModel:

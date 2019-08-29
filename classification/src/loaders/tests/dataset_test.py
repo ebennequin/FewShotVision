@@ -1,4 +1,4 @@
-from classification.src import EpisodicBatchSampler
+from classification.src.loaders.dataset import EpisodicBatchSampler
 from utils.io_utils import set_and_print_random_seed
 
 
