@@ -35,7 +35,7 @@ class MethodTraining():
             shallow=False,
             num_classes=4412,
             start_epoch=0,
-            stop_epoch=1,
+            stop_epoch=-1,
             resume=False,
             warmup=False,
             optimizer='Adam',
