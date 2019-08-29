@@ -2,8 +2,8 @@ import click
 from detection.src.steps import YOLOMAMLTraining
 
 @click.command()
-@click.option('--dataset_config', default='pipelines/detection/experiments_config/coco.data')
-@click.option('--model_config', default='pipelines/detection/experiments_config/deep-tiny-yolo-3-way.cfg')
+@click.option('--dataset_config', default='./detection/configs/coco.data')
+@click.option('--model_config', default='./detection/configs/deep-tiny-yolo-3-way.cfg')
 @click.option('--pretrained_weights', default='./data/weights/tiny.weights')
 @click.option('--n_way', default=3)
 @click.option('--n_shot', default=5)
