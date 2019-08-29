@@ -1,4 +1,4 @@
-from src.utils.io_utils import set_and_print_random_seed
+from utils.io_utils import set_and_print_random_seed
 
 class TestIoUtils:
 

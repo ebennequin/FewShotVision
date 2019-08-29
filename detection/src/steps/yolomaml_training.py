@@ -6,8 +6,8 @@ from torch.utils.tensorboard.writer import SummaryWriter
 
 from detection.src.loaders.data_manager import DetectionSetDataManager
 from detection.src.yolo_maml import YOLOMAML
-from src.utils import configs
-from src.utils.io_utils import set_and_print_random_seed
+from utils import configs
+from utils.io_utils import set_and_print_random_seed
 from detection.src.yolov3.model import Darknet
 from detection.src.yolov3.utils.parse_config import parse_data_config
 

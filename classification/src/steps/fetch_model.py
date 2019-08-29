@@ -3,7 +3,7 @@ import os
 from pipeline.steps import AbstractStep
 import torch
 
-from src.utils import configs
+from utils import configs
 
 class FetchModel(AbstractStep):
     """

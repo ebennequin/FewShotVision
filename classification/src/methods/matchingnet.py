@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-from src.methods.meta_template import MetaTemplate
-from src.utils import utils
+from classification.src import MetaTemplate
+from utils import utils
 
 
 class MatchingNet(MetaTemplate): #TODO: check that LSTMs are still trained

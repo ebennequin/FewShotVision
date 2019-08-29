@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from src.utils.utils import random_swap_tensor
+from utils.utils import random_swap_tensor
 
 
 class MetaTemplate(nn.Module):

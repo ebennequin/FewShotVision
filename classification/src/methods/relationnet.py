@@ -5,9 +5,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
 import torch.nn.functional as F
-from src.methods.meta_template import MetaTemplate
-from src import backbones
-from src.utils import utils
+from classification.src import MetaTemplate
+from utils import utils, backbones
 
 
 class RelationNet(MetaTemplate):

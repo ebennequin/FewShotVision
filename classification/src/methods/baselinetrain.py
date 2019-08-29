@@ -1,4 +1,4 @@
-from src import backbones
+from utils import backbones
 
 import torch.nn as nn
 from torch.autograd import Variable

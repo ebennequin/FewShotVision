@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from src.utils.utils import random_swap_numpy, random_swap_tensor
+from utils.utils import random_swap_numpy, random_swap_tensor
 import numpy as np
 
 class TestMethodEvaluation:

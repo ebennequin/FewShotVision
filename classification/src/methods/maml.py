@@ -4,9 +4,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from src import backbones
-from src.methods.meta_template import MetaTemplate
-from src.utils.utils import random_swap_tensor
+from utils import backbones
+from classification.src import MetaTemplate
+from utils.utils import random_swap_tensor
 
 class MAML(MetaTemplate):
     def __init__(self, model_func, n_way, n_support, approx=False):

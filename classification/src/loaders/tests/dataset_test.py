@@ -1,5 +1,5 @@
-from src.loaders.dataset import EpisodicBatchSampler
-from src.utils.io_utils import set_and_print_random_seed
+from classification.src import EpisodicBatchSampler
+from utils.io_utils import set_and_print_random_seed
 
 
 class TestDataset:

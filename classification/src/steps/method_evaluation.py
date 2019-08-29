@@ -6,21 +6,20 @@ import torch
 import torch.optim
 import torch.utils.data.sampler
 
-from src import backbones
-from src.loaders.data_managers import SetDataManager
-from src.methods import BaselineFinetune
-from src.methods import ProtoNet
-from src.methods import MatchingNet
-from src.methods import RelationNet
-from src.methods.maml import MAML
-from src.utils import configs
-from src.utils.io_utils import (
+from utils import backbones
+from classification.src.loaders.data_managers import SetDataManager
+from classification.src import BaselineFinetune
+from classification.src import ProtoNet
+from classification.src import MatchingNet
+from classification.src import RelationNet
+from classification.src import MAML
+from utils.io_utils import (
     model_dict,
     path_to_step_output,
     set_and_print_random_seed,
     get_path_to_json
 )
-from src.utils.utils import random_swap_numpy
+from utils.utils import random_swap_numpy
 
 
 class MethodEvaluation(AbstractStep):

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from src.steps.method_training import MethodTraining
+from classification.src.steps.method_training import MethodTraining
 
 class TestTrainingMethods:
 

@@ -1,7 +1,7 @@
 import os
 
-from src.steps.fetch_model import FetchModel
-from src.utils.io_utils import path_to_step_output
+from classification.src import FetchModel
+from utils.io_utils import path_to_step_output
 
 class TestFetchModel:
     current_dir = os.path.dirname(__file__)

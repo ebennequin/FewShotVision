@@ -4,8 +4,7 @@ import os
 import numpy as np
 import torch
 
-from src import backbones
-from src.utils import configs
+from utils import configs, backbones
 
 model_dict = dict(
     Conv4=backbones.Conv4,

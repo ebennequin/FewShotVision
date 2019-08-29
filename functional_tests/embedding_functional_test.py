@@ -3,9 +3,9 @@ import os
 import numpy as np
 import pytest
 
-from src.steps.embedding import Embedding
-from src.steps.fetch_model import FetchModel
-from src.utils.io_utils import path_to_step_output
+from classification.src import Embedding
+from classification.src import FetchModel
+from utils.io_utils import path_to_step_output
 
 class TestEmbedding:
 

@@ -3,7 +3,7 @@ import os
 from pipeline.steps import AbstractStep
 import pickle
 
-from src.utils import configs
+from utils import configs
 
 from detection.src.loaders.data_manager import create_dict_images_per_label
 from detection.src.yolov3.utils.datasets import ListDataset

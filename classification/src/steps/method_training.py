@@ -1,18 +1,16 @@
 import os
 
-import numpy as np
 from pipeline.steps import AbstractStep
 import torch
 
-from src import backbones
-from src.loaders.data_managers import SimpleDataManager, SetDataManager
-from src.methods import BaselineTrain
-from src.methods import ProtoNet
-from src.methods import MatchingNet
-from src.methods import RelationNet
-from src.methods.maml import MAML
-from src.utils import configs
-from src.utils.io_utils import (
+from classification.src.loaders.data_managers import SimpleDataManager, SetDataManager
+from classification.src import BaselineTrain
+from classification.src import ProtoNet
+from classification.src import MatchingNet
+from classification.src import RelationNet
+from classification.src import MAML
+from utils import configs, backbones
+from utils.io_utils import (
     model_dict,
     path_to_step_output,
     set_and_print_random_seed,

@@ -5,10 +5,9 @@ import numpy as np
 from pipeline.steps import AbstractStep
 from torch.autograd import Variable
 
-from src import backbones
-from src.loaders.data_managers import SimpleDataManager
-from src.utils import configs
-from src.utils.io_utils import (
+from classification.src.loaders.data_managers import SimpleDataManager
+from utils import configs, backbones
+from utils.io_utils import (
     model_dict,
     path_to_step_output,
     set_and_print_random_seed,

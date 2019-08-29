@@ -4,9 +4,9 @@ from pipeline.steps import AbstractStep
 import torch
 from torch.utils.tensorboard.writer import SummaryWriter
 
-from src.utils import configs
-from src.utils.utils import include_episode_loss_dict
-from src.utils.io_utils import set_and_print_random_seed
+from utils import configs
+from utils.utils import include_episode_loss_dict
+from utils.io_utils import set_and_print_random_seed
 from detection.src.yolov3.model import Darknet
 from detection.src.yolov3.utils.datasets import ListDataset
 from detection.src.yolov3.utils.parse_config import parse_data_config

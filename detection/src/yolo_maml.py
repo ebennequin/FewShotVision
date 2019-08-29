@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from src.utils.utils import include_episode_loss_dict, get_complete_loss_dict
+from utils.utils import include_episode_loss_dict, get_complete_loss_dict
 from detection.src.yolov3.utils.utils import xywh2xyxy, non_max_suppression, get_batch_statistics, ap_per_class
 
 

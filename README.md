@@ -96,6 +96,8 @@ You can specify many options, which are detailed in the docstring.
 For instance, if you want to custom the optimizer, run `python detection/scripts/run_yolomaml_train.py --optimizer=SGD`
 
 You can find the trained weights of the model in `output/final.weights`, and use them to perform detections.
+In the `output` folder, you can also find the events file to visualize the evolution of the loss during the training
+in a Tensorboard.
 
 ### Solve a few-shot object detection task
 To solve such a task, you first need to sample one.
