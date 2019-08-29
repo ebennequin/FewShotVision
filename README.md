@@ -46,9 +46,9 @@ You will need wget for that script.
 See test.json for reference
 * Put these file in the same folder and change data_dir['DATASETNAME'] in configs.py to the folder path  
 
-### Detection
+### Detection: COCO
 
-TODO
+ - run `source ./download_data/scripts/get_coco_dataset.sh`
 
 ## Few-Shot Image Classification
 To launch an experiment, run :
