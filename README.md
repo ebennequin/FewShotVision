@@ -23,8 +23,7 @@ virtualenv venv --python=python3
 source venv/bin/activate
 ```
 
-Then install dependencies. If you are on linux run `pip install -r dev_requirements.txt`. If you are on macOS
-run `pip install -r dev_requirements_macOS.txt`
+Then install dependencies. Run `pip install -r requirements.txt`.
 
 ## Download data
 

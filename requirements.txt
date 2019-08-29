@@ -54,3 +54,4 @@ tqdm==4.32.2
 urllib3==1.25.2
 wcwidth==0.1.7
 websocket-client==0.56.0
+Werkzeug==0.15.5
