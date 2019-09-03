@@ -1,6 +1,15 @@
 # Few Shot Learning
 This code was used for research in Few-Shot Image Classification and Few-Shot Object Detections.
-These two tasks constitute the two parts of the repository.
+These two tasks constitute the two parts of the repository. It contains:
+
+- An end to end implementation of several meta-learning algorithms for Few-Shot Image Classification, including:
+ - Matching Networks
+ - Prototypical Networks
+ - Relation Network
+ - MAML
+- A first (still non working) implementation of the YOLOMAML algorithm.
+
+It will be useful for training and testing meta-learning algorithms, allowing full reproducibility of the results. The code is extensively documented.
 
 ## Environment
 Mostly:
