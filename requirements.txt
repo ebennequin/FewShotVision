@@ -13,7 +13,6 @@ grpcio==1.21.1
 h5py==2.9.0
 hestia==0.3.0
 idna==2.8
-Jinja2==2.10
 kiwisolver==1.1.0
 Markdown==3.1.1
 MarkupSafe==1.1.1
