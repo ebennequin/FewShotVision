@@ -1,5 +1,5 @@
 # Few Shot Learning
-This code was used for research in Few-Shot Image Classification and Few-Shot Object Detections.
+This code was used for research in Few-Shot Image Classification and Few-Shot Object Detections. The resulting paper is available [here](https://arxiv.org/abs/1909.13579).
 These two tasks constitute the two parts of the repository. It contains:
 
 - An end to end implementation of several meta-learning algorithms for Few-Shot Image Classification, including:
