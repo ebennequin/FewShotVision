@@ -88,7 +88,7 @@ def main(
         trained_model (str): path to the file containing the model parameters, must end in .tar. If not None, fetches
         the trained model and skips training step
     """
-    if trained_model is not None:
+    if trained_model is None:
         step_to_trained_model = MethodTraining(
             dataset,
             backbone,
