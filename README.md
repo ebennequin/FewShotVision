@@ -1,4 +1,7 @@
 # Few Shot Learning
+
+### ⚠️ This code is no longer maintained. For up-to-date and documented code for few-shot learning, check out [EasyFSL](https://github.com/sicara/easy-few-shot-learning)
+
 This code was used for research in Few-Shot Image Classification and Few-Shot Object Detections. The resulting paper is available [here](https://arxiv.org/abs/1909.13579).
 These two tasks constitute the two parts of the repository. It contains:
 
