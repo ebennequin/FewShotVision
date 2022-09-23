@@ -31,7 +31,7 @@ polyaxon-client==0.4.4
 polyaxon-deploy==0.4.4
 polyaxon-schemas==0.4.4
 polystores==0.1.7
-protobuf==3.8.0
+protobuf==3.18.3
 psutil==5.6.6
 py==1.8.0
 pydot==1.4.1
